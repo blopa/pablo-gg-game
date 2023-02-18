@@ -1,7 +1,7 @@
 const { readdirSync, readFileSync, writeFileSync } = require('fs');
 const path = require('path');
 
-const TILESETS_PATH = path.resolve(
+const MAPS_PATH = path.resolve(
     __dirname,
     '..',
     'src',
@@ -17,35 +17,27 @@ async function copyTilesetData(mapName = null) {
 
     const allFiles = [];
     let sourceTilesetData = [];
-    const mapsFolders = await readdirSync(TILESETS_PATH);
+    const mapFiles = readdirSync(MAPS_PATH);
+
     // eslint-disable-next-line no-restricted-syntax
-    for (const tilesetPath of mapsFolders) {
-        const filePath = path.resolve(TILESETS_PATH, tilesetPath);
-        // eslint-disable-next-line no-await-in-loop
-        const spritesFiles = await readdirSync(filePath);
-        // eslint-disable-next-line no-restricted-syntax
-        for (const spritesFile of spritesFiles) {
-            if (spritesFile === `${mapName}.json`) {
-                // eslint-disable-next-line no-await-in-loop
-                const jsonData = JSON.parse(await readFileSync(path.resolve(filePath, spritesFile)));
-                sourceTilesetData = jsonData.tilesets;
-            } else {
-                allFiles.push(path.resolve(filePath, spritesFile));
-            }
+    for (const mapFile of mapFiles) {
+        if (mapFile === `${mapName}.json`) {
+            const jsonData = JSON.parse(readFileSync(path.resolve(MAPS_PATH, mapFile)));
+            sourceTilesetData = jsonData.tilesets;
+        } else {
+            allFiles.push(path.resolve(MAPS_PATH, mapFile));
         }
     }
 
     // eslint-disable-next-line no-restricted-syntax
     for (const jsonFile of allFiles) {
-        // eslint-disable-next-line no-await-in-loop
-        const jsonData = JSON.parse(await readFileSync(
+        const jsonData = JSON.parse(readFileSync(
             jsonFile
         ));
 
         jsonData.tilesets = sourceTilesetData;
 
-        // eslint-disable-next-line no-await-in-loop
-        await writeFileSync(
+        writeFileSync(
             jsonFile,
             JSON.stringify(jsonData, null, 2)
         );

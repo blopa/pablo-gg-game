@@ -10008,7 +10008,7 @@
       ],
       "height": 100,
       "id": 1,
-      "name": "Ground\/terrain",
+      "name": "Ground/terrain",
       "opacity": 1,
       "type": "tilelayer",
       "visible": true,
@@ -40047,7 +40047,7 @@
       ],
       "height": 100,
       "id": 4,
-      "name": "Doors\/windows\/roof",
+      "name": "Doors/windows/roof",
       "opacity": 1,
       "type": "tilelayer",
       "visible": true,
@@ -50201,15 +50201,15 @@
   "tilesets": [
     {
       "firstgid": 1,
-      "source": "..\/tilesets\/objects.json"
+      "source": "../tilesets/objects.json"
     },
     {
       "firstgid": 51,
-      "source": "..\/tilesets\/village.json"
+      "source": "../tilesets/village.json"
     },
     {
       "firstgid": 1818,
-      "source": "..\/tilesets\/city.json"
+      "source": "../tilesets/city.json"
     }
   ],
   "tilewidth": 16,

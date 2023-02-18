@@ -25,13 +25,15 @@ async function generateAtlasFiles(assetName = null) {
     if (assetName) {
         spritesFolders = [assetName];
     } else {
-        spritesFolders = await readdirSync(SOURCE_SPRITES_PATH);
+        spritesFolders = readdirSync(SOURCE_SPRITES_PATH);
     }
 
     // eslint-disable-next-line no-restricted-syntax
     for (const spritesFolder of spritesFolders) {
-        // eslint-disable-next-line no-await-in-loop
-        const spritesFiles = await readdirSync(path.resolve(__dirname, SOURCE_SPRITES_PATH, spritesFolder));
+        const spritesFiles = readdirSync(
+            path.resolve(__dirname, SOURCE_SPRITES_PATH, spritesFolder)
+        );
+
         const images = [];
         spritesFiles.forEach((spritesFile) => {
             images.push({
@@ -59,6 +61,7 @@ async function packImages(images, spriteName) {
             fixedSize: false,
             textureName: spriteName,
         });
+
         // eslint-disable-next-line no-restricted-syntax
         for (const item of files) {
             const fileExt = item.name.split('.').pop();
