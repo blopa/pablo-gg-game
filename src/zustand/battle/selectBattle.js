@@ -16,8 +16,4 @@ export const selectBattleHoveredItem = (state) => state.battle.hoveredItem;
 
 export const selectBattleEnemiesPickedItem = (state) => state.battle.enemiesPickedItem;
 
-export const selectBattleAttackDice = (state) => state.battle.attackDice;
-
-export const selectBattleDefenseDice = (state) => state.battle.defenseDice;
-
 export const selectBattleSetters = (state) => state.battle.setters;

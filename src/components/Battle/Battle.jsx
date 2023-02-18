@@ -28,9 +28,6 @@ import { useGameStore } from '../../zustand/store';
 // Styles
 import styles from './Battle.module.scss';
 
-// Components
-import BattleDiceViewer from '../BattleDiceViewer/BattleDiceViewer';
-
 function Battle() {
     const battleListRef = useRef();
 
@@ -105,7 +102,6 @@ function Battle() {
 
     return (
         <div className={classNames(styles['battle-wrapper'])}>
-            <BattleDiceViewer />
             <ul ref={battleListRef} className={styles['battle-items-wrapper']}>
                 {battleItems.map((item, index) => {
                     const [key, variables] = getTranslationVariables(item);

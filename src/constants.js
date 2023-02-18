@@ -56,9 +56,6 @@ export const ATTACK_BATTLE_ITEM = 'attack';
 export const ITEMS_BATTLE_ITEM = 'items';
 export const DEFENSE_BATTLE_ITEM = 'defense';
 export const RUN_BATTLE_ITEM = 'run';
-export const DICE_1_BATTLE_ITEM = 'dice_1';
-export const DICE_2_BATTLE_ITEM = 'dice_2';
-export const DICE_3_BATTLE_ITEM = 'dice_3';
 export const RETURN_BATTLE_ITEM = 'return';
 
 // DOM identifiers

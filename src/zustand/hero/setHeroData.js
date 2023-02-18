@@ -31,16 +31,4 @@ export default (set) => ({
                 initialFrame,
             },
         })),
-    addHeroInventoryDice: (die) =>
-        set((state) => ({
-            ...state,
-            heroData: {
-                ...state.heroData,
-                inventory: {
-                    ...state.heroData.inventory,
-                    // TODO make this a Set()
-                    dice: [...state.heroData.inventory.dice, die],
-                },
-            },
-        })),
 });

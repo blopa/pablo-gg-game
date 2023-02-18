@@ -61,8 +61,6 @@ const store = createStore((set) => ({
         pickedItem: null,
         hoveredItem: null,
         enemiesPickedItem: null,
-        attackDice: [],
-        defenseDice: [],
         setters: setBattle(set),
     },
     menu: {
