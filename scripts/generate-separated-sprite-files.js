@@ -1,8 +1,13 @@
 const path = require('path');
 const sharp = require('sharp');
+const { existsSync, mkdirSync } = require('fs');
 
 async function generateSeparatedSpriteFiles(inputFilePath, spriteWidth, spriteHeight) {
-    const outputDirectory = path.dirname(inputFilePath);
+    const inputFileName = path.basename(inputFilePath, path.extname(inputFilePath));
+    const outputDirectory = path.join(path.dirname(inputFilePath), inputFileName);
+    if (!existsSync(outputDirectory)) {
+        mkdirSync(outputDirectory);
+    }
 
     const metadata = await sharp(inputFilePath).metadata();
     const cols = Math.floor(metadata.width / spriteWidth);
@@ -12,7 +17,8 @@ async function generateSeparatedSpriteFiles(inputFilePath, spriteWidth, spriteHe
         for (let col = 0; col < cols; col++) {
             const left = col * spriteWidth;
             const top = row * spriteHeight;
-            const outputPath = path.join(outputDirectory, `${row}_${col}.png`);
+            const outputFileName = `${inputFileName}_${row + 1}_${col + 1}.png`;
+            const outputPath = path.join(outputDirectory, outputFileName);
 
             // eslint-disable-next-line no-await-in-loop
             await sharp(inputFilePath)
