@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkpablo_gg_game=self.webpackChunkpablo_gg_game||[]).push([[504],{7504:function(e,a,p){e.exports=p.p+"static/media/enemy.7c0b72b1045be3e0154f.png"}}]);

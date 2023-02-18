@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkpablo_gg_game=self.webpackChunkpablo_gg_game||[]).push([[568],{9568:function(e,a,p){e.exports=p.p+"static/media/heart_empty.47d79a15841fc10f969b.png"}}]);

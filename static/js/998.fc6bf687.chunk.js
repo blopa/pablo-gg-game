@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkpablo_gg_game=self.webpackChunkpablo_gg_game||[]).push([[998],{9130:function(a,e,p){a.exports=p.p+"static/media/heart_half.b9ff8885c2a980a88368.png"}}]);

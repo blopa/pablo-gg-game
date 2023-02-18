@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkpablo_gg_game=self.webpackChunkpablo_gg_game||[]).push([[195],{2195:function(e,p,a){e.exports=a.p+"static/media/npc_05.27c9534b0168f3ffdddf.png"}}]);

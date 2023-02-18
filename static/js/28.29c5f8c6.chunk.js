@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkpablo_gg_game=self.webpackChunkpablo_gg_game||[]).push([[28],{6028:function(e,a,c){e.exports=c.p+"static/media/objects.869e24e5c601c346240b.png"}}]);

@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkpablo_gg_game=self.webpackChunkpablo_gg_game||[]).push([[829],{1829:function(a,e,p){a.exports=p.p+"static/media/crystal.50eb991d432a03856747.png"}}]);
