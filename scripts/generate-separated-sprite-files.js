@@ -30,4 +30,8 @@ async function generateSeparatedSpriteFiles(inputFilePath, spriteWidth, spriteHe
     }
 }
 
-generateSeparatedSpriteFiles(process.argv[2], 16, 20);
+generateSeparatedSpriteFiles(
+    process.argv[2],
+    Number.parseInt(process.argv[3], 10),
+    Number.parseInt(process.argv[4], 10)
+);
