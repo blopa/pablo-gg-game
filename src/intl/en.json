@@ -1,0 +1,18 @@
+{
+    "game_title": "Game Title",
+    "start_game": "Start Game",
+    "exit": "Exit",
+    "rock": "Rock",
+    "paper": "Paper",
+    "scissors": "Scissors",
+    "attack": "Attack",
+    "defense": "Defense",
+    "items": "Items",
+    "next": "Next",
+    "ok": "Ok",
+    "return": "Return",
+    "dice_1": "Dice 1",
+    "dice_2": "Dice 2",
+    "dice_3": "Dice 3",
+    "run": "Run"
+}
