@@ -4,7 +4,7 @@ This project is based on a Medium post: https://javascript.plainenglish.io/i-mad
 
 <img src="/source_files/game_sample.gif?raw=true" width="890px" />
 
-## Try it out: https://blopa.github.io/top-down-react-phaser-game-template/
+## Try it out: https://blopa.github.io/pablo-gg-game/
 
 # Key Features
 - Built with Create React App
