@@ -32,7 +32,7 @@ export function create() {
     const handleStartGameSelected = () => {
         setMenuItems([]);
         setMenuOnSelect(null);
-        setMapKey('sample_map');
+        setMapKey('test_map');
         const {
             setHeroPreviousPosition,
             setHeroFacingDirection,
@@ -51,7 +51,7 @@ export function create() {
             // fonts: ['"Press Start 2P"'],
             atlases: ['hero'],
             images: [],
-            mapKey: 'sample_map',
+            mapKey: 'test_map',
             // mapKey: 'sample_indoor',
         });
     };
