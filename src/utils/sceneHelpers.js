@@ -189,9 +189,11 @@ export const handleCreateHero = (scene) => {
         .setOrigin(0, 0)
         .setDepth(1);
 
-    heroSprite.body.width = 10;
-    heroSprite.body.height = 8;
-    heroSprite.body.setOffset(3, 8);
+    // eslint-disable-next-line operator-assignment
+    heroSprite.body.width = heroSprite.body.width / 2;
+    // eslint-disable-next-line operator-assignment
+    heroSprite.body.height = heroSprite.body.height / 2;
+    heroSprite.body.setOffset(heroSprite.body.width / 2, heroSprite.body.height);
 
     // const facingDirection = getSelectorData(selectHeroFacingDirection);
     // heroSprite.setFrame(
@@ -199,13 +201,12 @@ export const handleCreateHero = (scene) => {
     // );
 
     scene.physics.add.collider(heroSprite, scene.mapLayers);
-    const actionColliderSizeOffset = 10;
     heroSprite.actionCollider = createInteractiveGameObject(
         scene,
-        0,
-        0,
-        TILE_WIDTH - actionColliderSizeOffset,
-        TILE_HEIGHT - actionColliderSizeOffset
+        heroSprite.x + heroSprite.body.width / 2,
+        heroSprite.y + heroSprite.height,
+        heroSprite.body.width,
+        TILE_HEIGHT / 2
     );
 
     // heroSprite.attackCollider = createInteractiveGameObject(
@@ -221,7 +222,9 @@ export const handleCreateHero = (scene) => {
 
         switch (facingDirection) {
             case DOWN_DIRECTION: {
-                heroSprite.actionCollider.setX(left + actionColliderSizeOffset / 2 - (heroSprite.width - width) / 2);
+                heroSprite.actionCollider.body.width = heroSprite.body.width;
+                heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
+                heroSprite.actionCollider.setX(left);
                 heroSprite.actionCollider.setY(bottom);
 
                 // heroSprite.attackCollider.setX(left);
@@ -231,8 +234,10 @@ export const handleCreateHero = (scene) => {
             }
 
             case UP_DIRECTION: {
-                heroSprite.actionCollider.setX(left + actionColliderSizeOffset / 2 - (heroSprite.width - width) / 2);
-                heroSprite.actionCollider.setY(top - height + actionColliderSizeOffset - (heroSprite.height - height));
+                heroSprite.actionCollider.body.width = heroSprite.body.width;
+                heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
+                heroSprite.actionCollider.setX(left);
+                heroSprite.actionCollider.setY(top - heroSprite.actionCollider.body.height);
 
                 // heroSprite.attackCollider.setX(left);
                 // heroSprite.attackCollider.setY(top - height);
@@ -241,8 +246,10 @@ export const handleCreateHero = (scene) => {
             }
 
             case LEFT_DIRECTION: {
-                heroSprite.actionCollider.setX(left - width + actionColliderSizeOffset - (heroSprite.width - width));
-                heroSprite.actionCollider.setY(top + actionColliderSizeOffset / 2 - (heroSprite.height - height) / 2);
+                heroSprite.actionCollider.body.height = heroSprite.body.height;
+                heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
+                heroSprite.actionCollider.setX(left - heroSprite.actionCollider.body.width);
+                heroSprite.actionCollider.setY(top);
 
                 // heroSprite.attackCollider.setX(left - width);
                 // heroSprite.attackCollider.setY(top);
@@ -251,8 +258,10 @@ export const handleCreateHero = (scene) => {
             }
 
             case RIGHT_DIRECTION: {
+                heroSprite.actionCollider.body.height = heroSprite.body.height;
+                heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
                 heroSprite.actionCollider.setX(right);
-                heroSprite.actionCollider.setY(top + actionColliderSizeOffset / 2 - (heroSprite.height - height) / 2);
+                heroSprite.actionCollider.setY(top);
 
                 // heroSprite.attackCollider.setX(right);
                 // heroSprite.attackCollider.setY(top);
@@ -266,9 +275,6 @@ export const handleCreateHero = (scene) => {
         }
     };
 
-    // in the first render, the body is still not in its proper place
-    // so let's use the sprite bounds
-    updateActionCollider(heroSprite.getBounds());
     heroSprite.update = (time, delta) => {
         if (heroSprite.body.velocity.y === 0 && heroSprite.body.velocity.x === 0) {
             return;

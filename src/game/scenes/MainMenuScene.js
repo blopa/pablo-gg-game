@@ -44,8 +44,8 @@ export function create() {
         setHeroInitialFrame(
             IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, DOWN_DIRECTION)
         );
-        setHeroInitialPosition({ x: 30, y: 42 });
-        setHeroPreviousPosition({ x: 30, y: 42 });
+        setHeroInitialPosition({ x: 1, y: 1 });
+        setHeroPreviousPosition({ x: 1, y: 1 });
 
         changeScene(scene, 'GameScene', {
             // fonts: ['"Press Start 2P"'],
