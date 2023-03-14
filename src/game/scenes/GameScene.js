@@ -1,5 +1,6 @@
 // Utils
 import {
+    fadeIn,
     handleCreateMap,
     handleCreateHero,
     handleObjectsLayer,
@@ -12,7 +13,10 @@ import {
 import { getSelectorData } from '../../utils/utils';
 
 // Selectors
-import { selectGameSetters } from '../../zustand/game/selectGameData';
+import {
+    selectGameSetters,
+    selectShouldPauseScene,
+} from '../../zustand/game/selectGameData';
 
 export const key = 'GameScene';
 
@@ -25,6 +29,8 @@ export function create() {
     const { addGameCameraSizeUpdateCallback } = getSelectorData(selectGameSetters);
 
     // All of these functions need to be called in order
+
+    fadeIn(scene);
 
     // Create controls
     handleCreateControls(scene);
@@ -56,6 +62,14 @@ export function create() {
 }
 
 export function update(time, delta) {
+    const shouldPause = getSelectorData(selectShouldPauseScene('GameScene'));
+    if (shouldPause) {
+        // figure out a better way to do this
+        scene.heroSprite.body.setVelocity(0, 0);
+        scene.heroSprite.anims.pause();
+        return;
+    }
+
     handleHeroMovement(scene);
     scene.heroSprite.update(time, delta);
 }

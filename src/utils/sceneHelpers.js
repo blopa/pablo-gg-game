@@ -51,6 +51,7 @@ import {
     selectHeroFacingDirection,
 } from '../zustand/hero/selectHeroData';
 import { selectTextSetters } from '../zustand/text/selectText';
+import {selectGameSetters} from "../zustand/game/selectGameData";
 
 export const createWalkingAnimation = (scene, assetKey, animationName, frameQuantity) => {
     scene.anims.create({
@@ -59,7 +60,7 @@ export const createWalkingAnimation = (scene, assetKey, animationName, frameQuan
             key: assetKey,
             frame: `${animationName}_${(index + 1).toString().padStart(2, '0')}`,
         })),
-        frameRate: 4,
+        frameRate: 6,
         repeat: -1,
         yoyo: true,
     });
@@ -274,6 +275,13 @@ export const handleCreateHero = (scene) => {
             }
         }
     };
+
+    updateActionCollider({
+        top: heroSprite.y + (heroSprite.height - heroSprite.body.height),
+        right: heroSprite.x + heroSprite.width - (heroSprite.width - heroSprite.body.width) / 2,
+        bottom: heroSprite.y + heroSprite.height,
+        left: heroSprite.x + (heroSprite.width - heroSprite.body.width) / 2,
+    });
 
     heroSprite.update = (time, delta) => {
         if (heroSprite.body.velocity.y === 0 && heroSprite.body.velocity.x === 0) {
@@ -534,11 +542,14 @@ export const handleObjectsLayer = (scene) => {
                         setHeroInitialPosition({ x: posX, y: posY });
                         setHeroPreviousPosition({ x: posX, y: posY });
 
-                        // scene.scene.restart();
+                        const { setShouldPauseScene } = getSelectorData(selectGameSetters);
+                        setShouldPauseScene('GameScene', true);
                         changeScene(scene, 'GameScene', {
                             atlases: ['hero'],
                             images: [],
                             mapKey: map,
+                        }, {
+                            fadeType: 'out',
                         });
                     });
 
@@ -600,7 +611,7 @@ export const handleCreateHeroAnimations = (scene) => {
     });
 };
 
-export const handleHeroMovement = (scene, heroSpeed = 60) => {
+export const handleHeroMovement = (scene, heroSpeed = 80) => {
     const dialogMessages = getSelectorData(selectDialogMessages);
     if (dialogMessages.length > 0) {
         return;
@@ -608,42 +619,99 @@ export const handleHeroMovement = (scene, heroSpeed = 60) => {
 
     const { setHeroFacingDirection } = getSelectorData(selectHeroSetters);
 
-    if (scene.cursors.left.isDown || scene.wasd[LEFT_DIRECTION].isDown) {
-        scene.heroSprite.body.setVelocityY(0);
-        scene.heroSprite.body.setVelocityX(-heroSpeed);
-        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`, true);
-        setHeroFacingDirection(LEFT_DIRECTION);
-    } else if (scene.cursors.right.isDown || scene.wasd[RIGHT_DIRECTION].isDown) {
-        scene.heroSprite.body.setVelocityY(0);
-        scene.heroSprite.body.setVelocityX(heroSpeed);
-        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`, true);
-        setHeroFacingDirection(RIGHT_DIRECTION);
-    } else if (scene.cursors.up.isDown || scene.wasd[UP_DIRECTION].isDown) {
-        scene.heroSprite.body.setVelocityX(0);
-        scene.heroSprite.body.setVelocityY(-heroSpeed);
-        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`, true);
+    let velocityX = 0;
+    let velocityY = 0;
+    let animName = null;
+
+    if (scene.cursors.up.isDown || scene.wasd[UP_DIRECTION].isDown) {
+        velocityY = -heroSpeed;
+        animName = `${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`;
         setHeroFacingDirection(UP_DIRECTION);
     } else if (scene.cursors.down.isDown || scene.wasd[DOWN_DIRECTION].isDown) {
-        scene.heroSprite.body.setVelocityX(0);
-        scene.heroSprite.body.setVelocityY(heroSpeed);
-        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`, true);
+        velocityY = heroSpeed;
+        animName = `${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`;
         setHeroFacingDirection(DOWN_DIRECTION);
+    }
+
+    if (scene.cursors.left.isDown || scene.wasd[LEFT_DIRECTION].isDown) {
+        velocityX = -heroSpeed;
+        animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
+        setHeroFacingDirection(LEFT_DIRECTION);
+    } else if (scene.cursors.right.isDown || scene.wasd[RIGHT_DIRECTION].isDown) {
+        velocityX = heroSpeed;
+        animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
+        setHeroFacingDirection(RIGHT_DIRECTION);
+    }
+
+    // Adjust velocity for diagonal movement
+    if (velocityX !== 0 && velocityY !== 0) {
+        velocityX *= 1 / Math.sqrt(2);
+        velocityY *= 1 / Math.sqrt(2);
+    }
+
+    scene.heroSprite.body.setVelocity(velocityX, velocityY);
+    if (animName) {
+        scene.heroSprite.anims.play(animName, true);
     } else {
-        const facingDirection = getSelectorData(selectHeroFacingDirection);
-        scene.heroSprite.body.setVelocityX(0);
-        scene.heroSprite.body.setVelocityY(0);
         scene.heroSprite.anims.stop();
-        scene.heroSprite.setFrame(
-            IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection)
-        );
+        const facingDirection = getSelectorData(selectHeroFacingDirection);
+        scene.heroSprite.setFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
     }
 };
 
 export const changeScene = (scene, nextScene, assets = {}, config = {}) => {
     // const sceneKey = scene.scene.key;
     // scene.scene.stop(sceneKey);
-    scene.scene.start('LoadAssetsScene', {
-        nextScene,
-        assets,
+    const startNewScene = () => {
+        // const loadAssetsScene = scene.game.scene.getScene('LoadAssetsScene');
+        scene.scene.start('LoadAssetsScene', {
+            nextScene,
+            assets,
+        });
+    };
+
+    const { fadeType } = config;
+    if (fadeType) {
+        fade(scene, startNewScene, 'right', fadeType);
+        return;
+    }
+
+    startNewScene();
+};
+
+export const fadeOut = (scene, callback = null, direction = 'right') => {
+    fade(scene, callback, direction, 'out');
+};
+
+export const fadeIn = (scene, callback = null, direction = 'left') => {
+    fade(scene, callback, direction, 'in');
+};
+
+const fade = (scene, callback, direction, type) => {
+    const blackBlock = scene.add.graphics();
+    const multiplier = direction === 'right' ? 1 : -1;
+    blackBlock.fillStyle(0x000000);
+
+    // TODO get sizes from store
+    blackBlock.fillRect(
+        -scene.game.config.width * (type === 'in' ? 0 : multiplier),
+        0,
+        scene.game.config.width,
+        scene.game.config.height
+    );
+    // blackBlock.setAlpha(0);
+    blackBlock.setDepth(Number.POSITIVE_INFINITY);
+
+    scene.tweens.add({
+        targets: blackBlock,
+        x: scene.game.config.width * (type === 'in' ? -2 : multiplier),
+        // alpha: 1,
+        duration: 500,
+        ease: 'Power2',
+        onComplete: () => {
+            callback?.();
+            // blackBlock.clear();
+            // blackBlock.destroy();
+        },
     });
 };

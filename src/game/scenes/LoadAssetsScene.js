@@ -35,6 +35,7 @@ import {
     selectLoadedMaps,
 } from '../../zustand/assets/selectLoadedAssets';
 import { selectMapSetters } from '../../zustand/map/selectMapData';
+import { selectGameSetters } from '../../zustand/game/selectGameData';
 
 export const scene = {};
 
@@ -93,7 +94,7 @@ export async function create(initData) {
         scene.load.off('complete');
     });
 
-    // Pre-load all the fonts needed for the scene
+    // Preload all the fonts needed for the scene
     // so Phaser can render them properly
     let newFontsCount = 0;
     fonts?.forEach((font, idx) => {
@@ -351,17 +352,27 @@ export async function create(initData) {
         await asyncLoader(scene.load.image(image, imagePath));
     }
 
-    // If we have fonts, then wait for them to be loaded before calling the next scene...
-    if (newFontsCount > 0) {
-        document.fonts.ready.then((fontFace) => {
-            scene.scene.start(
-                initData.nextScene
-            );
-        });
-    } else {
-        // ... otherwise just call the next scene already
+    const startNewScene = () => {
+        // const nextScene = scene.game.scene.getScene(initData.nextScene);
+        // if (nextScene.sys.isPaused()) {
+        //     nextScene.sys.resume();
+        // }
+
+        const { setShouldPauseScene } = getSelectorData(selectGameSetters);
+        setShouldPauseScene(initData.nextScene, false);
+
         scene.scene.start(
             initData.nextScene
         );
+    };
+
+    // If we have fonts, then wait for them to be loaded before calling the next scene...
+    if (newFontsCount > 0) {
+        document.fonts.ready.then((fontFace) => {
+            startNewScene();
+        });
+    } else {
+        // ... otherwise just call the next scene already
+        startNewScene();
     }
 }

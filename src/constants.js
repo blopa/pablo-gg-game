@@ -32,7 +32,7 @@ export const LEFT_DIRECTION = 'left';
 export const UP_DIRECTION = 'up';
 export const DOWN_DIRECTION = 'down';
 
-export const IGNORED_TILESETS = ['objects'];
+export const IGNORED_TILESETS = ['tileset_objects'];
 
 // Keys
 export const ENTER_KEY = 'Enter';

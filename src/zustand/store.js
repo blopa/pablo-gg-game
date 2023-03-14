@@ -45,6 +45,7 @@ const store = createStore((set) => ({
         locale: 'en',
         cameraSizeUpdateCallbacks: [],
         setters: setGameData(set),
+        pausedScenes: {},
     },
     dialog: {
         messages: [],

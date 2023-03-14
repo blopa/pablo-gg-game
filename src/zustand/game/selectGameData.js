@@ -11,6 +11,10 @@ export const selectGameCanvasElement = (state) =>
 
 export const selectGameLocale = (state) => state.game.locale;
 
-export const selectGameCameraSizeUpdateCallbacks = (state) => state.game.cameraSizeUpdateCallbacks;
+export const selectGameCameraSizeUpdateCallbacks = (state) =>
+    state.game.cameraSizeUpdateCallbacks;
 
 export const selectGameSetters = (state) => state.game.setters;
+
+export const selectShouldPauseScene = (sceneName) => (state) =>
+    state.game.pausedScenes[sceneName];

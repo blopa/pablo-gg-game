@@ -51,4 +51,15 @@ export default (set) => ({
                 locale,
             },
         })),
+    setShouldPauseScene: (sceneName, shouldPause) =>
+        set((state) => ({
+            ...state,
+            game: {
+                ...state.game,
+                pausedScenes: {
+                    ...state.game.pausedScenes,
+                    [sceneName]: shouldPause,
+                },
+            },
+        })),
 });
