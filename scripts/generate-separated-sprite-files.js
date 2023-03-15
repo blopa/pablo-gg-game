@@ -2,6 +2,11 @@ const path = require('path');
 const sharp = require('sharp');
 const { existsSync, mkdirSync, statSync, readdirSync } = require('fs');
 
+// Example:
+// node scripts/generate-separated-sprite-files.js source_files/cute_rpg/NPCs/ 24 24 row walk_down walk_left walk_right walk_up
+// node scripts/generate-separated-sprite-files.js source_files/cute_rpg/NPCs/hero.png 24 24 row walk_down walk_left walk_right walk_up
+// node scripts/generate-separated-sprite-files.js source_files/cute_rpg/NPCs/hero_attack.png 24 24 row attack_down attack_left attack_right attack_up
+
 async function runTask(
     inputFilePath,
     ...rest

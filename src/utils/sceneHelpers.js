@@ -51,9 +51,9 @@ import {
     selectHeroFacingDirection,
 } from '../zustand/hero/selectHeroData';
 import { selectTextSetters } from '../zustand/text/selectText';
-import {selectGameSetters} from "../zustand/game/selectGameData";
+import { selectGameSetters } from '../zustand/game/selectGameData';
 
-export const createWalkingAnimation = (scene, assetKey, animationName, frameQuantity) => {
+export const createAnimation = (scene, assetKey, animationName, frameQuantity) => {
     scene.anims.create({
         key: `${assetKey}_${animationName}`,
         frames: Array.from({ length: frameQuantity }).map((n, index) => ({
@@ -607,7 +607,11 @@ export const handleConfigureCamera = (scene) => {
 export const handleCreateHeroAnimations = (scene) => {
     // Animations
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
-        createWalkingAnimation(scene, HERO_SPRITE_NAME, `walk_${direction}`, 3);
+        createAnimation(scene, HERO_SPRITE_NAME, `walk_${direction}`, 3);
+    });
+
+    [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
+        createAnimation(scene, HERO_SPRITE_NAME, `attack_${direction}`, 1);
     });
 };
 
@@ -651,6 +655,7 @@ export const handleHeroMovement = (scene, heroSpeed = 80) => {
 
     scene.heroSprite.body.setVelocity(velocityX, velocityY);
     if (animName) {
+        // window.heroSprite = scene.heroSprite;
         scene.heroSprite.anims.play(animName, true);
     } else {
         scene.heroSprite.anims.stop();
