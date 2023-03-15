@@ -53,16 +53,16 @@ import {
 import { selectTextSetters } from '../zustand/text/selectText';
 import { selectGameSetters } from '../zustand/game/selectGameData';
 
-export const createAnimation = (scene, assetKey, animationName, frameQuantity) => {
+export const createAnimation = (scene, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
     scene.anims.create({
         key: `${assetKey}_${animationName}`,
         frames: Array.from({ length: frameQuantity }).map((n, index) => ({
             key: assetKey,
             frame: `${animationName}_${(index + 1).toString().padStart(2, '0')}`,
         })),
-        frameRate: 6,
-        repeat: -1,
-        yoyo: true,
+        frameRate,
+        repeat,
+        yoyo,
     });
 };
 
@@ -607,11 +607,27 @@ export const handleConfigureCamera = (scene) => {
 export const handleCreateHeroAnimations = (scene) => {
     // Animations
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
-        createAnimation(scene, HERO_SPRITE_NAME, `walk_${direction}`, 3);
+        createAnimation(
+            scene,
+            HERO_SPRITE_NAME,
+            `walk_${direction}`,
+            3,
+            6,
+            -1,
+            true
+        );
     });
 
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
-        createAnimation(scene, HERO_SPRITE_NAME, `attack_${direction}`, 1);
+        createAnimation(
+            scene,
+            HERO_SPRITE_NAME,
+            `attack_${direction}`,
+            1,
+            4,
+            0,
+            false
+        );
     });
 };
 
@@ -654,8 +670,11 @@ export const handleHeroMovement = (scene, heroSpeed = 80) => {
     }
 
     scene.heroSprite.body.setVelocity(velocityX, velocityY);
+    if (scene.heroSprite.anims.isPlaying && !scene.heroSprite.anims.currentAnim?.key.includes('walk')) {
+        return;
+    }
+
     if (animName) {
-        // window.heroSprite = scene.heroSprite;
         scene.heroSprite.anims.play(animName, true);
     } else {
         scene.heroSprite.anims.stop();

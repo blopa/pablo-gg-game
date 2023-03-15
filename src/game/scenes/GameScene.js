@@ -17,6 +17,8 @@ import {
     selectGameSetters,
     selectShouldPauseScene,
 } from '../../zustand/game/selectGameData';
+import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
+import { HERO_SPRITE_NAME } from '../../constants';
 
 export const key = 'GameScene';
 
@@ -59,6 +61,11 @@ export function create() {
     // Handle collisions
     scene.physics.add.collider(scene.heroSprite, scene.enemies);
     scene.physics.add.collider(scene.heroSprite, customColliders);
+
+    scene.input.keyboard.on('keydown-SPACE', () => {
+        const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
+        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
+    });
 }
 
 export function update(time, delta) {
