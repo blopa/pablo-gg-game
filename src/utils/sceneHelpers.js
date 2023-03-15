@@ -596,11 +596,11 @@ export const handleConfigureCamera = (scene) => {
     );
 
     if (scene.map.widthInPixels < game.scale.gameSize.width) {
-        camera.setPosition((game.scale.gameSize.width - scene.map.widthInPixels) / 2);
+        camera.setPosition(Math.round((game.scale.gameSize.width - scene.map.widthInPixels) / 2));
     }
 
     if (scene.map.heightInPixels < game.scale.gameSize.height) {
-        camera.setPosition(camera.x, (game.scale.gameSize.height - scene.map.heightInPixels) / 2);
+        camera.setPosition(camera.x, Math.round((game.scale.gameSize.height - scene.map.heightInPixels) / 2));
     }
 };
 

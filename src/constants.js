@@ -60,6 +60,7 @@ export const RETURN_BATTLE_ITEM = 'return';
 
 // DOM identifiers
 export const GAME_CONTENT_ID = 'game-content';
+export const REACT_CONTENT_ID = 'react-content';
 
 export const BOOT_SCENE_NAME = 'BootScene';
 

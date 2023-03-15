@@ -6,7 +6,11 @@
   font-style: normal;
 }
 
+:root {
+  --main-bg-color: #2d528b;
+}
+
 body {
   margin: 0;
-  background-color: #2d528b;
+  background-color: var(--main-bg-color);
 }
