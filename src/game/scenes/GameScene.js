@@ -20,7 +20,12 @@ import {
 import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 
 // Constants
-import { HERO_SPRITE_NAME, SWORD_SPRITE_NAME } from '../../constants';
+import {
+    DOWN_DIRECTION,
+    HERO_SPRITE_NAME,
+    LEFT_DIRECTION, RIGHT_DIRECTION,
+    UP_DIRECTION,
+} from '../../constants';
 
 export const key = 'GameScene';
 
@@ -66,8 +71,46 @@ export function create() {
 
     scene.input.keyboard.on('keydown-SPACE', () => {
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
-        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
-        scene.heroSprite.attackSprite.anims.play(`${SWORD_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
+        switch (heroFacingDirection) {
+            case DOWN_DIRECTION: {
+                scene.heroSprite.attackSprite.setX(scene.heroSprite.x - scene.heroSprite.body.width + 2);
+                scene.heroSprite.attackSprite.setY(scene.heroSprite.y - 6);
+
+                break;
+            }
+
+            case UP_DIRECTION: {
+                scene.heroSprite.attackSprite.setX(scene.heroSprite.x - scene.heroSprite.body.width + 2);
+                scene.heroSprite.attackSprite.setY(scene.heroSprite.y - scene.heroSprite.body.height + 6);
+
+                break;
+            }
+
+            case LEFT_DIRECTION: {
+                scene.heroSprite.attackSprite.setX(scene.heroSprite.x - scene.heroSprite.body.width + 2);
+                scene.heroSprite.attackSprite.setY(scene.heroSprite.y - scene.heroSprite.body.height + 6);
+
+                break;
+            }
+
+            case RIGHT_DIRECTION: {
+                scene.heroSprite.attackSprite.setX(scene.heroSprite.x - scene.heroSprite.body.width + 2);
+                scene.heroSprite.attackSprite.setY(scene.heroSprite.y - 6);
+
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+
+        scene.heroSprite.attackSprite.setFrame(`attack_${heroFacingDirection}_01`);
+        scene.heroSprite.attackSprite.setVisible(true);
+        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true)
+            .once('animationcomplete', () => {
+                scene.heroSprite.attackSprite.setVisible(false);
+            });
     });
 }
 

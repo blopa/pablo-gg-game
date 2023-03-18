@@ -196,6 +196,7 @@ export const handleCreateHero = (scene) => {
         .sprite(x * TILE_WIDTH, y * TILE_HEIGHT, SWORD_SPRITE_NAME)
         .setName(SWORD_SPRITE_NAME)
         .setOrigin(0, 0)
+        .setVisible(false)
         .setDepth(1);
 
     // eslint-disable-next-line operator-assignment
@@ -235,8 +236,6 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
                 heroSprite.actionCollider.setX(left);
                 heroSprite.actionCollider.setY(bottom);
-                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width + 2);
-                heroSprite.attackSprite.setY(heroSprite.y - 4);
 
                 break;
             }
@@ -246,8 +245,6 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
                 heroSprite.actionCollider.setX(left);
                 heroSprite.actionCollider.setY(top - heroSprite.actionCollider.body.height);
-                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width + 2);
-                heroSprite.attackSprite.setY(heroSprite.y - heroSprite.body.height + 3);
 
                 break;
             }
@@ -257,8 +254,6 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
                 heroSprite.actionCollider.setX(left - heroSprite.actionCollider.body.width);
                 heroSprite.actionCollider.setY(top);
-                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width);
-                heroSprite.attackSprite.setY(heroSprite.y - heroSprite.body.height + 6);
 
                 break;
             }
@@ -268,8 +263,6 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
                 heroSprite.actionCollider.setX(right);
                 heroSprite.actionCollider.setY(top);
-                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width + 4);
-                heroSprite.attackSprite.setY(heroSprite.y - 6);
 
                 break;
             }
@@ -634,17 +627,17 @@ export const handleCreateHeroAnimations = (scene) => {
         );
     });
 
-    [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
-        createAnimation(
-            scene,
-            SWORD_SPRITE_NAME,
-            `attack_${direction}`,
-            1,
-            4,
-            0,
-            false
-        );
-    });
+    // [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
+    //     createAnimation(
+    //         scene,
+    //         SWORD_SPRITE_NAME,
+    //         `attack_${direction}`,
+    //         1,
+    //         4,
+    //         0,
+    //         false
+    //     );
+    // });
 };
 
 export const handleHeroMovement = (scene, heroSpeed = 80) => {
