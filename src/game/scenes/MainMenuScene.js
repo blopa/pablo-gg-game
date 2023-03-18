@@ -44,12 +44,12 @@ export function create() {
         setHeroInitialFrame(
             IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, DOWN_DIRECTION)
         );
-        setHeroInitialPosition({ x: 1, y: 1 });
-        setHeroPreviousPosition({ x: 1, y: 1 });
+        setHeroInitialPosition({ x: 2, y: 3 });
+        setHeroPreviousPosition({ x: 2, y: 3 });
 
         changeScene(scene, 'GameScene', {
             // fonts: ['"Press Start 2P"'],
-            atlases: ['hero', 'sword'],
+            atlases: ['hero', 'sword', 'slime'],
             images: [],
             mapKey: 'test_map',
             // mapKey: 'sample_indoor',

@@ -1,4 +1,5 @@
 import { Game, AUTO, Scale } from 'phaser';
+import { PhaserNavMeshPlugin } from 'phaser-navmesh';
 
 // Utils
 import { getFileNameWithoutExtension, getSelectorData, isDev, isObject } from './utils';
@@ -114,6 +115,16 @@ export const instantiatePhaserGame = (gameTitle = 'some-game-title') => {
         zoom,
         autoRound: true,
         pixelArt: true,
+        plugins: {
+            scene: [
+                {
+                    key: 'PhaserNavMeshPlugin', // Key to store the plugin class under in cache
+                    plugin: PhaserNavMeshPlugin, // Class that constructs plugins
+                    mapping: 'navMeshPlugin', // Property mapping to use for the scene, e.g. this.navMeshPlugin
+                    start: true,
+                },
+            ],
+        },
         scale: {
             autoCenter: Scale.CENTER_BOTH,
             mode: Scale.NONE,

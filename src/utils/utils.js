@@ -62,8 +62,10 @@ export const createInteractiveGameObject = (
     y,
     width,
     height,
-    origin = { x: 0, y: 0 }
+    origin = { x: 0, y: 0 },
+    isCircle = false
 ) => {
+    const radius = Math.max(width, height) / 2;
     const customCollider = new GameObjects.Rectangle(
         scene,
         x,
@@ -74,6 +76,10 @@ export const createInteractiveGameObject = (
 
     scene.physics.add.existing(customCollider);
     customCollider.body.setImmovable(true);
+
+    if (isCircle) {
+        customCollider.body.setCircle(radius);
+    }
 
     return customCollider;
 };

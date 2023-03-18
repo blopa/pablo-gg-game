@@ -24,6 +24,7 @@ import {
     PAPER_BATTLE_ITEM,
     ITEMS_BATTLE_ITEM,
     SWORD_SPRITE_NAME,
+    SLIME_SPRITE_NAME,
     HEART_SPRITE_NAME,
     RETURN_BATTLE_ITEM,
     ATTACK_BATTLE_ITEM,
@@ -118,6 +119,14 @@ export const handleCreateMap = (scene) => {
                 const { collideLeft, collideRight, collideUp, collideDown } = properties;
                 const tilesetCustomColliders = tileset?.getTileData?.(index);
 
+                if (!layer.containsCollision) {
+                    layer.containsCollision =
+                        Boolean(collideLeft)
+                        || Boolean(collideRight)
+                        || Boolean(collideUp)
+                        || Boolean(collideDown);
+                }
+
                 if (tilesetCustomColliders) {
                     const { objectgroup } = tilesetCustomColliders;
                     const { objects } = objectgroup;
@@ -174,9 +183,37 @@ export const handleCreateMap = (scene) => {
         scene.mapLayers.add(layer);
     });
 
+    const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
+    const navMesh = scene.navMeshPlugin.buildMeshFromTilemap(
+        'mesh',
+        map,
+        layersWithCollision
+    );
+
     // eslint-disable-next-line no-param-reassign
     scene.map = map;
+
+    // eslint-disable-next-line no-param-reassign
+    scene.navigationMesh = navMesh;
     return customColliders;
+};
+
+export const handleCreateEnemies = (scene) => {
+    // Create slime sprite
+    const slimeSprite = scene.physics.add
+        .sprite(8 * TILE_WIDTH, 3 * TILE_HEIGHT, SLIME_SPRITE_NAME)
+        .setName(SLIME_SPRITE_NAME)
+        .setOrigin(0, 0)
+        .setDepth(1);
+
+    // eslint-disable-next-line operator-assignment
+    slimeSprite.body.width = 12;
+    // eslint-disable-next-line operator-assignment
+    slimeSprite.body.height = 10;
+    slimeSprite.body.setOffset(slimeSprite.body.width / 2, slimeSprite.body.height + 3);
+
+    // eslint-disable-next-line no-param-reassign
+    scene.slimeSprite = slimeSprite;
 };
 
 export const handleCreateHero = (scene) => {
@@ -191,6 +228,12 @@ export const handleCreateHero = (scene) => {
         .setOrigin(0, 0)
         .setDepth(1);
 
+    // eslint-disable-next-line operator-assignment
+    heroSprite.body.width = heroSprite.body.width / 2;
+    // eslint-disable-next-line operator-assignment
+    heroSprite.body.height = heroSprite.body.height / 2;
+    heroSprite.body.setOffset(heroSprite.body.width / 2, heroSprite.body.height);
+
     // Create attack animation
     heroSprite.attackSprite = scene.physics.add
         .sprite(x * TILE_WIDTH, y * TILE_HEIGHT, SWORD_SPRITE_NAME)
@@ -200,10 +243,9 @@ export const handleCreateHero = (scene) => {
         .setDepth(1);
 
     // eslint-disable-next-line operator-assignment
-    heroSprite.body.width = heroSprite.body.width / 2;
+    heroSprite.attackSprite.body.width = 20;
     // eslint-disable-next-line operator-assignment
-    heroSprite.body.height = heroSprite.body.height / 2;
-    heroSprite.body.setOffset(heroSprite.body.width / 2, heroSprite.body.height);
+    heroSprite.attackSprite.body.height = 20;
 
     // const facingDirection = getSelectorData(selectHeroFacingDirection);
     // heroSprite.setFrame(
@@ -227,8 +269,25 @@ export const handleCreateHero = (scene) => {
     //     TILE_HEIGHT
     // );
 
+    // hero presence
+    heroSprite.presenceCircle = createInteractiveGameObject(
+        scene,
+        heroSprite.x,
+        heroSprite.y,
+        TILE_WIDTH * 15,
+        TILE_HEIGHT * 15,
+        { x: 0, y: 0 },
+        true
+    );
+
     const updateActionCollider = ({ top, right, bottom, left, width, height } = heroSprite.body) => {
         const facingDirection = getSelectorData(selectHeroFacingDirection);
+        heroSprite.presenceCircle.setX(
+            heroSprite.x - Math.round(heroSprite.presenceCircle.width / 2 - heroSprite.width / 2)
+        );
+        heroSprite.presenceCircle.setY(
+            heroSprite.y - Math.round(heroSprite.presenceCircle.height / 2 - heroSprite.height / 2) + 6
+        );
 
         switch (facingDirection) {
             case DOWN_DIRECTION: {
@@ -285,6 +344,7 @@ export const handleCreateHero = (scene) => {
             return;
         }
 
+        heroSprite.attackSprite.update?.();
         updateActionCollider();
     };
 
@@ -542,7 +602,7 @@ export const handleObjectsLayer = (scene) => {
                         const { setShouldPauseScene } = getSelectorData(selectGameSetters);
                         setShouldPauseScene('GameScene', true);
                         changeScene(scene, 'GameScene', {
-                            atlases: ['hero', 'sword'],
+                            atlases: ['hero', 'sword', 'slime'],
                             images: [],
                             mapKey: map,
                         }, {
@@ -599,6 +659,22 @@ export const handleConfigureCamera = (scene) => {
     if (scene.map.heightInPixels < game.scale.gameSize.height) {
         camera.setPosition(camera.x, Math.round((game.scale.gameSize.height - scene.map.heightInPixels) / 2));
     }
+};
+
+export const handleCreateEnemiesAnimations = (scene) => {
+    [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
+        createAnimation(
+            scene,
+            SLIME_SPRITE_NAME,
+            `walk_${direction}`,
+            3,
+            3,
+            -1,
+            true
+        );
+    });
+
+    scene.slimeSprite.anims.play('slime_walk_down');
 };
 
 export const handleCreateHeroAnimations = (scene) => {
@@ -678,11 +754,12 @@ export const handleHeroMovement = (scene, heroSpeed = 80) => {
         velocityY *= 1 / Math.sqrt(2);
     }
 
-    scene.heroSprite.body.setVelocity(velocityX, velocityY);
     if (scene.heroSprite.anims.isPlaying && !scene.heroSprite.anims.currentAnim?.key.includes('walk')) {
+        scene.heroSprite.body.setVelocity(0, 0); // TODO maybe
         return;
     }
 
+    scene.heroSprite.body.setVelocity(velocityX, velocityY);
     if (animName) {
         scene.heroSprite.anims.play(animName, true);
     } else {
