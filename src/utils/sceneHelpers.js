@@ -23,6 +23,7 @@ import {
     ENEMY_SPRITE_NAME,
     PAPER_BATTLE_ITEM,
     ITEMS_BATTLE_ITEM,
+    SWORD_SPRITE_NAME,
     HEART_SPRITE_NAME,
     RETURN_BATTLE_ITEM,
     ATTACK_BATTLE_ITEM,
@@ -190,6 +191,13 @@ export const handleCreateHero = (scene) => {
         .setOrigin(0, 0)
         .setDepth(1);
 
+    // Create attack animation
+    heroSprite.attackSprite = scene.physics.add
+        .sprite(x * TILE_WIDTH, y * TILE_HEIGHT, SWORD_SPRITE_NAME)
+        .setName(SWORD_SPRITE_NAME)
+        .setOrigin(0, 0)
+        .setDepth(1);
+
     // eslint-disable-next-line operator-assignment
     heroSprite.body.width = heroSprite.body.width / 2;
     // eslint-disable-next-line operator-assignment
@@ -227,9 +235,8 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
                 heroSprite.actionCollider.setX(left);
                 heroSprite.actionCollider.setY(bottom);
-
-                // heroSprite.attackCollider.setX(left);
-                // heroSprite.attackCollider.setY(bottom);
+                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width + 2);
+                heroSprite.attackSprite.setY(heroSprite.y - 4);
 
                 break;
             }
@@ -239,9 +246,8 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
                 heroSprite.actionCollider.setX(left);
                 heroSprite.actionCollider.setY(top - heroSprite.actionCollider.body.height);
-
-                // heroSprite.attackCollider.setX(left);
-                // heroSprite.attackCollider.setY(top - height);
+                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width + 2);
+                heroSprite.attackSprite.setY(heroSprite.y - heroSprite.body.height + 3);
 
                 break;
             }
@@ -251,9 +257,8 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
                 heroSprite.actionCollider.setX(left - heroSprite.actionCollider.body.width);
                 heroSprite.actionCollider.setY(top);
-
-                // heroSprite.attackCollider.setX(left - width);
-                // heroSprite.attackCollider.setY(top);
+                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width);
+                heroSprite.attackSprite.setY(heroSprite.y - heroSprite.body.height + 6);
 
                 break;
             }
@@ -263,9 +268,8 @@ export const handleCreateHero = (scene) => {
                 heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
                 heroSprite.actionCollider.setX(right);
                 heroSprite.actionCollider.setY(top);
-
-                // heroSprite.attackCollider.setX(right);
-                // heroSprite.attackCollider.setY(top);
+                heroSprite.attackSprite.setX(heroSprite.x - heroSprite.body.width + 4);
+                heroSprite.attackSprite.setY(heroSprite.y - 6);
 
                 break;
             }
@@ -545,7 +549,7 @@ export const handleObjectsLayer = (scene) => {
                         const { setShouldPauseScene } = getSelectorData(selectGameSetters);
                         setShouldPauseScene('GameScene', true);
                         changeScene(scene, 'GameScene', {
-                            atlases: ['hero'],
+                            atlases: ['hero', 'sword'],
                             images: [],
                             mapKey: map,
                         }, {
@@ -622,6 +626,18 @@ export const handleCreateHeroAnimations = (scene) => {
         createAnimation(
             scene,
             HERO_SPRITE_NAME,
+            `attack_${direction}`,
+            1,
+            4,
+            0,
+            false
+        );
+    });
+
+    [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
+        createAnimation(
+            scene,
+            SWORD_SPRITE_NAME,
             `attack_${direction}`,
             1,
             4,

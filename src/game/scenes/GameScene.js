@@ -18,7 +18,9 @@ import {
     selectShouldPauseScene,
 } from '../../zustand/game/selectGameData';
 import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
-import { HERO_SPRITE_NAME } from '../../constants';
+
+// Constants
+import { HERO_SPRITE_NAME, SWORD_SPRITE_NAME } from '../../constants';
 
 export const key = 'GameScene';
 
@@ -65,6 +67,7 @@ export function create() {
     scene.input.keyboard.on('keydown-SPACE', () => {
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
         scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
+        scene.heroSprite.attackSprite.anims.play(`${SWORD_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
     });
 }
 
