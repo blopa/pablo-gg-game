@@ -132,7 +132,7 @@ export const instantiatePhaserGame = (gameTitle = 'some-game-title') => {
         physics: {
             default: 'arcade',
             arcade: {
-                // debug: IS_DEV,
+                debug: IS_DEV,
                 // fixedStep: false,
                 // fps: 120,
             },

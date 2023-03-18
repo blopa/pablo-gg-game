@@ -74,8 +74,70 @@ export function create() {
     handleCreateHeroAnimations(scene);
 
     // Handle collisions
+    let timeOutFunctionId;
     scene.physics.add.collider(scene.heroSprite, scene.enemies);
     scene.physics.add.collider(scene.heroSprite, customColliders);
+    scene.physics.add.overlap(
+        scene.heroSprite.attackSprite,
+        scene.slimeSprite,
+        (attackSprite, slimeSprite) => {
+            if (slimeSprite.isTakingDamage || !attackSprite.visible) {
+                return;
+            }
+
+            // eslint-disable-next-line no-param-reassign
+            slimeSprite.isTakingDamage = true;
+
+            // clearTimeout(timeOutFunctionId);
+            scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
+            const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
+            scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
+
+            switch (attackSprite.frame.name) {
+                case 'attack_up_01': {
+                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
+                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                        x: position.x,
+                        y: position.y - 1,
+                    });
+
+                    break;
+                }
+                case 'attack_right_01': {
+                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
+                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                        x: position.x + 1,
+                        y: position.y,
+                    });
+
+                    break;
+                }
+                case 'attack_down_01': {
+                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
+                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                        x: position.x,
+                        y: position.y + 1,
+                    });
+
+                    break;
+                }
+                case 'attack_left_01': {
+                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
+                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                        x: position.x - 1,
+                        y: position.y,
+                    });
+
+                    break;
+                }
+
+                default: {
+                    break;
+                }
+            }
+        }
+    );
+
     scene.physics.add.overlap(
         scene.heroSprite.presencePerceptionCircle,
         scene.slimeSprite,
@@ -83,7 +145,9 @@ export function create() {
             if (!slimeSprite.perceptedHero) {
                 // eslint-disable-next-line no-param-reassign
                 slimeSprite.perceptedHero = true;
-                calculatePaths();
+                if (!timeOutFunctionId) {
+                    calculatePaths();
+                }
             }
         }
     );
@@ -106,8 +170,12 @@ export function create() {
     });
     scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
 
-    let timeOutFunctionId;
     const calculatePaths = () => {
+        clearTimeout(timeOutFunctionId);
+        if (scene.slimeSprite.isTakingDamage) {
+            return;
+        }
+
         if (!scene.slimeSprite.followHero) {
             scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
             scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
@@ -123,9 +191,9 @@ export function create() {
             y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
         });
 
-        clearTimeout(timeOutFunctionId);
-        // Schedule next recalculation
+        // clearTimeout(timeOutFunctionId);
         timeOutFunctionId = setTimeout(() => {
+            timeOutFunctionId = null;
             calculatePaths();
         }, 1000);
     };
@@ -139,16 +207,27 @@ export function create() {
             };
 
             if (slimePosition.x === heroPosition.x && slimePosition.y === heroPosition.y) {
+                // clearTimeout(timeOutFunctionId);
                 scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 2);
-            } else if (scene.slimeSprite.perceptedHero) {
+            } else {
                 calculatePaths();
             }
         }
     });
 
     scene.gridEngine.movementStarted().subscribe(({ charId, direction }) => {
-        if (charId === SLIME_SPRITE_NAME) {
+        if (charId === SLIME_SPRITE_NAME && !scene.slimeSprite.isTakingDamage) {
             scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
+        }
+    });
+
+    scene.heroSprite.on('animationcomplete', (animation, frame) => {
+        if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
+            scene.slimeSprite.isTakingDamage = false;
+            scene.slimeSprite.perceptedHero = false;
+            scene.slimeSprite.followHero = true;
+            // clearTimeout(timeOutFunctionId);
+            calculatePaths();
         }
     });
 
