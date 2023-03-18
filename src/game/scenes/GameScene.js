@@ -1,5 +1,3 @@
-import { Math as PhaserMath } from 'phaser';
-
 // Utils
 import {
     fadeIn,
@@ -27,7 +25,7 @@ import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 import {
     DOWN_DIRECTION,
     HERO_SPRITE_NAME,
-    LEFT_DIRECTION, RIGHT_DIRECTION,
+    LEFT_DIRECTION, RIGHT_DIRECTION, SLIME_SPRITE_NAME, TILE_HEIGHT, TILE_WIDTH,
     UP_DIRECTION,
 } from '../../constants';
 
@@ -78,62 +76,81 @@ export function create() {
     // Handle collisions
     scene.physics.add.collider(scene.heroSprite, scene.enemies);
     scene.physics.add.collider(scene.heroSprite, customColliders);
-    scene.physics.add.overlap(scene.heroSprite.presenceCircle, scene.slimeSprite, (presenceCircle, slimeSprite) => {
-        // TODO
-    });
-
-    const setupEnemy = () => {
-        let paths = [];
-        let currentPath = 0;
-
-        const calculatePaths = () => {
-            scene.tweens.getTweensOf(scene.slimeSprite).forEach((tween) => tween.stop());
-            paths = scene.navigationMesh.findPath(
-                { x: scene.slimeSprite.x, y: scene.slimeSprite.y },
-                { x: scene.heroSprite.x, y: scene.heroSprite.y }
-            );
-
-            console.log('recalculating...', paths);
-
-            // Schedule next recalculation
-            setTimeout(() => {
+    scene.physics.add.overlap(
+        scene.heroSprite.presencePerceptionCircle,
+        scene.slimeSprite,
+        (presencePerceptionCircle, slimeSprite) => {
+            if (!slimeSprite.perceptedHero) {
+                // eslint-disable-next-line no-param-reassign
+                slimeSprite.perceptedHero = true;
                 calculatePaths();
-                moveToNextPoint();
-            }, 5000);
-        };
-
-        const moveToNextPoint = () => {
-            if (!paths) {
-                return;
             }
+        }
+    );
 
-            currentPath += 1;
-            if (currentPath >= paths.length) {
-                currentPath = 0;
-            }
+    scene.physics.add.overlap(
+        scene.heroSprite.presenceFollowCircle,
+        scene.slimeSprite,
+        (presenceFollowCircle, slimeSprite) => {
+            // eslint-disable-next-line no-param-reassign
+            slimeSprite.followHero = true;
+        }
+    );
 
-            const nextPoint = paths[currentPath];
-            const distance = PhaserMath.Distance.Between(
-                scene.slimeSprite.x,
-                scene.slimeSprite.y,
-                nextPoint.x,
-                nextPoint.y
-            );
+    scene.gridEngine.addCharacter({
+        id: SLIME_SPRITE_NAME,
+        sprite: scene.slimeSprite,
+        speed: 1,
+        startPosition: { x: 12, y: 8 },
+        // offsetY: 4,
+    });
+    scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
 
-            const tween = scene.tweens.add({
-                targets: scene.slimeSprite,
-                duration: distance * 100,
-                x: nextPoint.x,
-                y: nextPoint.y,
-                onComplete: moveToNextPoint,
-            });
-        };
+    let timeOutFunctionId;
+    const calculatePaths = () => {
+        if (!scene.slimeSprite.followHero) {
+            scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
+            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
+            scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 1);
+            return;
+        }
 
-        calculatePaths();
-        moveToNextPoint();
+        scene.slimeSprite.followHero = false;
+        scene.slimeSprite.perceptedHero = false;
+        scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 2);
+        scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+            x: Math.round(scene.heroSprite.x / TILE_WIDTH),
+            y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
+        });
+
+        clearTimeout(timeOutFunctionId);
+        // Schedule next recalculation
+        timeOutFunctionId = setTimeout(() => {
+            calculatePaths();
+        }, 1000);
     };
 
-    setupEnemy();
+    scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
+        if (charId === SLIME_SPRITE_NAME) {
+            const slimePosition = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
+            const heroPosition = {
+                x: Math.round(scene.heroSprite.x / TILE_WIDTH),
+                y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
+            };
+
+            if (slimePosition.x === heroPosition.x && slimePosition.y === heroPosition.y) {
+                scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 2);
+            } else if (scene.slimeSprite.perceptedHero) {
+                calculatePaths();
+            }
+        }
+    });
+
+    scene.gridEngine.movementStarted().subscribe(({ charId, direction }) => {
+        if (charId === SLIME_SPRITE_NAME) {
+            scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
+        }
+    });
 
     scene.input.keyboard.on('keydown-SPACE', () => {
         const updateAttackPosition = () => {

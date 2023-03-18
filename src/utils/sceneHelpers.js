@@ -30,6 +30,7 @@ import {
     ATTACK_BATTLE_ITEM,
     DEFENSE_BATTLE_ITEM,
     CRYSTAL_SPRITE_NAME,
+    SHOULD_TILE_COLLIDE,
     SCISSORS_BATTLE_ITEM,
     IDLE_FRAME_POSITION_KEY,
 } from '../constants';
@@ -118,13 +119,17 @@ export const handleCreateMap = (scene) => {
                 const { index, tileset, properties } = tile;
                 const { collideLeft, collideRight, collideUp, collideDown } = properties;
                 const tilesetCustomColliders = tileset?.getTileData?.(index);
+                const shouldCollide = Boolean(collideLeft)
+                    || Boolean(collideRight)
+                    || Boolean(collideUp)
+                    || Boolean(collideDown);
+
+                if (shouldCollide) {
+                    properties[SHOULD_TILE_COLLIDE] = shouldCollide;
+                }
 
                 if (!layer.containsCollision) {
-                    layer.containsCollision =
-                        Boolean(collideLeft)
-                        || Boolean(collideRight)
-                        || Boolean(collideUp)
-                        || Boolean(collideDown);
+                    layer.containsCollision = shouldCollide;
                 }
 
                 if (tilesetCustomColliders) {
@@ -143,6 +148,7 @@ export const handleCreateMap = (scene) => {
                                 Boolean(collideUp),
                                 Boolean(collideDown)
                             );
+
                             return;
                         }
 
@@ -184,17 +190,14 @@ export const handleCreateMap = (scene) => {
     });
 
     const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
-    const navMesh = scene.navMeshPlugin.buildMeshFromTilemap(
-        'mesh',
-        map,
-        layersWithCollision
-    );
+    scene.gridEngine.create(map, {
+        characters: [],
+        collisionTilePropertyName: SHOULD_TILE_COLLIDE,
+    });
 
     // eslint-disable-next-line no-param-reassign
     scene.map = map;
 
-    // eslint-disable-next-line no-param-reassign
-    scene.navigationMesh = navMesh;
     return customColliders;
 };
 
@@ -270,7 +273,7 @@ export const handleCreateHero = (scene) => {
     // );
 
     // hero presence
-    heroSprite.presenceCircle = createInteractiveGameObject(
+    heroSprite.presencePerceptionCircle = createInteractiveGameObject(
         scene,
         heroSprite.x,
         heroSprite.y,
@@ -280,13 +283,30 @@ export const handleCreateHero = (scene) => {
         true
     );
 
+    heroSprite.presenceFollowCircle = createInteractiveGameObject(
+        scene,
+        heroSprite.x,
+        heroSprite.y,
+        TILE_WIDTH * 24,
+        TILE_HEIGHT * 24,
+        { x: 0, y: 0 },
+        true
+    );
+
     const updateActionCollider = ({ top, right, bottom, left, width, height } = heroSprite.body) => {
         const facingDirection = getSelectorData(selectHeroFacingDirection);
-        heroSprite.presenceCircle.setX(
-            heroSprite.x - Math.round(heroSprite.presenceCircle.width / 2 - heroSprite.width / 2)
+        heroSprite.presencePerceptionCircle.setX(
+            heroSprite.x - Math.round(heroSprite.presencePerceptionCircle.width / 2 - heroSprite.width / 2)
         );
-        heroSprite.presenceCircle.setY(
-            heroSprite.y - Math.round(heroSprite.presenceCircle.height / 2 - heroSprite.height / 2) + 6
+        heroSprite.presencePerceptionCircle.setY(
+            heroSprite.y - Math.round(heroSprite.presencePerceptionCircle.height / 2 - heroSprite.height / 2) + 6
+        );
+
+        heroSprite.presenceFollowCircle.setX(
+            heroSprite.x - Math.round(heroSprite.presenceFollowCircle.width / 2 - heroSprite.width / 2)
+        );
+        heroSprite.presenceFollowCircle.setY(
+            heroSprite.y - Math.round(heroSprite.presenceFollowCircle.height / 2 - heroSprite.height / 2) + 6
         );
 
         switch (facingDirection) {

@@ -1,5 +1,5 @@
 import { Game, AUTO, Scale } from 'phaser';
-import { PhaserNavMeshPlugin } from 'phaser-navmesh';
+import { GridEngine } from 'grid-engine';
 
 // Utils
 import { getFileNameWithoutExtension, getSelectorData, isDev, isObject } from './utils';
@@ -118,10 +118,9 @@ export const instantiatePhaserGame = (gameTitle = 'some-game-title') => {
         plugins: {
             scene: [
                 {
-                    key: 'PhaserNavMeshPlugin', // Key to store the plugin class under in cache
-                    plugin: PhaserNavMeshPlugin, // Class that constructs plugins
-                    mapping: 'navMeshPlugin', // Property mapping to use for the scene, e.g. this.navMeshPlugin
-                    start: true,
+                    key: 'gridEngine',
+                    plugin: GridEngine,
+                    mapping: 'gridEngine',
                 },
             ],
         },
@@ -133,7 +132,7 @@ export const instantiatePhaserGame = (gameTitle = 'some-game-title') => {
         physics: {
             default: 'arcade',
             arcade: {
-                debug: IS_DEV,
+                // debug: IS_DEV,
                 // fixedStep: false,
                 // fps: 120,
             },

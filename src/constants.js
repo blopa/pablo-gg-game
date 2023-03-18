@@ -69,3 +69,5 @@ export const REACT_CONTENT_ID = 'react-content';
 export const BOOT_SCENE_NAME = 'BootScene';
 
 export const DEFAULT_LOCALE = 'en';
+
+export const SHOULD_TILE_COLLIDE = 'should-tile-collide';
