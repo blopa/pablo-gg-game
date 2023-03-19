@@ -23,10 +23,15 @@ import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 
 // Constants
 import {
-    DOWN_DIRECTION,
+    SLIME_SPRITE_NAME,
+    FOLLOW_BEHAVIOUR,
     HERO_SPRITE_NAME,
-    LEFT_DIRECTION, RIGHT_DIRECTION, SLIME_SPRITE_NAME, TILE_HEIGHT, TILE_WIDTH,
+    RIGHT_DIRECTION,
+    LEFT_DIRECTION,
+    DOWN_DIRECTION,
     UP_DIRECTION,
+    TILE_HEIGHT,
+    TILE_WIDTH,
 } from '../../constants';
 
 export const key = 'GameScene';
@@ -74,7 +79,6 @@ export function create() {
     handleCreateHeroAnimations(scene);
 
     // Handle collisions
-    let timeOutFunctionId;
     scene.physics.add.collider(scene.heroSprite, scene.enemies);
     scene.physics.add.collider(scene.heroSprite, customColliders);
     scene.physics.add.overlap(
@@ -89,7 +93,7 @@ export function create() {
             slimeSprite.isTakingDamage = true;
 
             // clearTimeout(timeOutFunctionId);
-            scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
+            // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
             const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
             scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
 
@@ -135,6 +139,27 @@ export function create() {
                     break;
                 }
             }
+
+            const damage = 10;
+            const damageNumber = scene.add.text(
+                slimeSprite.x + 10,
+                slimeSprite.y,
+                `-${damage}`,
+                { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
+            ).setOrigin(0.5);
+
+            scene.tweens.add({
+                targets: damageNumber,
+                alpha: 0,
+                duration: 1000,
+                onUpdate: (tween, target) => {
+                    damageNumber.x = slimeSprite.x + 10;
+                    damageNumber.y = slimeSprite.y - tween.totalProgress * 5;
+                },
+                onComplete: () => {
+                    damageNumber.destroy();
+                },
+            });
         }
     );
 
@@ -142,22 +167,11 @@ export function create() {
         scene.heroSprite.presencePerceptionCircle,
         scene.slimeSprite,
         (presencePerceptionCircle, slimeSprite) => {
-            if (!slimeSprite.perceptedHero) {
+            if (slimeSprite.body.overlapR > 100 && slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
                 // eslint-disable-next-line no-param-reassign
-                slimeSprite.perceptedHero = true;
-                if (!timeOutFunctionId) {
-                    calculatePaths();
-                }
+                slimeSprite.behaviour = FOLLOW_BEHAVIOUR;
+                calculatePaths();
             }
-        }
-    );
-
-    scene.physics.add.overlap(
-        scene.heroSprite.presenceFollowCircle,
-        scene.slimeSprite,
-        (presenceFollowCircle, slimeSprite) => {
-            // eslint-disable-next-line no-param-reassign
-            slimeSprite.followHero = true;
         }
     );
 
@@ -170,32 +184,32 @@ export function create() {
     });
     scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
 
+    let timeOutFunctionId;
     const calculatePaths = () => {
-        clearTimeout(timeOutFunctionId);
+        // clearTimeout(timeOutFunctionId);
+        timeOutFunctionId?.remove?.();
+        timeOutFunctionId = null;
+
         if (scene.slimeSprite.isTakingDamage) {
             return;
         }
 
-        if (!scene.slimeSprite.followHero) {
-            scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
+        if (scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
+            // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
             scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
             scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 1);
             return;
         }
 
-        scene.slimeSprite.followHero = false;
-        scene.slimeSprite.perceptedHero = false;
         scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 2);
         scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
             x: Math.round(scene.heroSprite.x / TILE_WIDTH),
             y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
         });
 
-        // clearTimeout(timeOutFunctionId);
-        timeOutFunctionId = setTimeout(() => {
-            timeOutFunctionId = null;
+        timeOutFunctionId = scene.time.delayedCall(1000, () => {
             calculatePaths();
-        }, 1000);
+        });
     };
 
     scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
@@ -208,8 +222,8 @@ export function create() {
 
             if (slimePosition.x === heroPosition.x && slimePosition.y === heroPosition.y) {
                 // clearTimeout(timeOutFunctionId);
-                scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 2);
-            } else {
+                scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 1);
+            } else if (!timeOutFunctionId) {
                 calculatePaths();
             }
         }
@@ -224,10 +238,10 @@ export function create() {
     scene.heroSprite.on('animationcomplete', (animation, frame) => {
         if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
             scene.slimeSprite.isTakingDamage = false;
-            scene.slimeSprite.perceptedHero = false;
-            scene.slimeSprite.followHero = true;
             // clearTimeout(timeOutFunctionId);
-            calculatePaths();
+            if (!timeOutFunctionId) {
+                calculatePaths();
+            }
         }
     });
 
@@ -298,4 +312,5 @@ export function update(time, delta) {
 
     handleHeroMovement(scene);
     scene.heroSprite.update(time, delta);
+    scene.slimeSprite?.update?.(time, delta);
 }

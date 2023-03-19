@@ -17,6 +17,7 @@ import {
     RIGHT_DIRECTION,
     KEY_SPRITE_NAME,
     RUN_BATTLE_ITEM,
+    PATROL_BEHAVIOUR,
     HERO_SPRITE_NAME,
     COIN_SPRITE_NAME,
     ROCK_BATTLE_ITEM,
@@ -209,11 +210,19 @@ export const handleCreateEnemies = (scene) => {
         .setOrigin(0, 0)
         .setDepth(1);
 
-    // eslint-disable-next-line operator-assignment
-    slimeSprite.body.width = 12;
-    // eslint-disable-next-line operator-assignment
-    slimeSprite.body.height = 10;
-    slimeSprite.body.setOffset(slimeSprite.body.width / 2, slimeSprite.body.height + 3);
+    // // eslint-disable-next-line operator-assignment
+    // slimeSprite.body.width = 12;
+    // // eslint-disable-next-line operator-assignment
+    // slimeSprite.body.height = 10;
+    slimeSprite.body.setCircle(6);
+    slimeSprite.body.setOffset(slimeSprite.body.width / 2, slimeSprite.body.height + 1);
+    slimeSprite.behaviour = PATROL_BEHAVIOUR;
+
+    slimeSprite.update = (time, delta) => {
+        if (slimeSprite.body.overlapR < 10 && slimeSprite.body.overlapR > 0) {
+            slimeSprite.behaviour = PATROL_BEHAVIOUR;
+        }
+    };
 
     // eslint-disable-next-line no-param-reassign
     scene.slimeSprite = slimeSprite;
@@ -277,18 +286,8 @@ export const handleCreateHero = (scene) => {
         scene,
         heroSprite.x,
         heroSprite.y,
-        TILE_WIDTH * 15,
-        TILE_HEIGHT * 15,
-        { x: 0, y: 0 },
-        true
-    );
-
-    heroSprite.presenceFollowCircle = createInteractiveGameObject(
-        scene,
-        heroSprite.x,
-        heroSprite.y,
-        TILE_WIDTH * 24,
-        TILE_HEIGHT * 24,
+        TILE_WIDTH * 26,
+        TILE_HEIGHT * 26,
         { x: 0, y: 0 },
         true
     );
@@ -300,13 +299,6 @@ export const handleCreateHero = (scene) => {
         );
         heroSprite.presencePerceptionCircle.setY(
             heroSprite.y - Math.round(heroSprite.presencePerceptionCircle.height / 2 - heroSprite.height / 2) + 6
-        );
-
-        heroSprite.presenceFollowCircle.setX(
-            heroSprite.x - Math.round(heroSprite.presenceFollowCircle.width / 2 - heroSprite.width / 2)
-        );
-        heroSprite.presenceFollowCircle.setY(
-            heroSprite.y - Math.round(heroSprite.presenceFollowCircle.height / 2 - heroSprite.height / 2) + 6
         );
 
         switch (facingDirection) {
