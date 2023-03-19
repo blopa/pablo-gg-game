@@ -12,6 +12,7 @@ import {
     DOWN_DIRECTION,
     RIGHT_DIRECTION,
     PATROL_BEHAVIOUR,
+    FOLLOW_BEHAVIOUR,
     HERO_SPRITE_NAME,
     SWORD_SPRITE_NAME,
     SLIME_SPRITE_NAME,
@@ -276,6 +277,40 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
     scene.enemies.add(enemySprite);
     // eslint-disable-next-line no-param-reassign
     scene.slimeSprite = enemySprite;
+};
+
+export const getCalculateEnemyFollowPaths = (scene) => {
+    let timeOutFunctionId;
+    const calculateEnemyFollowPaths = () => {
+        console.log('func called!!');
+        // clearTimeout(timeOutFunctionId);
+        timeOutFunctionId?.remove?.();
+        timeOutFunctionId = null;
+
+        if (scene.slimeSprite.isTakingDamage) {
+            return;
+        }
+
+        if (scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
+            // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
+            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
+            scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 1);
+            return;
+        }
+
+        // TODO add a if condition that checks for hero range
+        scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 2);
+        scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+            x: Math.round(scene.heroSprite.x / TILE_WIDTH),
+            y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
+        });
+
+        timeOutFunctionId = scene.time.delayedCall(1000, () => {
+            calculateEnemyFollowPaths();
+        });
+    };
+
+    return calculateEnemyFollowPaths;
 };
 
 export const handleCreateHero = (scene) => {
