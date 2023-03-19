@@ -12,17 +12,9 @@ import { asyncLoader } from '../../utils/phaser';
 
 // Constants
 import {
-    KEY,
-    COIN,
-    ENEMY,
-    HEART,
-    CRYSTAL,
-    KEY_SPRITE_NAME,
-    COIN_SPRITE_NAME,
+    SLIME,
     IGNORED_TILESETS,
-    ENEMY_SPRITE_NAME,
-    HEART_SPRITE_NAME,
-    CRYSTAL_SPRITE_NAME,
+    SLIME_SPRITE_NAME,
 } from '../../constants';
 
 // Selectors
@@ -139,11 +131,11 @@ export async function create(initData) {
             layer.objects.forEach(async (object) => {
                 const { gid, properties } = object;
                 switch (gid) {
-                    case ENEMY: {
+                    case SLIME: {
                         // for some reason, if I don't assign this constant to a local variable
                         // webpack production build do something that the code doesn't work properly
                         // on the browser
-                        const spriteName = ENEMY_SPRITE_NAME;
+                        const spriteName = SLIME_SPRITE_NAME;
 
                         if (
                             isGeneratedAtlasFileAvailable(`${spriteName}.json`)
@@ -163,76 +155,7 @@ export async function create(initData) {
 
                         break;
                     }
-                    case COIN: {
-                        const spriteName = COIN_SPRITE_NAME;
 
-                        if (
-                            isGeneratedAtlasFileAvailable(`${spriteName}.json`)
-                            && isGeneratedAtlasFileAvailable(`${spriteName}.png`)
-                        && !loadedAtlases.includes(spriteName)
-                        ) {
-                            // eslint-disable-next-line no-await-in-loop
-                            const { default: jsonPath } =
-                                await import(`../../assets/atlases/generated/${spriteName}.json`);
-                            // eslint-disable-next-line no-await-in-loop
-                            const { default: imagePath } =
-                                await import(`../../assets/atlases/generated/${spriteName}.png`);
-
-                            addLoadedAtlas(spriteName);
-                            await asyncLoader(scene.load.atlas(spriteName, imagePath, jsonPath));
-                        }
-
-                        break;
-                    }
-                    case HEART: {
-                        const spriteName = HEART_SPRITE_NAME;
-                        if (
-                            isImageFileAvailable('heart_full.png')
-                            && !loadedImages.includes(spriteName)
-                        ) {
-                            // eslint-disable-next-line no-await-in-loop, import/no-unresolved, import/no-webpack-loader-syntax
-                            const { default: imagePath } = await import('../../assets/images/heart_full.png'); // `../../assets/images/${spriteName}.png`
-
-                            addLoadedImage(spriteName);
-                            await asyncLoader(scene.load.image(spriteName, imagePath));
-                        }
-
-                        break;
-                    }
-                    case CRYSTAL: {
-                        const spriteName = CRYSTAL_SPRITE_NAME;
-
-                        if (
-                            isImageFileAvailable(`${spriteName}.png`)
-                            && !loadedImages.includes(spriteName)
-                        ) {
-                            // eslint-disable-next-line no-await-in-loop
-                            const { default: imagePath } =
-                                await import(`../../assets/images/${spriteName}.png`);
-
-                            addLoadedImage(spriteName);
-                            await asyncLoader(scene.load.image(spriteName, imagePath));
-                        }
-
-                        break;
-                    }
-                    case KEY: {
-                        const spriteName = KEY_SPRITE_NAME;
-
-                        if (
-                            isImageFileAvailable(`${spriteName}.png`)
-                            && !loadedImages.includes(spriteName)
-                        ) {
-                            // eslint-disable-next-line no-await-in-loop
-                            const { default: imagePath } =
-                                await import(`../../assets/images/${spriteName}.png`);
-
-                            addLoadedImage(spriteName);
-                            await asyncLoader(scene.load.image(spriteName, imagePath));
-                        }
-
-                        break;
-                    }
                     default: {
                         break;
                     }
@@ -301,7 +224,7 @@ export async function create(initData) {
         }
 
         addLoadedMap(mapKey);
-        // Load map with pre-loaded tilesets
+        // Load map with preloaded tilesets
         await asyncLoader(scene.load.tilemapTiledJSON(mapKey, mapJson));
     }
 

@@ -42,8 +42,17 @@ export const calculateGameSize = (
 };
 
 // Thanks yannick @ https://phaser.discourse.group/t/loading-audio/1306/4
-export const asyncLoader = (loaderPlugin) => new Promise((resolve, reject) => {
-    loaderPlugin.on('filecomplete', resolve).on('loaderror', reject);
+export const asyncLoader = (loaderPlugin, name = null) => new Promise((resolve, reject) => {
+    loaderPlugin.on('filecomplete', resolve).on('complete', resolve).on('loaderror', reject);
+    // .on('filecomplete', () => console.log('filecomplete', name))
+    // .on('loaderror', () => console.log('loaderror', name))
+    // .on('complete', () => console.log('complete', name))
+    // .on('load', () => console.log('load', name))
+    // .on('fileprogress', () => console.log('fileprogress', name))
+    // .on('postprocess', () => console.log('postprocess', name))
+    // .on('progress', () => console.log('progress', name))
+    // .on('start', () => console.log('start', name))
+    // .on('addfile', () => console.log('addfile', name));
     loaderPlugin.start();
 });
 

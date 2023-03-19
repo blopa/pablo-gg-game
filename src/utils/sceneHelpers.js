@@ -2,12 +2,8 @@ import { Input } from 'phaser';
 
 // Constants
 import {
-    KEY,
-    COIN,
     DOOR,
-    HEART,
-    ENEMY,
-    CRYSTAL,
+    SLIME,
     IDLE_FRAME,
     TILE_WIDTH,
     TILE_HEIGHT,
@@ -15,24 +11,11 @@ import {
     LEFT_DIRECTION,
     DOWN_DIRECTION,
     RIGHT_DIRECTION,
-    KEY_SPRITE_NAME,
-    RUN_BATTLE_ITEM,
     PATROL_BEHAVIOUR,
     HERO_SPRITE_NAME,
-    COIN_SPRITE_NAME,
-    ROCK_BATTLE_ITEM,
-    ENEMY_SPRITE_NAME,
-    PAPER_BATTLE_ITEM,
-    ITEMS_BATTLE_ITEM,
     SWORD_SPRITE_NAME,
     SLIME_SPRITE_NAME,
-    HEART_SPRITE_NAME,
-    RETURN_BATTLE_ITEM,
-    ATTACK_BATTLE_ITEM,
-    DEFENSE_BATTLE_ITEM,
-    CRYSTAL_SPRITE_NAME,
     SHOULD_TILE_COLLIDE,
-    SCISSORS_BATTLE_ITEM,
     IDLE_FRAME_POSITION_KEY,
 } from '../constants';
 
@@ -202,30 +185,27 @@ export const handleCreateMap = (scene) => {
     return customColliders;
 };
 
-export const handleCreateEnemies = (scene) => {
+export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyHealth) => {
     // Create slime sprite
-    const slimeSprite = scene.physics.add
-        .sprite(8 * TILE_WIDTH, 3 * TILE_HEIGHT, SLIME_SPRITE_NAME)
-        .setName(SLIME_SPRITE_NAME)
+    const enemySprite = scene.physics.add
+        .sprite(position.x, position.y, spriteName)
+        .setName(spriteName)
         .setOrigin(0, 0)
         .setDepth(1);
 
-    // // eslint-disable-next-line operator-assignment
-    // slimeSprite.body.width = 12;
-    // // eslint-disable-next-line operator-assignment
-    // slimeSprite.body.height = 10;
-    slimeSprite.body.setCircle(6);
-    slimeSprite.body.setOffset(slimeSprite.body.width / 2, slimeSprite.body.height + 1);
-    slimeSprite.behaviour = PATROL_BEHAVIOUR;
+    enemySprite.body.setCircle(6);
+    enemySprite.body.setOffset(enemySprite.body.width / 2, enemySprite.body.height + 1);
+    enemySprite.behaviour = PATROL_BEHAVIOUR;
 
-    slimeSprite.update = (time, delta) => {
-        if (slimeSprite.body.overlapR < 10 && slimeSprite.body.overlapR > 0) {
-            slimeSprite.behaviour = PATROL_BEHAVIOUR;
+    enemySprite.update = (time, delta) => {
+        if (enemySprite.body.overlapR < 10 && enemySprite.body.overlapR > 0) {
+            enemySprite.behaviour = PATROL_BEHAVIOUR;
         }
     };
 
+    scene.enemies.add(enemySprite);
     // eslint-disable-next-line no-param-reassign
-    scene.slimeSprite = slimeSprite;
+    scene.slimeSprite = enemySprite;
 };
 
 export const handleCreateHero = (scene) => {
@@ -373,215 +353,9 @@ export const handleObjectsLayer = (scene) => {
             const propertiesObject = Object.fromEntries(properties?.map((curr) => [curr.name, curr.value]) || []);
 
             switch (gid || name) {
-                case ENEMY: {
-                    const spriteName = `${ENEMY_SPRITE_NAME}_${layerIndex}${objectIndex}`;
-                    const enemy = scene.physics.add
-                        .sprite(x, y, ENEMY_SPRITE_NAME, IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, DOWN_DIRECTION))
-                        .setName(spriteName)
-                        .setOrigin(0, 1)
-                        .setDepth(1);
-
-                    enemy.body.setImmovable(true);
-                    scene.sprites.add(enemy);
-                    scene.enemies.add(enemy);
-
-                    enemy.setInteractive();
-                    enemy.on('pointerdown', () => {
-                        const { setTextTexts } = getSelectorData(selectTextSetters);
-                        setTextTexts([{
-                            key: 'game_title',
-                            variables: {},
-                            config: {},
-                        }]);
-                    });
-
-                    enemy.on('pointerdown', () => {
-                        scene.scene.moveBelow('GameScene', 'BattleScene');
-                        scene.scene.pause('GameScene');
-                        scene.scene.launch('BattleScene');
-
-                        const {
-                            setBattleItems,
-                            setBattleEnemies,
-                            setBattleOnHover,
-                            setBattleOnSelect,
-                            setBattleHoveredItem,
-                        } = getSelectorData(selectBattleSetters);
-
-                        setBattleItems([
-                            ATTACK_BATTLE_ITEM,
-                            ITEMS_BATTLE_ITEM,
-                            DEFENSE_BATTLE_ITEM,
-                            RUN_BATTLE_ITEM,
-                        ]);
-
-                        setBattleEnemies([
-                            {
-                                sprite: 'enemy_01',
-                                position: { x: 200, y: 140 },
-                                types: [ROCK_BATTLE_ITEM],
-                                health: 100,
-                                attack: 10,
-                            },
-                            {
-                                sprite: 'enemy_02',
-                                position: { x: 300, y: 140 },
-                                types: [PAPER_BATTLE_ITEM],
-                                health: 100,
-                                attack: 10,
-                            },
-                            {
-                                sprite: 'enemy_03',
-                                position: { x: 400, y: 160 },
-                                types: [SCISSORS_BATTLE_ITEM],
-                                health: 100,
-                                attack: 10,
-                            },
-                        ]);
-
-                        setBattleOnSelect((item, itemIndex) => {
-                            switch (item) {
-                                case ATTACK_BATTLE_ITEM: {
-                                    const items = [
-                                        RETURN_BATTLE_ITEM,
-                                    ];
-
-                                    setBattleItems(items);
-                                    setBattleOnHover((itemIndex) => {
-                                        setBattleHoveredItem(itemIndex);
-                                    });
-
-                                    setBattleOnSelect((item, itemIndex) => {
-                                        switch (item) {
-                                            case RETURN_BATTLE_ITEM:
-                                            default: {
-                                                break;
-                                            }
-                                        }
-                                    });
-
-                                    break;
-                                }
-                                case ITEMS_BATTLE_ITEM: {
-                                    break;
-                                }
-                                case DEFENSE_BATTLE_ITEM: {
-                                    break;
-                                }
-                                case RUN_BATTLE_ITEM:
-                                default: {
-                                    break;
-                                }
-                            }
-
-                            // setBattleItems([]);
-                        });
-                    });
-
-                    const enemyActionHeroCollider = scene.physics.add.overlap(
-                        enemy,
-                        scene.heroSprite.actionCollider,
-                        (e, a) => {
-                            if (Input.Keyboard.JustDown(scene.actionKey)) {
-                                const {
-                                    setDialogAction,
-                                    setDialogMessages,
-                                    setDialogCharacterName,
-                                } = getSelectorData(selectDialogSetters);
-                                const dialogMessages = getSelectorData(selectDialogMessages);
-
-                                if (dialogMessages.length === 0) {
-                                    enemyActionHeroCollider.active = false;
-                                    setDialogCharacterName('monster');
-                                    setDialogMessages([
-                                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                                        'Praesent id neque sodales, feugiat tortor non, fringilla ex.',
-                                        'Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur',
-                                    ]);
-                                    setDialogAction(() => {
-                                        // Do this to not trigger the message again
-                                        // Because whenever you call JustDown once, the second time
-                                        // you call it, it will be false
-                                        Input.Keyboard.JustDown(scene.actionKey);
-                                        setDialogCharacterName('');
-                                        setDialogMessages([]);
-                                        setDialogAction(null);
-                                    });
-
-                                    scene.time.delayedCall(0, () => {
-                                        enemyActionHeroCollider.active = true;
-                                    });
-                                }
-                            }
-                        }
-                    );
-
-                    break;
-                }
-
-                case COIN: {
-                    const spriteName = `${COIN_SPRITE_NAME}_${layerIndex}${objectIndex}`;
-                    const coin = scene.physics.add
-                        .sprite(x, y, COIN_SPRITE_NAME, 'coin_idle_01')
-                        .setOrigin(0, 1)
-                        .setName(spriteName)
-                        .setDepth(1);
-
-                    const animationKey = `${COIN_SPRITE_NAME}_idle`;
-                    if (!scene.anims.exists(animationKey)) {
-                        scene.anims.create({
-                            key: animationKey,
-                            frames: Array.from({ length: 2 }).map((n, index) => ({
-                                key: COIN_SPRITE_NAME,
-                                frame: `${COIN_SPRITE_NAME}_idle_${(index + 1).toString().padStart(2, '0')}`,
-                            })),
-                            frameRate: 3,
-                            repeat: -1,
-                            yoyo: false,
-                        });
-                    }
-
-                    coin.anims.play(animationKey);
-                    scene.items.add(coin);
-
-                    break;
-                }
-
-                case HEART: {
-                    const spriteName = `${HEART_SPRITE_NAME}_${layerIndex}${objectIndex}`;
-                    const heart = scene.physics.add
-                        .image(x, y, HEART_SPRITE_NAME)
-                        .setOrigin(0, 1)
-                        .setName(spriteName)
-                        .setDepth(1);
-
-                    scene.items.add(heart);
-
-                    break;
-                }
-
-                case CRYSTAL: {
-                    const spriteName = `${CRYSTAL_SPRITE_NAME}_${layerIndex}${objectIndex}`;
-                    const crystal = scene.physics.add
-                        .image(x, y, CRYSTAL_SPRITE_NAME)
-                        .setOrigin(0, 1)
-                        .setName(spriteName)
-                        .setDepth(1);
-
-                    scene.items.add(crystal);
-
-                    break;
-                }
-
-                case KEY: {
-                    const spriteName = `${KEY_SPRITE_NAME}_${layerIndex}${objectIndex}`;
-                    const key = scene.physics.add
-                        .image(x, y, KEY_SPRITE_NAME)
-                        .setOrigin(0, 1)
-                        .setName(spriteName)
-                        .setDepth(1);
-
-                    scene.items.add(key);
+                case SLIME: {
+                    const { type, health } = propertiesObject;
+                    handleCreateEnemy(scene, SLIME_SPRITE_NAME, { x, y }, type, health);
 
                     break;
                 }
@@ -614,7 +388,7 @@ export const handleObjectsLayer = (scene) => {
                         const { setShouldPauseScene } = getSelectorData(selectGameSetters);
                         setShouldPauseScene('GameScene', true);
                         changeScene(scene, 'GameScene', {
-                            atlases: ['hero', 'sword', 'slime'],
+                            atlases: ['hero', 'sword'],
                             images: [],
                             mapKey: map,
                         }, {
@@ -624,22 +398,6 @@ export const handleObjectsLayer = (scene) => {
 
                     break;
                 }
-
-                // case 'encounter': {
-                //     const customCollider = createInteractiveGameObject(
-                //         scene,
-                //         x,
-                //         y,
-                //         width,
-                //         height
-                //     );
-                //
-                //     const overlapCollider = scene.physics.add.overlap(scene.heroSprite, customCollider, () => {
-                //         // TODO
-                //     });
-                //
-                //     break;
-                // }
 
                 default: {
                     break;

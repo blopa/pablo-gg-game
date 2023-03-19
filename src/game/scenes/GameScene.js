@@ -6,7 +6,7 @@ import {
     handleObjectsLayer,
     handleHeroMovement,
     handleCreateGroups,
-    handleCreateEnemies,
+    handleCreateEnemy,
     handleCreateControls,
     handleConfigureCamera,
     handleCreateHeroAnimations,
@@ -57,9 +57,6 @@ export function create() {
     // Create the map
     const customColliders = handleCreateMap(scene);
 
-    // Create enemies sprites
-    handleCreateEnemies(scene);
-
     // Create hero sprite
     handleCreateHero(scene);
 
@@ -79,7 +76,7 @@ export function create() {
     handleCreateHeroAnimations(scene);
 
     // Handle collisions
-    scene.physics.add.collider(scene.heroSprite, scene.enemies);
+    // scene.physics.add.collider(scene.heroSprite, scene.enemies);
     scene.physics.add.collider(scene.heroSprite, customColliders);
     scene.physics.add.overlap(
         scene.heroSprite.attackSprite,
@@ -143,7 +140,7 @@ export function create() {
             const damage = 10;
             const damageNumber = scene.add.text(
                 slimeSprite.x + 10,
-                slimeSprite.y,
+                slimeSprite.y + 5,
                 `-${damage}`,
                 { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
             ).setOrigin(0.5);
@@ -154,7 +151,7 @@ export function create() {
                 duration: 1000,
                 onUpdate: (tween, target) => {
                     damageNumber.x = slimeSprite.x + 10;
-                    damageNumber.y = slimeSprite.y - tween.totalProgress * 5;
+                    damageNumber.y = slimeSprite.y + 5 - tween.totalProgress * 5;
                 },
                 onComplete: () => {
                     damageNumber.destroy();
@@ -179,7 +176,10 @@ export function create() {
         id: SLIME_SPRITE_NAME,
         sprite: scene.slimeSprite,
         speed: 1,
-        startPosition: { x: 12, y: 8 },
+        startPosition: {
+            x: scene.slimeSprite.x / TILE_WIDTH,
+            y: scene.slimeSprite.y / TILE_HEIGHT,
+        },
         // offsetY: 4,
     });
     scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
@@ -238,10 +238,7 @@ export function create() {
     scene.heroSprite.on('animationcomplete', (animation, frame) => {
         if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
             scene.slimeSprite.isTakingDamage = false;
-            // clearTimeout(timeOutFunctionId);
-            if (!timeOutFunctionId) {
-                calculatePaths();
-            }
+            calculatePaths();
         }
     });
 

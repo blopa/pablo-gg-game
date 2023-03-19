@@ -10,21 +10,11 @@ export const OVERLAY_DIV_RESIZE_THRESHOLD = RE_RESIZE_THRESHOLD;
 
 export const HERO_SPRITE_NAME = 'hero';
 
+export const SWORD_SPRITE_NAME = 'sword';
 export const SLIME_SPRITE_NAME = 'slime';
 
-export const SWORD_SPRITE_NAME = 'sword';
-export const ENEMY_SPRITE_NAME = 'enemy';
-export const COIN_SPRITE_NAME = 'coin';
-export const HEART_SPRITE_NAME = 'heart';
-export const CRYSTAL_SPRITE_NAME = 'crystal';
-export const KEY_SPRITE_NAME = 'key';
-
 // Game Objects Tiled IDs
-export const ENEMY = 1;
-export const COIN = 2;
-export const HEART = 3;
-export const CRYSTAL = 4;
-export const KEY = 5;
+export const SLIME = 1;
 export const DOOR = 6;
 
 export const IDLE_FRAME = 'walk_position_02';
