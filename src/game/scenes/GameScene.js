@@ -6,7 +6,6 @@ import {
     handleObjectsLayer,
     handleHeroMovement,
     handleCreateGroups,
-    handleCreateEnemy,
     handleCreateControls,
     handleConfigureCamera,
     handleCreateHeroAnimations,
@@ -81,82 +80,18 @@ export function create() {
     scene.physics.add.overlap(
         scene.heroSprite.attackSprite,
         scene.slimeSprite,
-        (attackSprite, slimeSprite) => {
-            if (slimeSprite.isTakingDamage || !attackSprite.visible) {
+        (attackSprite, enemySprite) => {
+            if (enemySprite.isTakingDamage || !attackSprite.visible) {
                 return;
             }
 
             // eslint-disable-next-line no-param-reassign
-            slimeSprite.isTakingDamage = true;
+            enemySprite.isTakingDamage = true;
+            enemySprite.takeDamage(10, attackSprite.frame.name);
 
             // clearTimeout(timeOutFunctionId);
             // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
-            const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
-            scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
-
-            switch (attackSprite.frame.name) {
-                case 'attack_up_01': {
-                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
-                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
-                        x: position.x,
-                        y: position.y - 1,
-                    });
-
-                    break;
-                }
-                case 'attack_right_01': {
-                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
-                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
-                        x: position.x + 1,
-                        y: position.y,
-                    });
-
-                    break;
-                }
-                case 'attack_down_01': {
-                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
-                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
-                        x: position.x,
-                        y: position.y + 1,
-                    });
-
-                    break;
-                }
-                case 'attack_left_01': {
-                    scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
-                    scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
-                        x: position.x - 1,
-                        y: position.y,
-                    });
-
-                    break;
-                }
-
-                default: {
-                    break;
-                }
-            }
-
-            const damage = 10;
-            const damageNumber = scene.add.text(
-                slimeSprite.x + 10,
-                slimeSprite.y + 5,
-                `-${damage}`,
-                { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
-            ).setOrigin(0.5);
-
-            scene.tweens.add({
-                targets: damageNumber,
-                alpha: 0,
-                duration: 1000,
-                onUpdate: (tween, target) => {
-                    damageNumber.x = slimeSprite.x + 10;
-                    damageNumber.y = slimeSprite.y + 5 - tween.totalProgress * 5;
-                },
-                onComplete: () => {
-                    damageNumber.destroy();
-                },
-            });
+            // const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
         }
     );
 

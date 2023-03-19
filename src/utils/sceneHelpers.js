@@ -28,8 +28,7 @@ import {
 } from './utils';
 
 // Selectors
-import { selectBattleSetters } from '../zustand/battle/selectBattle';
-import { selectDialogMessages, selectDialogSetters } from '../zustand/dialog/selectDialog';
+import { selectDialogMessages } from '../zustand/dialog/selectDialog';
 import { selectMapKey, selectTilesets, selectMapSetters } from '../zustand/map/selectMapData';
 import {
     selectHeroSetters,
@@ -37,7 +36,6 @@ import {
     selectHeroInitialPosition,
     selectHeroFacingDirection,
 } from '../zustand/hero/selectHeroData';
-import { selectTextSetters } from '../zustand/text/selectText';
 import { selectGameSetters } from '../zustand/game/selectGameData';
 
 export const createAnimation = (scene, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
@@ -203,6 +201,78 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         }
     };
 
+    enemySprite.takeDamage = (damage, attackDirection) => {
+        const pos = {
+            x: Math.round(enemySprite.x / TILE_WIDTH),
+            y: Math.round(enemySprite.y / TILE_HEIGHT),
+        };
+
+        scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
+
+        switch (attackDirection) {
+            case 'attack_up_01': {
+                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
+                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                    x: pos.x,
+                    y: pos.y - 1,
+                });
+
+                break;
+            }
+            case 'attack_right_01': {
+                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
+                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                    x: pos.x + 1,
+                    y: pos.y,
+                });
+
+                break;
+            }
+            case 'attack_down_01': {
+                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
+                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                    x: pos.x,
+                    y: pos.y + 1,
+                });
+
+                break;
+            }
+            case 'attack_left_01': {
+                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
+                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                    x: pos.x - 1,
+                    y: pos.y,
+                });
+
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+
+        const damageNumber = scene.add.text(
+            enemySprite.x + 10,
+            enemySprite.y + 5,
+            `-${damage}`,
+            { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
+        ).setOrigin(0.5);
+
+        scene.tweens.add({
+            targets: damageNumber,
+            alpha: 0,
+            duration: 1000,
+            onUpdate: (tween, target) => {
+                damageNumber.x = enemySprite.x + 10;
+                damageNumber.y = enemySprite.y + 5 - tween.totalProgress * 5;
+            },
+            onComplete: () => {
+                damageNumber.destroy();
+            },
+        });
+    };
+
     scene.enemies.add(enemySprite);
     // eslint-disable-next-line no-param-reassign
     scene.slimeSprite = enemySprite;
@@ -355,7 +425,13 @@ export const handleObjectsLayer = (scene) => {
             switch (gid || name) {
                 case SLIME: {
                     const { type, health } = propertiesObject;
-                    handleCreateEnemy(scene, SLIME_SPRITE_NAME, { x, y }, type, health);
+                    handleCreateEnemy(
+                        scene,
+                        SLIME_SPRITE_NAME,
+                        { x, y },
+                        type,
+                        health
+                    );
 
                     break;
                 }
