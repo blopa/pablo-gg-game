@@ -260,6 +260,22 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
             { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
         ).setOrigin(0.5);
 
+        // Add blinking effect
+        const blinkTween = scene.tweens.add({
+            targets: enemySprite,
+            alpha: 0,
+            duration: 50,
+            ease: 'Power1',
+            repeat: 3,
+            yoyo: true,
+            onStart: () => {
+                enemySprite.alpha = 1;
+            },
+            onComplete: () => {
+                enemySprite.alpha = 1;
+            },
+        });
+
         scene.tweens.add({
             targets: damageNumber,
             alpha: 0,
@@ -270,6 +286,8 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
             },
             onComplete: () => {
                 damageNumber.destroy();
+                blinkTween.stop();
+                enemySprite.alpha = 1;
             },
         });
     };
