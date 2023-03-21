@@ -9,7 +9,6 @@ import {
     handleCreateControls,
     handleConfigureCamera,
     handleCreateHeroAnimations,
-    getCalculateEnemyFollowPaths,
     handleCreateEnemiesAnimations,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
@@ -30,8 +29,6 @@ import {
     LEFT_DIRECTION,
     DOWN_DIRECTION,
     UP_DIRECTION,
-    TILE_HEIGHT,
-    TILE_WIDTH,
 } from '../../constants';
 
 export const key = 'GameScene';
@@ -88,9 +85,8 @@ export function create() {
 
             // eslint-disable-next-line no-param-reassign
             enemySprite.isTakingDamage = true;
-            enemySprite.takeDamage(10, attackSprite.frame.name);
+            enemySprite.handleTakeDamage(10, attackSprite.frame.name);
 
-            // clearTimeout(timeOutFunctionId);
             // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
             // const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
         }
@@ -101,41 +97,14 @@ export function create() {
         scene.slimeSprite,
         (presencePerceptionCircle, slimeSprite) => {
             if (slimeSprite.body.overlapR > 100 && slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
-                // eslint-disable-next-line no-param-reassign
-                slimeSprite.behaviour = FOLLOW_BEHAVIOUR;
-                calculateEnemyFollowPaths();
+                slimeSprite.handlePerceptedHero();
             }
         }
     );
 
-    scene.gridEngine.addCharacter({
-        id: SLIME_SPRITE_NAME,
-        sprite: scene.slimeSprite,
-        speed: 1,
-        startPosition: {
-            x: scene.slimeSprite.x / TILE_WIDTH,
-            y: scene.slimeSprite.y / TILE_HEIGHT,
-        },
-        // offsetY: 4,
-    });
-    scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
-
-    const calculateEnemyFollowPaths = getCalculateEnemyFollowPaths(scene);
     scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
         if (charId === SLIME_SPRITE_NAME) {
-            const slimePosition = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
-            const heroPosition = {
-                x: Math.round(scene.heroSprite.x / TILE_WIDTH),
-                y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
-            };
-
-            // TODO look for range instead
-            if (slimePosition.x === heroPosition.x && slimePosition.y === heroPosition.y) {
-                // clearTimeout(timeOutFunctionId);
-                scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 1);
-            } else {
-                calculateEnemyFollowPaths();
-            }
+            scene.slimeSprite.handleEnemyStoppedMoving();
         }
     });
 
@@ -147,8 +116,7 @@ export function create() {
 
     scene.heroSprite.on('animationcomplete', (animation, frame) => {
         if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
-            scene.slimeSprite.isTakingDamage = false;
-            calculateEnemyFollowPaths();
+            scene.slimeSprite.handleStopTakingDamage();
         }
     });
 

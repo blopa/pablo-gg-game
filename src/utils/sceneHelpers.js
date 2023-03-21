@@ -1,4 +1,4 @@
-import { Input } from 'phaser';
+import { Input, Math as PhaserMath } from 'phaser';
 
 // Constants
 import {
@@ -202,17 +202,44 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         }
     };
 
-    enemySprite.takeDamage = (damage, attackDirection) => {
-        const pos = {
-            x: Math.round(enemySprite.x / TILE_WIDTH),
-            y: Math.round(enemySprite.y / TILE_HEIGHT),
-        };
+    const calculateEnemyFollowPaths = getCalculateEnemyFollowPaths(scene);
+    enemySprite.handleEnemyStoppedMoving = () => {
+        const distance = PhaserMath.Distance.Between(
+            scene.heroSprite.x,
+            scene.heroSprite.y,
+            enemySprite.x,
+            enemySprite.y
+        );
 
+        if (distance < (TILE_HEIGHT * TILE_WIDTH) / 2) {
+            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 1);
+        } else {
+            calculateEnemyFollowPaths();
+        }
+    };
+
+    enemySprite.handleStopTakingDamage = () => {
+        enemySprite.isTakingDamage = false;
+        calculateEnemyFollowPaths();
+    };
+
+    enemySprite.handlePerceptedHero = () => {
+        enemySprite.behaviour = FOLLOW_BEHAVIOUR;
+        calculateEnemyFollowPaths();
+    };
+
+    enemySprite.handleTakeDamage = (damage, attackDirection) => {
+        // const pos = {
+        //     x: Math.round(enemySprite.x / TILE_WIDTH),
+        //     y: Math.round(enemySprite.y / TILE_HEIGHT),
+        // };
+        const pos = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
+        scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
         scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
 
         switch (attackDirection) {
             case 'attack_up_01': {
-                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
                 scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
                     x: pos.x,
                     y: pos.y - 1,
@@ -221,7 +248,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 break;
             }
             case 'attack_right_01': {
-                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
                 scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
                     x: pos.x + 1,
                     y: pos.y,
@@ -230,7 +257,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 break;
             }
             case 'attack_down_01': {
-                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
                 scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
                     x: pos.x,
                     y: pos.y + 1,
@@ -239,7 +266,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 break;
             }
             case 'attack_left_01': {
-                scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
                 scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
                     x: pos.x - 1,
                     y: pos.y,
@@ -292,6 +319,18 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         });
     };
 
+    scene.gridEngine.addCharacter({
+        id: SLIME_SPRITE_NAME,
+        sprite: enemySprite,
+        speed: 1,
+        startPosition: {
+            x: position.x / TILE_WIDTH,
+            y: position.y / TILE_HEIGHT,
+        },
+        // offsetY: 4,
+    });
+    scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
+
     scene.enemies.add(enemySprite);
     // eslint-disable-next-line no-param-reassign
     scene.slimeSprite = enemySprite;
@@ -300,8 +339,6 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
 export const getCalculateEnemyFollowPaths = (scene) => {
     let timeOutFunctionId;
     const calculateEnemyFollowPaths = () => {
-        console.log('func called!!');
-        // clearTimeout(timeOutFunctionId);
         timeOutFunctionId?.remove?.();
         timeOutFunctionId = null;
 
@@ -311,7 +348,7 @@ export const getCalculateEnemyFollowPaths = (scene) => {
 
         if (scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
             // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
-            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
+            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 4);
             scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 1);
             return;
         }
