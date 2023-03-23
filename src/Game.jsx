@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IntlProvider } from 'react-intl';
-import isMobile from 'is-mobile';
 
 // Components
-import VirtualGamepad from './components/VirtualGamepad/VirtualGamepad';
 import ReactWrapper from './components/ReactWrapper';
 
 // Selectors
@@ -54,9 +52,9 @@ function Game() {
             defaultLocale={DEFAULT_LOCALE}
         >
             <ReactWrapper />
-            {/*{isMobile() && (*/}
-            {/*    <VirtualGamepad />*/}
-            {/*)}*/}
+            {/* {isMobile() && ( */}
+            {/*    <VirtualGamepad /> */}
+            {/* )} */}
         </IntlProvider>
     );
 }

@@ -1,3 +1,5 @@
+import { GridEngine } from 'grid-engine';
+
 // Utils
 import {
     fadeIn,
@@ -32,9 +34,17 @@ import {
 
 export const key = 'GameScene';
 
-export const scene = {};
+export const sceneHelpers = {};
+
+export const preload = () => {
+    const scene = sceneHelpers.getScene();
+    scene.load.scenePlugin('gridEngine', GridEngine, 'gridEngine', 'gridEngine');
+};
 
 export function create() {
+    const scene = sceneHelpers.getScene();
+    // scene.gridEngine = scene.game.scene.scenes.find((s) => s.scene.key === key).gridEngine;
+    // scene.plugins.installScenePlugin('gridEngine', GridEngine, 'gridEngine' );
     // scene.input.on('pointerup', (pointer) => {
     //     console.log('clicky click');
     // });
@@ -146,6 +156,7 @@ export function create() {
 }
 
 export function update(time, delta) {
+    const scene = sceneHelpers.getScene();
     const shouldPause = getSelectorData(selectShouldPauseScene('GameScene'));
     if (shouldPause) {
         // figure out a better way to do this

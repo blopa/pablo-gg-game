@@ -53,7 +53,7 @@ export default class BootScene extends Scene {
 
 ```javascript
 // Export scene in functional approach
-export const scene = {};
+export const sceneHelpers = {};
 
 export const key = 'BootScene';
 

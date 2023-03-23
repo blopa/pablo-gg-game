@@ -1,5 +1,5 @@
 import { Game, AUTO, Scale } from 'phaser';
-import { GridEngine } from 'grid-engine';
+// import { GridEngine } from 'grid-engine';
 
 // Utils
 import { getFileNameWithoutExtension, getSelectorData, isDev, isObject } from './utils';
@@ -61,15 +61,20 @@ export const prepareScene = (module, modulePath) => {
         return module.default;
     }
 
+    const key = module.key || getFileNameWithoutExtension(modulePath);
     function init(data) {
+        // eslint-disable-next-line @babel/no-invalid-this,unicorn/no-this-assignment
+        const actualScene = this;
         // eslint-disable-next-line no-undefined
-        if (isObject(module.scene)) {
+        if (isObject(module.sceneHelpers)) {
             // when this function is called, "this" will be the scene
-            // eslint-disable-next-line @babel/no-invalid-this
-            Object.entries(this).forEach(([key, value]) => {
+            Object.entries(actualScene).forEach(([propName, value]) => {
                 // eslint-disable-next-line no-param-reassign
-                module.scene[key] = value;
+                module.sceneHelpers[propName] = value;
             });
+
+            // eslint-disable-next-line no-param-reassign
+            module.sceneHelpers.getScene = () => actualScene;
         }
 
         module.init?.(data);
@@ -81,7 +86,6 @@ export const prepareScene = (module, modulePath) => {
     //     }
     // });
 
-    const key = module.key || getFileNameWithoutExtension(modulePath);
     return {
         ...module,
         name: key,
@@ -124,15 +128,15 @@ export const instantiatePhaserGame = (gameTitle = 'some-game-title') => {
         zoom,
         autoRound: true,
         pixelArt: true,
-        plugins: {
-            scene: [
-                {
-                    key: 'gridEngine',
-                    plugin: GridEngine,
-                    mapping: 'gridEngine',
-                },
-            ],
-        },
+        // plugins: {
+        //     scene: [
+        //         {
+        //             key: 'gridEngine',
+        //             plugin: GridEngine,
+        //             mapping: 'gridEngine',
+        //         },
+        //     ],
+        // },
         scale: {
             autoCenter: Scale.CENTER_BOTH,
             mode: Scale.NONE,

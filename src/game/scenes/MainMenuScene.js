@@ -10,11 +10,12 @@ import { selectHeroSetters } from '../../zustand/hero/selectHeroData';
 import { selectMapSetters } from '../../zustand/map/selectMapData';
 import { selectMenuSetters } from '../../zustand/menu/selectMenu';
 
-export const scene = {};
+export const sceneHelpers = {};
 
 export const key = 'MainMenuScene';
 
 export function create() {
+    const scene = sceneHelpers.getScene();
     const { setMapKey } = getSelectorData(selectMapSetters);
     const { setMenuItems, setMenuOnSelect } = getSelectorData(selectMenuSetters);
 

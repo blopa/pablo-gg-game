@@ -29,11 +29,12 @@ import {
 import { selectMapSetters } from '../../zustand/map/selectMapData';
 import { selectGameSetters } from '../../zustand/game/selectGameData';
 
-export const scene = {};
+export const sceneHelpers = {};
 
 export const key = 'LoadAssetsScene';
 
 export async function create(initData) {
+    const scene = sceneHelpers.getScene();
     const { width: gameWidth, height: gameHeight } = scene.cameras.main;
     const {
         fonts = [],

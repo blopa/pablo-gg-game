@@ -5,11 +5,12 @@ import { getSelectorData } from '../../utils/utils';
 import { selectGameSetters, selectGameWidth } from '../../zustand/game/selectGameData';
 import { selectBattleEnemies } from '../../zustand/battle/selectBattle';
 
-export const scene = {};
+export const sceneHelpers = {};
 
 export const key = 'BattleScene';
 
 export function create() {
+    const scene = sceneHelpers.getScene();
     const { addGameCameraSizeUpdateCallback } = getSelectorData(selectGameSetters);
     const backgroundImage = scene.add.image(0, 0, 'background_grass').setOrigin(0, 0);
     const gameWidth = getSelectorData(selectGameWidth);
