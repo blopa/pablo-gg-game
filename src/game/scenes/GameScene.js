@@ -9,6 +9,7 @@ import {
     handleCreateControls,
     handleConfigureCamera,
     handleCreateHeroAnimations,
+    subscribeToGridEngineEvents,
     handleCreateEnemiesAnimations,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
@@ -22,8 +23,6 @@ import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 
 // Constants
 import {
-    SLIME_SPRITE_NAME,
-    FOLLOW_BEHAVIOUR,
     HERO_SPRITE_NAME,
     RIGHT_DIRECTION,
     LEFT_DIRECTION,
@@ -72,53 +71,23 @@ export function create() {
     // Hero animations
     handleCreateHeroAnimations(scene);
 
+    // Subscribe to grid-engine events
+    subscribeToGridEngineEvents(scene);
+
     // Handle collisions
     // scene.physics.add.collider(scene.heroSprite, scene.enemies);
     scene.physics.add.collider(scene.heroSprite, customColliders);
     scene.physics.add.overlap(
         scene.heroSprite.attackSprite,
         scene.slimeSprite,
-        (attackSprite, enemySprite) => {
-            if (enemySprite.isTakingDamage || !attackSprite.visible) {
-                return;
-            }
-
-            // eslint-disable-next-line no-param-reassign
-            enemySprite.isTakingDamage = true;
-            enemySprite.handleTakeDamage(10, attackSprite.frame.name);
-
-            // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
-            // const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
-        }
+        scene.slimeSprite.onAttackOverlap
     );
 
     scene.physics.add.overlap(
         scene.heroSprite.presencePerceptionCircle,
         scene.slimeSprite,
-        (presencePerceptionCircle, slimeSprite) => {
-            if (slimeSprite.body.overlapR > 100 && slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
-                slimeSprite.handlePerceptedHero();
-            }
-        }
+        scene.slimeSprite.onPresenceOverlap
     );
-
-    scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
-        if (charId === SLIME_SPRITE_NAME) {
-            scene.slimeSprite.handleEnemyStoppedMoving();
-        }
-    });
-
-    scene.gridEngine.movementStarted().subscribe(({ charId, direction }) => {
-        if (charId === SLIME_SPRITE_NAME && !scene.slimeSprite.isTakingDamage) {
-            scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
-        }
-    });
-
-    scene.heroSprite.on('animationcomplete', (animation, frame) => {
-        if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
-            scene.slimeSprite.handleStopTakingDamage();
-        }
-    });
 
     scene.input.keyboard.on('keydown-SPACE', () => {
         const updateAttackPosition = () => {

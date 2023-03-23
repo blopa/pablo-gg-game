@@ -8,29 +8,24 @@ import {
     TILE_WIDTH,
     TILE_HEIGHT,
     UP_DIRECTION,
-    LEFT_DIRECTION,
     DOWN_DIRECTION,
+    LEFT_DIRECTION,
     RIGHT_DIRECTION,
     PATROL_BEHAVIOUR,
     FOLLOW_BEHAVIOUR,
     HERO_SPRITE_NAME,
-    SWORD_SPRITE_NAME,
     SLIME_SPRITE_NAME,
+    SWORD_SPRITE_NAME,
     SHOULD_TILE_COLLIDE,
     IDLE_FRAME_POSITION_KEY,
 } from '../constants';
 
 // Utils
-import {
-    getSelectorData,
-    getDegreeFromRadians,
-    rotateRectangleInsideTile,
-    createInteractiveGameObject,
-} from './utils';
+import { createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rotateRectangleInsideTile } from './utils';
 
 // Selectors
 import { selectDialogMessages } from '../zustand/dialog/selectDialog';
-import { selectMapKey, selectTilesets, selectMapSetters } from '../zustand/map/selectMapData';
+import { selectMapKey, selectMapSetters, selectTilesets } from '../zustand/map/selectMapData';
 import {
     selectHeroSetters,
     selectHeroInitialFrame,
@@ -366,6 +361,25 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         });
     };
 
+    enemySprite.onAttackOverlap = (attackSprite, enemySprite) => {
+        if (enemySprite.isTakingDamage || !attackSprite.visible) {
+            return;
+        }
+
+        // eslint-disable-next-line no-param-reassign
+        enemySprite.isTakingDamage = true;
+        enemySprite.handleTakeDamage(10, attackSprite.frame.name);
+
+        // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
+        // const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
+    };
+
+    enemySprite.onPresenceOverlap = (presencePerceptionCircle, enemySprite) => {
+        if (enemySprite.body.overlapR > 100 && enemySprite.behaviour !== FOLLOW_BEHAVIOUR) {
+            enemySprite.handlePerceptedHero();
+        }
+    };
+
     scene.gridEngine.addCharacter({
         id: SLIME_SPRITE_NAME,
         sprite: enemySprite,
@@ -381,6 +395,20 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
     scene.enemies.add(enemySprite);
     // eslint-disable-next-line no-param-reassign
     scene.slimeSprite = enemySprite;
+};
+
+export const subscribeToGridEngineEvents = (scene) => {
+    scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
+        if (charId === SLIME_SPRITE_NAME) {
+            scene.slimeSprite.handleEnemyStoppedMoving();
+        }
+    });
+
+    scene.gridEngine.movementStarted().subscribe(({ charId, direction }) => {
+        if (charId === SLIME_SPRITE_NAME && !scene.slimeSprite.isTakingDamage) {
+            scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
+        }
+    });
 };
 
 export const getCalculateEnemyFollowPaths = (scene) => {
@@ -483,6 +511,12 @@ export const handleCreateHero = (scene) => {
         { x: 0, y: 0 },
         true
     );
+
+    heroSprite.on('animationcomplete', (animation, frame) => {
+        if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
+            scene.slimeSprite.handleStopTakingDamage();
+        }
+    });
 
     const updateActionCollider = ({ top, right, bottom, left, width, height } = heroSprite.body) => {
         const facingDirection = getSelectorData(selectHeroFacingDirection);
