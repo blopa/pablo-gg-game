@@ -202,8 +202,13 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         }
     };
 
-    const calculateEnemyFollowPaths = getCalculateEnemyFollowPaths(scene);
+    const [calculateEnemyFollowPaths, timeOutFunctionId] = getCalculateEnemyFollowPaths(scene);
     enemySprite.handleEnemyStoppedMoving = () => {
+        if (enemySprite.isTakingDamage) {
+            timeOutFunctionId?.remove?.();
+            return;
+        }
+
         const distance = PhaserMath.Distance.Between(
             scene.heroSprite.x,
             scene.heroSprite.y,
@@ -228,48 +233,92 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         calculateEnemyFollowPaths();
     };
 
+    const enemyImage = scene.add.image(
+        enemySprite.x,
+        enemySprite.y,
+        SLIME_SPRITE_NAME,
+        enemySprite.frame.name
+    ).setOrigin(0.2, 0.35);
+    enemyImage.setAlpha(0);
+
     enemySprite.handleTakeDamage = (damage, attackDirection) => {
-        // const pos = {
-        //     x: Math.round(enemySprite.x / TILE_WIDTH),
-        //     y: Math.round(enemySprite.y / TILE_HEIGHT),
-        // };
+        // const attackAnimation = scene.anims.anims.get('hero_attack_down');
+        // const attackAnimationDuration = attackAnimation.duration; // / attackAnimation.frameRate;
+        const animationDuration = 90;
+
         const pos = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
         scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
         scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
+        enemyImage.setPosition(enemySprite.x + (enemySprite.body.width / 2), enemySprite.y);
+        enemyImage.setFrame(enemySprite.frame.name);
+        enemySprite.setAlpha(0);
+        enemyImage.setAlpha(1);
 
         switch (attackDirection) {
             case 'attack_up_01': {
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
-                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
                     x: pos.x,
                     y: pos.y - 1,
+                });
+
+                scene.tweens.add({
+                    targets: enemyImage,
+                    duration: animationDuration,
+                    x: pos.x * TILE_WIDTH,
+                    y: (pos.y - 1) * TILE_HEIGHT,
+                    ease: 'Power1',
                 });
 
                 break;
             }
             case 'attack_right_01': {
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
-                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
                     x: pos.x + 1,
                     y: pos.y,
+                });
+
+                scene.tweens.add({
+                    targets: enemyImage,
+                    duration: animationDuration,
+                    x: (pos.x + 1) * TILE_WIDTH,
+                    y: pos.y * TILE_HEIGHT,
+                    ease: 'Power1',
                 });
 
                 break;
             }
             case 'attack_down_01': {
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
-                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
                     x: pos.x,
                     y: pos.y + 1,
+                });
+
+                scene.tweens.add({
+                    targets: enemyImage,
+                    duration: animationDuration,
+                    x: pos.x * TILE_WIDTH,
+                    y: (pos.y + 1) * TILE_HEIGHT,
+                    ease: 'Power1',
                 });
 
                 break;
             }
             case 'attack_left_01': {
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
-                scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
                     x: pos.x - 1,
                     y: pos.y,
+                });
+
+                scene.tweens.add({
+                    targets: enemyImage,
+                    duration: animationDuration,
+                    x: (pos.x - 1) * TILE_WIDTH,
+                    y: pos.y * TILE_HEIGHT,
+                    ease: 'Power1',
                 });
 
                 break;
@@ -289,17 +338,16 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
 
         // Add blinking effect
         const blinkTween = scene.tweens.add({
-            targets: enemySprite,
+            targets: enemyImage,
             alpha: 0,
-            duration: 50,
+            duration: Math.floor(animationDuration / 3),
+            // duration: animationDuration,
             ease: 'Power1',
             repeat: 3,
             yoyo: true,
-            onStart: () => {
-                enemySprite.alpha = 1;
-            },
             onComplete: () => {
-                enemySprite.alpha = 1;
+                enemySprite.setAlpha(1);
+                enemyImage.setAlpha(0);
             },
         });
 
@@ -314,7 +362,6 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
             onComplete: () => {
                 damageNumber.destroy();
                 blinkTween.stop();
-                enemySprite.alpha = 1;
             },
         });
     };
@@ -339,6 +386,8 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
 export const getCalculateEnemyFollowPaths = (scene) => {
     let timeOutFunctionId;
     const calculateEnemyFollowPaths = () => {
+        // console.log('running thiiis', ((new Error()).stack.split('\n')[2].trim().split(' ')[2]));
+        const movement = scene.gridEngine.getMovement(SLIME_SPRITE_NAME);
         timeOutFunctionId?.remove?.();
         timeOutFunctionId = null;
 
@@ -346,14 +395,17 @@ export const getCalculateEnemyFollowPaths = (scene) => {
             return;
         }
 
-        if (scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
+        // TODO add a if condition that checks for hero range
+        if (
+            (!scene.gridEngine.isMoving(SLIME_SPRITE_NAME) && movement.type === 'Target')
+            || scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR
+        ) {
             // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
             scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 4);
             scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 1);
             return;
         }
 
-        // TODO add a if condition that checks for hero range
         scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 2);
         scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
             x: Math.round(scene.heroSprite.x / TILE_WIDTH),
@@ -365,7 +417,7 @@ export const getCalculateEnemyFollowPaths = (scene) => {
         });
     };
 
-    return calculateEnemyFollowPaths;
+    return [calculateEnemyFollowPaths, timeOutFunctionId];
 };
 
 export const handleCreateHero = (scene) => {

@@ -27,7 +27,7 @@
     "eslint-plugin-unicorn": "^45.0.2",
     "eslint-plugin-unused-imports": "^2.0.0",
     "free-tex-packer-core": "^0.3.4",
-    "npm-check-updates": "^16.7.13",
+    "npm-check-updates": "^16.8.0",
     "sharp": "^0.31.3"
   },
   "dependencies": {
