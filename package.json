@@ -28,7 +28,7 @@
     "eslint-plugin-unused-imports": "^2.0.0",
     "free-tex-packer-core": "^0.3.4",
     "npm-check-updates": "^16.8.0",
-    "sharp": "^0.31.3"
+    "sharp": "^0.32.0"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
@@ -49,7 +49,7 @@
     "react-helmet": "^6.1.0",
     "react-intl": "^6.3.2",
     "react-scripts": "^5.0.1",
-    "sass": "^1.59.3",
+    "sass": "^1.60.0",
     "zustand": "^4.3.6"
   },
   "overrides": {

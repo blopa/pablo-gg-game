@@ -197,25 +197,14 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         }
     };
 
-    const [calculateEnemyFollowPaths, timeOutFunctionId] = getCalculateEnemyFollowPaths(scene);
+    const [calculateEnemyFollowPaths, timeOutFunctionId] = getCalculateEnemyFollowPaths(scene, enemySprite);
     enemySprite.handleEnemyStoppedMoving = () => {
         if (enemySprite.isTakingDamage) {
             timeOutFunctionId?.remove?.();
             return;
         }
 
-        const distance = PhaserMath.Distance.Between(
-            scene.heroSprite.x,
-            scene.heroSprite.y,
-            enemySprite.x,
-            enemySprite.y
-        );
-
-        if (distance < (TILE_HEIGHT * TILE_WIDTH) / 2) {
-            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 1);
-        } else {
-            calculateEnemyFollowPaths();
-        }
+        calculateEnemyFollowPaths();
     };
 
     enemySprite.handleStopTakingDamage = () => {
@@ -411,7 +400,7 @@ export const subscribeToGridEngineEvents = (scene) => {
     });
 };
 
-export const getCalculateEnemyFollowPaths = (scene) => {
+export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
     let timeOutFunctionId;
     const calculateEnemyFollowPaths = () => {
         // console.log('running thiiis', ((new Error()).stack.split('\n')[2].trim().split(' ')[2]));
@@ -423,22 +412,32 @@ export const getCalculateEnemyFollowPaths = (scene) => {
             return;
         }
 
-        // TODO add a if condition that checks for hero range
-        if (
-            (!scene.gridEngine.isMoving(SLIME_SPRITE_NAME) && movement.type === 'Target')
-            || scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR
-        ) {
+        if (scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
             // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
             scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 4);
             scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 1);
             return;
         }
 
-        scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 2);
-        scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
-            x: Math.round(scene.heroSprite.x / TILE_WIDTH),
-            y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
-        });
+        const distance = PhaserMath.Distance.Between(
+            scene.heroSprite.x,
+            scene.heroSprite.y,
+            enemySprite.x,
+            enemySprite.y
+        );
+
+        if (
+            (!scene.gridEngine.isMoving(SLIME_SPRITE_NAME) && movement.type === 'Target')
+            && distance < (TILE_HEIGHT * TILE_WIDTH) / 2
+        ) {
+            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 1);
+        } else {
+            scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 2);
+            scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+                x: Math.round(scene.heroSprite.x / TILE_WIDTH),
+                y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
+            });
+        }
 
         timeOutFunctionId = scene.time.delayedCall(1000, () => {
             calculateEnemyFollowPaths();
