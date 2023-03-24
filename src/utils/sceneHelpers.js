@@ -511,6 +511,35 @@ export const handleCreateHero = (scene) => {
         true
     );
 
+    heroSprite.handleEnemyOverlap = (enemySprite, heroEnemyOverlap) => {
+        // TODO improve this
+        // eslint-disable-next-line no-param-reassign
+        heroEnemyOverlap.active = false;
+
+        // Calculate the x and y positions relative to the enemySprite
+        const deltaX = enemySprite.x - heroSprite.x;
+        const deltaY = enemySprite.y - heroSprite.y;
+
+        // Check if deltaX is positive or negative and multiply by 1 or -1 accordingly
+        const newX = heroSprite.x - (deltaX > 0 ? 1 : -1) * TILE_WIDTH;
+        // Check if deltaY is positive or negative and multiply by 1 or -1 accordingly
+        const newY = heroSprite.y - (deltaY > 0 ? 1 : -1) * TILE_HEIGHT;
+
+        // Create the tween animation to move the heroSprite
+        const tween = scene.tweens.add({
+            targets: heroSprite,
+            x: newX,
+            y: newY,
+            ease: 'Power1',
+            duration: 40,
+            onComplete: () => {
+                tween.remove();
+                // eslint-disable-next-line no-param-reassign
+                heroEnemyOverlap.active = true;
+            },
+        });
+    };
+
     heroSprite.on('animationcomplete', (animation, frame) => {
         if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
             scene.slimeSprite.handleStopTakingDamage();
