@@ -87,7 +87,7 @@ export function create() {
     // Handle collisions
     const heroEnemyOverlap = scene.physics.add.overlap(scene.heroSprite, scene.enemies, (heroSprite, enemySprite) => {
         // console.log('overlap', 'heroSprite, enemySprite', enemyHeroOverlap);
-        heroSprite.handleEnemyOverlap?.(enemySprite, heroEnemyOverlap);
+        heroSprite.handleTakeDamage(5, enemySprite, heroEnemyOverlap);
         // enemySprite.handleHeroOverlap?.(heroSprite);
     });
 

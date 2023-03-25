@@ -313,41 +313,19 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
             }
         }
 
-        const damageNumber = scene.add.text(
-            enemySprite.x + 10,
-            enemySprite.y + 5,
-            `-${damage}`,
-            { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
-        ).setOrigin(0.5);
+        // Display damage number
+        displayDamageNumber(scene, enemySprite, damage);
 
         // Add blinking effect
-        const blinkTween = scene.tweens.add({
-            targets: enemyImage,
-            alpha: 0,
-            duration: Math.floor(animationDuration / 3),
-            // duration: animationDuration,
-            ease: 'Power1',
-            repeat: 3,
-            yoyo: true,
-            onComplete: () => {
+        createBlinkingEffect(
+            scene,
+            enemyImage,
+            Math.floor(animationDuration / 3),
+            () => {
                 enemySprite.setAlpha(1);
                 enemyImage.setAlpha(0);
-            },
-        });
-
-        scene.tweens.add({
-            targets: damageNumber,
-            alpha: 0,
-            duration: 1000,
-            onUpdate: (tween, target) => {
-                damageNumber.x = enemySprite.x + 10;
-                damageNumber.y = enemySprite.y + 5 - tween.totalProgress * 5;
-            },
-            onComplete: () => {
-                damageNumber.destroy();
-                blinkTween.stop();
-            },
-        });
+            }
+        );
     };
 
     enemySprite.onAttackOverlap = (attackSprite, enemySprite) => {
@@ -447,6 +425,43 @@ export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
     return [calculateEnemyFollowPaths, timeOutFunctionId];
 };
 
+export const createBlinkingEffect = (scene, targetSprite, duration, handleOnComplete) => {
+    scene.tweens.add({
+        targets: targetSprite,
+        alpha: 0,
+        duration,
+        ease: 'Power1',
+        repeat: 3,
+        yoyo: true,
+        onComplete: () => {
+            handleOnComplete?.();
+        },
+    });
+};
+
+export const displayDamageNumber = (scene, targetSprite, damage) => {
+    const damageNumber = scene.add.text(
+        targetSprite.x + 10,
+        targetSprite.y + 5,
+        `-${damage}`,
+        { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
+    ).setOrigin(0.5);
+
+    scene.tweens.add({
+        targets: damageNumber,
+        alpha: 0,
+        duration: 1000,
+        onUpdate: (tween, target) => {
+            damageNumber.x = targetSprite.x + 10;
+            damageNumber.y = targetSprite.y + 5 - tween.totalProgress * 5;
+        },
+        onComplete: () => {
+            damageNumber.destroy();
+            targetSprite.stop();
+        },
+    });
+};
+
 export const handleCreateHero = (scene) => {
     const initialFrame = getSelectorData(selectHeroInitialFrame);
     const initialPosition = getSelectorData(selectHeroInitialPosition);
@@ -460,9 +475,10 @@ export const handleCreateHero = (scene) => {
         .setDepth(1);
 
     // eslint-disable-next-line operator-assignment
-    heroSprite.body.width = heroSprite.body.width / 2;
+    // heroSprite.body.width = heroSprite.body.width / 2;
     // eslint-disable-next-line operator-assignment
-    heroSprite.body.height = heroSprite.body.height / 2;
+    // heroSprite.body.height = heroSprite.body.height / 2;
+    heroSprite.body.setCircle(heroSprite.body.width / 4);
     heroSprite.body.setOffset(heroSprite.body.width / 2, heroSprite.body.height);
 
     // Create attack animation
@@ -511,19 +527,45 @@ export const handleCreateHero = (scene) => {
         true
     );
 
-    heroSprite.handleEnemyOverlap = (enemySprite, heroEnemyOverlap) => {
-        // TODO improve this
+    heroSprite.handleTakeDamage = (damage, enemySprite, heroEnemyOverlap) => {
+        if (
+            heroSprite.body.overlapR === enemySprite.body.overlapR
+            && heroSprite.body.overlapR < 5
+        ) {
+            return;
+        }
+
         // eslint-disable-next-line no-param-reassign
         heroEnemyOverlap.active = false;
+
+        // eslint-disable-next-line no-param-reassign
+        heroSprite.isTakingDamage = true;
 
         // Calculate the x and y positions relative to the enemySprite
         const deltaX = enemySprite.x - heroSprite.x;
         const deltaY = enemySprite.y - heroSprite.y;
 
         // Check if deltaX is positive or negative and multiply by 1 or -1 accordingly
-        const newX = heroSprite.x - (deltaX > 0 ? 1 : -1) * TILE_WIDTH;
+        const newX = heroSprite.x - (deltaX > 0 ? 1 : -1) * TILE_WIDTH / 2;
         // Check if deltaY is positive or negative and multiply by 1 or -1 accordingly
-        const newY = heroSprite.y - (deltaY > 0 ? 1 : -1) * TILE_HEIGHT;
+        const newY = heroSprite.y - (deltaY > 0 ? 1 : -1) * TILE_HEIGHT / 2;
+
+        // Display damage number
+        displayDamageNumber(scene, heroSprite, damage);
+
+        // Add blinking effect
+        createBlinkingEffect(
+            scene,
+            heroSprite,
+            50,
+            () => {
+                heroSprite.setAlpha(1);
+                // eslint-disable-next-line no-param-reassign
+                heroEnemyOverlap.active = true;
+                // eslint-disable-next-line no-param-reassign
+                heroSprite.isTakingDamage = false;
+            }
+        );
 
         // Create the tween animation to move the heroSprite
         const tween = scene.tweens.add({
@@ -534,8 +576,7 @@ export const handleCreateHero = (scene) => {
             duration: 40,
             onComplete: () => {
                 tween.remove();
-                // eslint-disable-next-line no-param-reassign
-                heroEnemyOverlap.active = true;
+                heroSprite.updateActionCollider();
             },
         });
     };
@@ -613,6 +654,8 @@ export const handleCreateHero = (scene) => {
         heroSprite.attackSprite.update?.();
         updateActionCollider();
     };
+
+    heroSprite.updateActionCollider = updateActionCollider;
 
     // eslint-disable-next-line no-param-reassign
     scene.heroSprite = heroSprite;
