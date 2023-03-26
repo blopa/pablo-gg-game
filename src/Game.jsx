@@ -52,9 +52,6 @@ function Game() {
             defaultLocale={DEFAULT_LOCALE}
         >
             <ReactWrapper />
-            {/* {isMobile() && ( */}
-            {/*    <VirtualGamepad /> */}
-            {/* )} */}
         </IntlProvider>
     );
 }

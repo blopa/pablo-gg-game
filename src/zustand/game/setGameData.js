@@ -1,4 +1,12 @@
 export default (set) => ({
+    setGameShowHeadsUpDisplay: (showHeadsUpDisplay) =>
+        set((state) => ({
+            ...state,
+            game: {
+                ...state.game,
+                showHeadsUpDisplay,
+            },
+        })),
     setGameWidth: (width) =>
         set((state) => ({
             ...state,

@@ -16,5 +16,7 @@ export const selectGameCameraSizeUpdateCallbacks = (state) =>
 
 export const selectGameSetters = (state) => state.game.setters;
 
+export const selectGameShowHeadsUpDisplay = (state) => state.game.showHeadsUpDisplay;
+
 export const selectShouldPauseScene = (sceneName) => (state) =>
     state.game.pausedScenes[sceneName];

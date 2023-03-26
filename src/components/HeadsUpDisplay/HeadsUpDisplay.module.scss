@@ -1,0 +1,39 @@
+.hud-wrapper {
+    image-rendering: pixelated;
+    user-select: none;
+    user-drag: none;
+    padding: calc(var(--game-zoom) * 5px);
+}
+
+.hud-image-corner {
+    height: calc(var(--game-zoom) * 8px);
+}
+
+.hud-image-middle {
+    height: calc(var(--game-zoom) * 8px);
+}
+
+.hud-image-middle-health {
+    width: calc(var(--game-zoom) * var(--game-total-health) * 1px);
+}
+
+.hud-image-middle-mana {
+    width: calc(var(--game-zoom) * var(--game-total-mana) * 1px);
+}
+
+.hud-image-meter-health {
+    margin-right: calc(var(--game-zoom) * var(--game-current-health) * -1px);
+    width: calc(var(--game-zoom) * var(--game-current-health) * 1px);
+}
+
+.hud-image-meter-mana {
+    margin-right: calc(var(--game-zoom) * var(--game-current-mana) * -1px);
+    width: calc(var(--game-zoom) * var(--game-current-mana) * 1px);
+}
+
+.hud-image-meter {
+    margin-bottom: calc(var(--game-zoom) * 3px);
+    height: calc(var(--game-zoom) * 2px);
+    z-index: 2;
+    position: relative;
+}

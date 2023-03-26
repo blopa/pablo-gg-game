@@ -48,7 +48,8 @@ export function create() {
     // scene.input.on('pointerup', (pointer) => {
     //     console.log('clicky click');
     // });
-    const { addGameCameraSizeUpdateCallback } = getSelectorData(selectGameSetters);
+    const { addGameCameraSizeUpdateCallback, setGameShowHeadsUpDisplay } = getSelectorData(selectGameSetters);
+    setGameShowHeadsUpDisplay(true);
 
     // All of these functions need to be called in order
 
