@@ -29,6 +29,7 @@ import { selectMapKey, selectMapSetters, selectTilesets } from '../zustand/map/s
 import {
     selectHeroSetters,
     selectHeroInitialFrame,
+    selectHeroCurrentHealth,
     selectHeroInitialPosition,
     selectHeroFacingDirection,
 } from '../zustand/hero/selectHeroData';
@@ -535,6 +536,10 @@ export const handleCreateHero = (scene) => {
             return;
         }
 
+        const { setHeroCurrentHealth } = getSelectorData(selectHeroSetters);
+        const currentHealth = getSelectorData(selectHeroCurrentHealth);
+        const newHealth = setHeroCurrentHealth(currentHealth - damage);
+
         // eslint-disable-next-line no-param-reassign
         heroEnemyOverlap.active = false;
 
@@ -551,7 +556,11 @@ export const handleCreateHero = (scene) => {
         const newY = heroSprite.y - (deltaY > 0 ? 1 : -1) * TILE_HEIGHT / 2;
 
         // Display damage number
-        displayDamageNumber(scene, heroSprite, damage);
+        displayDamageNumber(
+            scene,
+            heroSprite,
+            Math.abs(newHealth - currentHealth)
+        );
 
         // Add blinking effect
         createBlinkingEffect(

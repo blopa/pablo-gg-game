@@ -26,6 +26,10 @@ const store = createStore((set) => ({
         facingDirection: '',
         initialPosition: {},
         previousPosition: {},
+        totalHealth: 80,
+        currentHealth: 80,
+        totalMana: 60,
+        currentMana: 60,
         initialFrame: '',
         inventory: {
             dice: [],

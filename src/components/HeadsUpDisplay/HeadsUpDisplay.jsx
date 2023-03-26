@@ -12,11 +12,22 @@ import manaMeter from '../../assets/images/mana_meter.png';
 // Styles
 import styles from './HeadsUpDisplay.module.scss';
 
+// Store
+import { useGameStore } from '../../zustand/store';
+
+// Selectors
+import {
+    selectHeroTotalMana,
+    selectHeroTotalHealth,
+    selectHeroCurrentMana,
+    selectHeroCurrentHealth,
+} from '../../zustand/hero/selectHeroData';
+
 function HeadsUpDisplay() {
-    const totalHealth = 80;
-    const currentHealth = 8;
-    const totalMana = 60;
-    const currentMana = 18;
+    const totalHealth = useGameStore(selectHeroTotalHealth);
+    const currentHealth = useGameStore(selectHeroCurrentHealth);
+    const totalMana = useGameStore(selectHeroTotalMana);
+    const currentMana = useGameStore(selectHeroCurrentMana);
 
     useEffect(() => {
         if (totalHealth > 0) {
