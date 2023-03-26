@@ -50,3 +50,9 @@ export const SHOULD_TILE_COLLIDE = 'should-tile-collide';
 // Enemies behaviours
 export const FOLLOW_BEHAVIOUR = 'follow-behaviour';
 export const PATROL_BEHAVIOUR = 'patrol-behaviour';
+
+// Depth
+export const HERO_DEPTH = 100;
+export const UI_DEPTH = 200;
+export const ENEMY_DEPTH = 20;
+export const ITEM_DEPTH = 10;

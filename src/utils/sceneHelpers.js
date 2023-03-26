@@ -4,8 +4,11 @@ import { Input, Math as PhaserMath } from 'phaser';
 import {
     DOOR,
     SLIME,
+    UI_DEPTH,
     IDLE_FRAME,
+    HERO_DEPTH,
     TILE_WIDTH,
+    ENEMY_DEPTH,
     TILE_HEIGHT,
     UP_DIRECTION,
     DOWN_DIRECTION,
@@ -186,7 +189,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         .sprite(position.x, position.y, spriteName)
         .setName(spriteName)
         .setOrigin(0, 0)
-        .setDepth(1);
+        .setDepth(ENEMY_DEPTH);
 
     enemySprite.body.setCircle(6);
     enemySprite.body.setOffset(enemySprite.body.width / 2, enemySprite.body.height + 1);
@@ -223,8 +226,10 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         enemySprite.y,
         SLIME_SPRITE_NAME,
         enemySprite.frame.name
-    ).setOrigin(0.2, 0.35);
-    enemyImage.setAlpha(0);
+    )
+        .setOrigin(0.2, 0.35)
+        .setDepth(ENEMY_DEPTH)
+        .setAlpha(0);
 
     enemySprite.handleTakeDamage = (damage, attackDirection) => {
         // const attackAnimation = scene.anims.anims.get('hero_attack_down');
@@ -236,16 +241,26 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
         enemyImage.setPosition(enemySprite.x + (enemySprite.body.width / 2), enemySprite.y);
         enemyImage.setFrame(enemySprite.frame.name);
+
+        // TODO there is a bug when you hit the enemy again right after hitting it, it will cancel the blinking animation
         enemySprite.setAlpha(0);
         enemyImage.setAlpha(1);
 
         switch (attackDirection) {
             case 'attack_up_01': {
-                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
+                const newPos = {
                     x: pos.x,
                     y: pos.y - 1,
-                });
+                };
+
+                if (scene.gridEngine.isTileBlocked(newPos)) {
+                    enemySprite.setAlpha(1);
+                    enemyImage.setAlpha(0);
+                    break;
+                }
+
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -258,11 +273,19 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 break;
             }
             case 'attack_right_01': {
-                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
+                const newPos = {
                     x: pos.x + 1,
                     y: pos.y,
-                });
+                };
+
+                if (scene.gridEngine.isTileBlocked(newPos)) {
+                    enemySprite.setAlpha(1);
+                    enemyImage.setAlpha(0);
+                    break;
+                }
+
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -275,11 +298,19 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 break;
             }
             case 'attack_down_01': {
-                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
+                const newPos = {
                     x: pos.x,
                     y: pos.y + 1,
-                });
+                };
+
+                if (scene.gridEngine.isTileBlocked(newPos)) {
+                    enemySprite.setAlpha(1);
+                    enemyImage.setAlpha(0);
+                    break;
+                }
+
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -292,11 +323,19 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 break;
             }
             case 'attack_left_01': {
-                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, {
+                const newPos = {
                     x: pos.x - 1,
                     y: pos.y,
-                });
+                };
+
+                if (scene.gridEngine.isTileBlocked(newPos)) {
+                    enemySprite.setAlpha(1);
+                    enemyImage.setAlpha(0);
+                    break;
+                }
+
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
+                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -446,7 +485,9 @@ export const displayDamageNumber = (scene, targetSprite, damage) => {
         targetSprite.y + 5,
         `-${damage}`,
         { fontFamily: '"Press Start 2P"', fontSize: 8, color: '#ff0000' }
-    ).setOrigin(0.5);
+    )
+        .setOrigin(0.5)
+        .setDepth(UI_DEPTH);
 
     scene.tweens.add({
         targets: damageNumber,
@@ -473,7 +514,7 @@ export const handleCreateHero = (scene) => {
         .sprite(x * TILE_WIDTH, y * TILE_HEIGHT, HERO_SPRITE_NAME, initialFrame)
         .setName(HERO_SPRITE_NAME)
         .setOrigin(0, 0)
-        .setDepth(1);
+        .setDepth(HERO_DEPTH);
 
     // eslint-disable-next-line operator-assignment
     // heroSprite.body.width = heroSprite.body.width / 2;
@@ -488,7 +529,7 @@ export const handleCreateHero = (scene) => {
         .setName(SWORD_SPRITE_NAME)
         .setOrigin(0, 0)
         .setVisible(false)
-        .setDepth(1);
+        .setDepth(HERO_DEPTH);
 
     // eslint-disable-next-line operator-assignment
     heroSprite.attackSprite.body.width = 20;
