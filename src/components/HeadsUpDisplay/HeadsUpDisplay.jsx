@@ -30,12 +30,12 @@ function HeadsUpDisplay() {
     const currentMana = useGameStore(selectHeroCurrentMana);
 
     useEffect(() => {
-        if (totalHealth > 0) {
+        if (totalHealth >= 0) {
             document.documentElement.style.setProperty('--game-total-health', totalHealth);
             document.documentElement.style.setProperty('--game-current-health', currentHealth);
         }
 
-        if (totalMana) {
+        if (totalMana >= 0) {
             document.documentElement.style.setProperty('--game-total-mana', totalMana);
             document.documentElement.style.setProperty('--game-current-mana', currentMana);
         }

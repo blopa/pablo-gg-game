@@ -106,6 +106,13 @@ export function create() {
     );
 
     scene.input.keyboard.on('keydown-SPACE', () => {
+        if (scene.heroSprite.isAttacking) {
+            return;
+        }
+
+        scene.heroSprite.isAttacking = true;
+        scene.heroSprite.attackSprite.setVisible(true);
+
         const updateAttackPosition = () => {
             const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
             switch (heroFacingDirection) {
@@ -147,17 +154,34 @@ export function create() {
             }
 
             scene.heroSprite.attackSprite.setFrame(`attack_${heroFacingDirection}_01`);
-            scene.heroSprite.attackSprite.setVisible(true);
         };
 
         updateAttackPosition();
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
         scene.heroSprite.attackSprite.update = updateAttackPosition;
+        const handleAttackComplete = (animation, frame) => {
+            if (!animation.key.includes('hero_attack')) {
+                return;
+            }
+
+            scene.heroSprite.attackSprite.setVisible(false);
+            scene.slimeSprite.handleStopTakingDamage();
+            scene.heroSprite.isAttacking = false;
+            delete scene.heroSprite.attackSprite.update;
+        };
+
+        const handleAttackStarted = (animation, frame) => {
+            if (!animation.key.includes('hero_attack')) {
+                return;
+            }
+
+            scene.heroSprite.attackSprite.setVisible(true);
+        };
+
         scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true)
-            .once('animationcomplete', () => {
-                scene.heroSprite.attackSprite.setVisible(false);
-                delete scene.heroSprite.attackSprite.update;
-            });
+            .once('animationstart', handleAttackStarted)
+            .once('animationcomplete', handleAttackComplete)
+            .once('animationstop', handleAttackComplete);
     });
 }
 

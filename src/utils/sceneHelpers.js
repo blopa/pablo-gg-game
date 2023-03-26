@@ -583,6 +583,9 @@ export const handleCreateHero = (scene) => {
             y: newY,
             ease: 'Power1',
             duration: 40,
+            onUpdate: () => {
+                scene.heroSprite.attackSprite.update?.();
+            },
             onComplete: () => {
                 tween.remove();
                 heroSprite.updateActionCollider();
@@ -590,11 +593,14 @@ export const handleCreateHero = (scene) => {
         });
     };
 
-    heroSprite.on('animationcomplete', (animation, frame) => {
-        if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
-            scene.slimeSprite.handleStopTakingDamage();
-        }
-    });
+    // const handleEnemyAnimationComplete = (animation, frame) => {
+    //     if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
+    //         scene.slimeSprite.handleStopTakingDamage();
+    //     }
+    // };
+    //
+    // heroSprite.on('animationcomplete', handleEnemyAnimationComplete)
+    //     .on('animationstop', handleEnemyAnimationComplete);
 
     const updateActionCollider = ({ top, right, bottom, left, width, height } = heroSprite.body) => {
         const facingDirection = getSelectorData(selectHeroFacingDirection);
