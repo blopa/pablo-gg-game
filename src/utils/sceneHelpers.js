@@ -240,7 +240,9 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
         enemySprite.currentHealth -= damage;
 
         if (enemySprite.currentHealth <= 0) {
-            enemySprite.setVisible(false); // TODO
+            scene.gridEngine.removeCharacter(spriteName);
+            enemySprite.destroy(true);
+            enemyImage.destroy(true);
             return;
         }
 
@@ -426,7 +428,10 @@ export const subscribeToGridEngineEvents = (scene) => {
     scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
         if (charId.includes(ENEMY_SPRITE_PREFIX)) {
             const enemySprite = scene.enemies.getChildren().find(({ name }) => name === charId);
-            enemySprite.handleEnemyStoppedMoving();
+
+            if (enemySprite) {
+                enemySprite.handleEnemyStoppedMoving();
+            }
         }
     });
 
@@ -434,7 +439,7 @@ export const subscribeToGridEngineEvents = (scene) => {
         if (charId.includes(ENEMY_SPRITE_PREFIX)) {
             const enemySprite = scene.enemies.getChildren().find(({ name }) => name === charId);
 
-            if (!enemySprite.isTakingDamage) {
+            if (enemySprite && !enemySprite.isTakingDamage) {
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
             }
         }
@@ -445,11 +450,12 @@ export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
     let timeOutFunctionId;
     const calculateEnemyFollowPaths = () => {
         // console.log('running thiiis', ((new Error()).stack.split('\n')[2].trim().split(' ')[2]));
-        const movement = scene.gridEngine.getMovement(enemySprite.name);
+        const allEnemies = scene.gridEngine.getAllCharacters();
+
         timeOutFunctionId?.remove?.();
         timeOutFunctionId = null;
 
-        if (enemySprite.isTakingDamage) {
+        if (!allEnemies.includes(enemySprite.name) || !enemySprite || enemySprite.isTakingDamage) {
             return;
         }
 
@@ -467,6 +473,7 @@ export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
             enemySprite.y
         );
 
+        const movement = scene.gridEngine.getMovement(enemySprite.name);
         if (
             (!scene.gridEngine.isMoving(enemySprite.name) && movement.type === 'Target')
             && distance < (TILE_HEIGHT * TILE_WIDTH) / 2
@@ -522,7 +529,10 @@ export const displayDamageNumber = (scene, targetSprite, damage) => {
         },
         onComplete: () => {
             damageNumber.destroy();
-            targetSprite.stop();
+
+            // by the time the tween is over
+            // the sprite might have been deleted already
+            targetSprite?.anims?.stop?.();
         },
     });
 };
@@ -642,7 +652,7 @@ export const handleCreateHero = (scene) => {
         );
 
         // Create the tween animation to move the heroSprite
-        const tween = scene.tweens.add({
+        scene.tweens.add({
             targets: heroSprite,
             x: newX,
             y: newY,
@@ -652,7 +662,6 @@ export const handleCreateHero = (scene) => {
                 scene.heroSprite.attackSprite.update?.();
             },
             onComplete: () => {
-                tween.remove();
                 heroSprite.updateActionCollider();
             },
         });
