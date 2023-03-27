@@ -381,13 +381,18 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
     };
 
     enemySprite.onAttackOverlap = (attackSprite, enemySprite) => {
-        if (enemySprite.isTakingDamage || !attackSprite.visible) {
+        if (
+            enemySprite.isTakingDamage
+            || !attackSprite.visible
+            || attackSprite.enemies.includes(enemySprite)
+        ) {
             return;
         }
 
         // eslint-disable-next-line no-param-reassign
         enemySprite.isTakingDamage = true;
         enemySprite.handleTakeDamage(10, attackSprite.frame.name);
+        attackSprite.enemies.push(enemySprite);
 
         // scene.gridEngine.stopMovement(spriteName);
         // const position = scene.gridEngine.getPosition(spriteName);
@@ -415,21 +420,23 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
 
     // Create enemy animation
     handleCreateEnemiesAnimations(scene, enemySprite);
-
-    // eslint-disable-next-line no-param-reassign
-    scene.slimeSprite = enemySprite;
 };
 
 export const subscribeToGridEngineEvents = (scene) => {
     scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
         if (charId.includes(ENEMY_SPRITE_PREFIX)) {
-            scene.slimeSprite.handleEnemyStoppedMoving();
+            const enemySprite = scene.enemies.getChildren().find(({ name }) => name === charId);
+            enemySprite.handleEnemyStoppedMoving();
         }
     });
 
     scene.gridEngine.movementStarted().subscribe(({ charId, direction }) => {
-        if (charId.includes(ENEMY_SPRITE_PREFIX) && !scene.slimeSprite.isTakingDamage) {
-            scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
+        if (charId.includes(ENEMY_SPRITE_PREFIX)) {
+            const enemySprite = scene.enemies.getChildren().find(({ name }) => name === charId);
+
+            if (!enemySprite.isTakingDamage) {
+                enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
+            }
         }
     });
 };
@@ -551,6 +558,7 @@ export const handleCreateHero = (scene) => {
     heroSprite.attackSprite.body.width = 20;
     // eslint-disable-next-line operator-assignment
     heroSprite.attackSprite.body.height = 20;
+    heroSprite.attackSprite.enemies = [];
 
     // const facingDirection = getSelectorData(selectHeroFacingDirection);
     // heroSprite.setFrame(
@@ -649,15 +657,6 @@ export const handleCreateHero = (scene) => {
             },
         });
     };
-
-    // const handleEnemyAnimationComplete = (animation, frame) => {
-    //     if (animation.key.includes('hero_attack') && scene.slimeSprite.isTakingDamage) {
-    //         scene.slimeSprite.handleStopTakingDamage();
-    //     }
-    // };
-    //
-    // heroSprite.on('animationcomplete', handleEnemyAnimationComplete)
-    //     .on('animationstop', handleEnemyAnimationComplete);
 
     const updateActionCollider = ({ top, right, bottom, left, width, height } = heroSprite.body) => {
         const facingDirection = getSelectorData(selectHeroFacingDirection);

@@ -164,8 +164,12 @@ export function create() {
                 return;
             }
 
+            while (scene.heroSprite.attackSprite.enemies.length > 0) {
+                const enemySprite = scene.heroSprite.attackSprite.enemies.pop();
+                enemySprite.handleStopTakingDamage();
+            }
+
             scene.heroSprite.attackSprite.setVisible(false);
-            scene.slimeSprite.handleStopTakingDamage(); // TODO idk how to fix this one
             scene.heroSprite.isAttacking = false;
             delete scene.heroSprite.attackSprite.update;
         };
