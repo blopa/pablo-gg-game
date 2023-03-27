@@ -95,14 +95,18 @@ export function create() {
     scene.physics.add.collider(scene.heroSprite, customColliders);
     scene.physics.add.overlap(
         scene.heroSprite.attackSprite,
-        scene.slimeSprite,
-        scene.slimeSprite.onAttackOverlap
+        scene.enemies,
+        (attackSprite, enemySprite) => {
+            enemySprite.onAttackOverlap(attackSprite, enemySprite);
+        }
     );
 
     scene.physics.add.overlap(
         scene.heroSprite.presencePerceptionCircle,
-        scene.slimeSprite,
-        scene.slimeSprite.onPresenceOverlap
+        scene.enemies,
+        (presencePerceptionCircle, enemySprite) => {
+            enemySprite.onPresenceOverlap(presencePerceptionCircle, enemySprite);
+        }
     );
 
     scene.input.keyboard.on('keydown-SPACE', () => {
@@ -165,7 +169,7 @@ export function create() {
             }
 
             scene.heroSprite.attackSprite.setVisible(false);
-            scene.slimeSprite.handleStopTakingDamage();
+            scene.slimeSprite.handleStopTakingDamage(); // TODO idk how to fix this one
             scene.heroSprite.isAttacking = false;
             delete scene.heroSprite.attackSprite.update;
         };
@@ -197,5 +201,7 @@ export function update(time, delta) {
 
     handleHeroMovement(scene);
     scene.heroSprite.update(time, delta);
-    scene.slimeSprite?.update?.(time, delta);
+    scene.enemies.getChildren().forEach((enemy) => {
+        enemy?.update?.(time, delta);
+    });
 }

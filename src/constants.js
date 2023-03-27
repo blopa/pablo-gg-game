@@ -12,6 +12,7 @@ export const HERO_SPRITE_NAME = 'hero';
 
 export const SWORD_SPRITE_NAME = 'sword';
 export const SLIME_SPRITE_NAME = 'slime';
+export const ENEMY_SPRITE_PREFIX = 'enemy';
 
 // Game Objects Tiled IDs
 export const SLIME = 1;

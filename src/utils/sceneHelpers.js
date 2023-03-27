@@ -20,7 +20,7 @@ import {
     SLIME_SPRITE_NAME,
     SWORD_SPRITE_NAME,
     SHOULD_TILE_COLLIDE,
-    IDLE_FRAME_POSITION_KEY,
+    IDLE_FRAME_POSITION_KEY, ENEMY_SPRITE_PREFIX,
 } from '../constants';
 
 // Utils
@@ -186,7 +186,7 @@ export const handleCreateMap = (scene) => {
 export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyHealth) => {
     // Create slime sprite
     const enemySprite = scene.physics.add
-        .sprite(position.x, position.y, spriteName)
+        .sprite(position.x, position.y, SLIME_SPRITE_NAME)
         .setName(spriteName)
         .setOrigin(0, 0)
         .setDepth(ENEMY_DEPTH);
@@ -194,6 +194,8 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
     enemySprite.body.setCircle(6);
     enemySprite.body.setOffset(enemySprite.body.width / 2, enemySprite.body.height + 1);
     enemySprite.behaviour = PATROL_BEHAVIOUR;
+    enemySprite.totalHealth = enemyHealth;
+    enemySprite.currentHealth = enemyHealth;
 
     enemySprite.update = (time, delta) => {
         if (enemySprite.body.overlapR < 10 && enemySprite.body.overlapR > 0) {
@@ -232,13 +234,20 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         .setAlpha(0);
 
     enemySprite.handleTakeDamage = (damage, attackDirection) => {
+        enemySprite.currentHealth -= damage;
+
+        if (enemySprite.currentHealth <= 0) {
+            enemySprite.setVisible(false); // TODO
+            return;
+        }
+
         // const attackAnimation = scene.anims.anims.get('hero_attack_down');
         // const attackAnimationDuration = attackAnimation.duration; // / attackAnimation.frameRate;
         const animationDuration = 90;
 
-        const pos = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
-        scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
-        scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 20);
+        const pos = scene.gridEngine.getPosition(spriteName);
+        scene.gridEngine.stopMovement(spriteName);
+        scene.gridEngine.setSpeed(spriteName, 20);
         enemyImage.setPosition(enemySprite.x + (enemySprite.body.width / 2), enemySprite.y);
         enemyImage.setFrame(enemySprite.frame.name);
 
@@ -260,7 +269,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 }
 
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_down`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
+                scene.gridEngine.setPosition(spriteName, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -285,7 +294,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 }
 
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_left`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
+                scene.gridEngine.setPosition(spriteName, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -310,7 +319,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 }
 
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_up`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
+                scene.gridEngine.setPosition(spriteName, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -335,7 +344,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
                 }
 
                 enemySprite.anims.play(`${SLIME_SPRITE_NAME}_walk_right`);
-                scene.gridEngine.setPosition(SLIME_SPRITE_NAME, newPos);
+                scene.gridEngine.setPosition(spriteName, newPos);
 
                 scene.tweens.add({
                     targets: enemyImage,
@@ -377,8 +386,8 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         enemySprite.isTakingDamage = true;
         enemySprite.handleTakeDamage(10, attackSprite.frame.name);
 
-        // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
-        // const position = scene.gridEngine.getPosition(SLIME_SPRITE_NAME);
+        // scene.gridEngine.stopMovement(spriteName);
+        // const position = scene.gridEngine.getPosition(spriteName);
     };
 
     enemySprite.onPresenceOverlap = (presencePerceptionCircle, enemySprite) => {
@@ -388,7 +397,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
     };
 
     scene.gridEngine.addCharacter({
-        id: SLIME_SPRITE_NAME,
+        id: spriteName,
         sprite: enemySprite,
         speed: 1,
         startPosition: {
@@ -397,7 +406,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
         },
         // offsetY: 4,
     });
-    scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 2);
+    scene.gridEngine.moveRandomly(spriteName, 2000, 2);
 
     scene.enemies.add(enemySprite);
     // eslint-disable-next-line no-param-reassign
@@ -406,13 +415,13 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
 
 export const subscribeToGridEngineEvents = (scene) => {
     scene.gridEngine.movementStopped().subscribe(({ charId, direction }) => {
-        if (charId === SLIME_SPRITE_NAME) {
+        if (charId.includes(ENEMY_SPRITE_PREFIX)) {
             scene.slimeSprite.handleEnemyStoppedMoving();
         }
     });
 
     scene.gridEngine.movementStarted().subscribe(({ charId, direction }) => {
-        if (charId === SLIME_SPRITE_NAME && !scene.slimeSprite.isTakingDamage) {
+        if (charId.includes(ENEMY_SPRITE_PREFIX) && !scene.slimeSprite.isTakingDamage) {
             scene.slimeSprite.anims.play(`${SLIME_SPRITE_NAME}_walk_${direction}`);
         }
     });
@@ -422,7 +431,7 @@ export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
     let timeOutFunctionId;
     const calculateEnemyFollowPaths = () => {
         // console.log('running thiiis', ((new Error()).stack.split('\n')[2].trim().split(' ')[2]));
-        const movement = scene.gridEngine.getMovement(SLIME_SPRITE_NAME);
+        const movement = scene.gridEngine.getMovement(enemySprite.name);
         timeOutFunctionId?.remove?.();
         timeOutFunctionId = null;
 
@@ -431,9 +440,9 @@ export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
         }
 
         if (scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
-            // scene.gridEngine.stopMovement(SLIME_SPRITE_NAME);
-            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 2000, 4);
-            scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 1);
+            // scene.gridEngine.stopMovement(enemySprite.name);
+            scene.gridEngine.moveRandomly(enemySprite.name, 2000, 4);
+            scene.gridEngine.setSpeed(enemySprite.name, 1);
             return;
         }
 
@@ -445,13 +454,13 @@ export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
         );
 
         if (
-            (!scene.gridEngine.isMoving(SLIME_SPRITE_NAME) && movement.type === 'Target')
+            (!scene.gridEngine.isMoving(enemySprite.name) && movement.type === 'Target')
             && distance < (TILE_HEIGHT * TILE_WIDTH) / 2
         ) {
-            scene.gridEngine.moveRandomly(SLIME_SPRITE_NAME, 10, 1);
+            scene.gridEngine.moveRandomly(enemySprite.name, 10, 1);
         } else {
-            scene.gridEngine.setSpeed(SLIME_SPRITE_NAME, 2);
-            scene.gridEngine.moveTo(SLIME_SPRITE_NAME, {
+            scene.gridEngine.setSpeed(enemySprite.name, 2);
+            scene.gridEngine.moveTo(enemySprite.name, {
                 x: Math.round(scene.heroSprite.x / TILE_WIDTH),
                 y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
             });
@@ -730,7 +739,7 @@ export const handleObjectsLayer = (scene) => {
                     const { type, health } = propertiesObject;
                     handleCreateEnemy(
                         scene,
-                        SLIME_SPRITE_NAME,
+                        `${ENEMY_SPRITE_PREFIX}_${SLIME_SPRITE_NAME}_${objectIndex}`,
                         { x, y },
                         type,
                         health
