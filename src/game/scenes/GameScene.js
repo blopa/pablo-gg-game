@@ -12,7 +12,6 @@ import {
     handleConfigureCamera,
     handleCreateHeroAnimations,
     subscribeToGridEngineEvents,
-    handleCreateEnemiesAnimations,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
 
@@ -75,9 +74,6 @@ export function create() {
     addGameCameraSizeUpdateCallback(() => {
         handleConfigureCamera(scene);
     });
-
-    // Enemies animations
-    handleCreateEnemiesAnimations(scene);
 
     // Hero animations
     handleCreateHeroAnimations(scene);

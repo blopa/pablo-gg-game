@@ -20,7 +20,8 @@ import {
     SLIME_SPRITE_NAME,
     SWORD_SPRITE_NAME,
     SHOULD_TILE_COLLIDE,
-    IDLE_FRAME_POSITION_KEY, ENEMY_SPRITE_PREFIX,
+    ENEMY_SPRITE_PREFIX,
+    IDLE_FRAME_POSITION_KEY,
 } from '../constants';
 
 // Utils
@@ -183,7 +184,7 @@ export const handleCreateMap = (scene) => {
     return customColliders;
 };
 
-export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyHealth) => {
+export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyFamily, enemyHealth) => {
     // Create slime sprite
     const enemySprite = scene.physics.add
         .sprite(position.x, position.y, SLIME_SPRITE_NAME)
@@ -196,6 +197,8 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
     enemySprite.behaviour = PATROL_BEHAVIOUR;
     enemySprite.totalHealth = enemyHealth;
     enemySprite.currentHealth = enemyHealth;
+    enemySprite.enemyFamily = enemyFamily;
+    enemySprite.enemyType = enemyType;
 
     enemySprite.update = (time, delta) => {
         if (enemySprite.body.overlapR < 10 && enemySprite.body.overlapR > 0) {
@@ -409,6 +412,10 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyH
     scene.gridEngine.moveRandomly(spriteName, 2000, 2);
 
     scene.enemies.add(enemySprite);
+
+    // Create enemy animation
+    handleCreateEnemiesAnimations(scene, enemySprite);
+
     // eslint-disable-next-line no-param-reassign
     scene.slimeSprite = enemySprite;
 };
@@ -435,11 +442,11 @@ export const getCalculateEnemyFollowPaths = (scene, enemySprite) => {
         timeOutFunctionId?.remove?.();
         timeOutFunctionId = null;
 
-        if (scene.slimeSprite.isTakingDamage) {
+        if (enemySprite.isTakingDamage) {
             return;
         }
 
-        if (scene.slimeSprite.behaviour !== FOLLOW_BEHAVIOUR) {
+        if (enemySprite.behaviour !== FOLLOW_BEHAVIOUR) {
             // scene.gridEngine.stopMovement(enemySprite.name);
             scene.gridEngine.moveRandomly(enemySprite.name, 2000, 4);
             scene.gridEngine.setSpeed(enemySprite.name, 1);
@@ -742,6 +749,7 @@ export const handleObjectsLayer = (scene) => {
                         `${ENEMY_SPRITE_PREFIX}_${SLIME_SPRITE_NAME}_${objectIndex}`,
                         { x, y },
                         type,
+                        SLIME_SPRITE_NAME,
                         health
                     );
 
@@ -819,11 +827,12 @@ export const handleConfigureCamera = (scene) => {
     }
 };
 
-export const handleCreateEnemiesAnimations = (scene) => {
+export const handleCreateEnemiesAnimations = (scene, enemySprite) => {
+    // TODO check if animation already exists first
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
         createAnimation(
             scene,
-            SLIME_SPRITE_NAME,
+            enemySprite.enemyFamily,
             `walk_${direction}`,
             3,
             3,
@@ -832,7 +841,7 @@ export const handleCreateEnemiesAnimations = (scene) => {
         );
     });
 
-    scene.slimeSprite.anims.play('slime_walk_down');
+    enemySprite.anims.play(`${enemySprite.enemyFamily}_walk_${DOWN_DIRECTION}`);
 };
 
 export const handleCreateHeroAnimations = (scene) => {
