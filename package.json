@@ -35,7 +35,7 @@
     "@emotion/styled": "^11.10.6",
     "@mikewesthad/dungeon": "^2.0.1",
     "@mui/icons-material": "^5.11.11",
-    "@mui/material": "^5.11.14",
+    "@mui/material": "^5.11.15",
     "@react-spring/web": "^9.7.1",
     "beautiful-react-hooks": "^3.12.2",
     "classnames": "^2.3.2",

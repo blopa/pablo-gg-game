@@ -1,4 +1,4 @@
-import { Input, Math as PhaserMath } from 'phaser';
+import { Input, Math as PhaserMath, Display } from 'phaser';
 
 // Constants
 import {
@@ -240,6 +240,55 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
         enemySprite.currentHealth -= damage;
 
         if (enemySprite.currentHealth <= 0) {
+            // const tex = scene.textures.get('slime');
+            // let newTexture = tex.generateTexture('new', tex.width, tex.height);
+            // debugger;
+
+            const graphics = scene.add.graphics();
+            // const pixels = scene.textures.getPixel(16, 16, enemyImage.texture.key);
+            // const hexColor = Display.Color.RGBToString(pixels.r, pixels.g, pixels.b);
+
+            const source = enemyImage.texture.getSourceImage();
+            const canvas = scene.textures.createCanvas('canvasName', source.width, source.height);
+            canvas.draw(0, 0, source);
+            const context = canvas.getContext('2d');
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+
+            let totalRed = 0;
+            let totalGreen = 0;
+            let totalBlue = 0;
+            const numPixels = pixels.length / 4;
+
+            for (let i = 0; i < pixels.length; i += 4) {
+                totalRed += pixels[i];
+                totalGreen += pixels[i + 1];
+                totalBlue += pixels[i + 2];
+            }
+
+            const avgRed = totalRed / numPixels;
+            const avgGreen = totalGreen / numPixels;
+            const avgBlue = totalBlue / numPixels;
+            const avgColor = Display.Color.GetColor(avgRed, avgGreen, avgBlue);
+
+            // const intColor = Number.parseInt(avgColor.replace('#', '0x'), 10);
+            graphics.fillStyle(avgColor, 1);
+            graphics.fillRect(0, 0, 2, 2);
+            graphics.generateTexture('blue-pixel', 2, 2);
+            // scene.textures.addTexture(texture);
+            const tex = scene.textures.get('blue-pixel');
+
+            const emitter = scene.add.particles(tex).createEmitter({
+                x: enemySprite.x,
+                y: enemySprite.y,
+                speed: { min: -800, max: 800 },
+                angle: { min: 0, max: 360 },
+                gravityY: 1000,
+                lifespan: 2000,
+                blendMode: 'ADD',
+            });
+
+            emitter.explode(30);
             scene.gridEngine.removeCharacter(spriteName);
             enemySprite.destroy(true);
             enemyImage.destroy(true);
