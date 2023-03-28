@@ -249,6 +249,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
             // const hexColor = Display.Color.RGBToString(pixels.r, pixels.g, pixels.b);
 
             const source = enemyImage.texture.getSourceImage();
+            // TODO rename and destroy this canvas
             const canvas = scene.textures.createCanvas('canvasName', source.width, source.height);
             canvas.draw(0, 0, source);
             const context = canvas.getContext('2d');
@@ -279,19 +280,32 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
             const tex = scene.textures.get('blue-pixel');
 
             const emitter = scene.add.particles(tex).createEmitter({
-                x: enemySprite.x,
-                y: enemySprite.y,
-                speed: { min: -800, max: 800 },
+                x: enemySprite.x + Math.round(enemySprite.width / 2),
+                y: enemySprite.y + Math.round(enemySprite.height / 2),
+                speed: { min: 50, max: 200 },
                 angle: { min: 0, max: 360 },
-                gravityY: 1000,
-                lifespan: 2000,
+                gravityY: 50,
+                lifespan: 350,
                 blendMode: 'ADD',
+                scale: { start: 1, end: 0 },
+                // quantity: 64,
             });
 
-            emitter.explode(30);
-            scene.gridEngine.removeCharacter(spriteName);
-            enemySprite.destroy(true);
-            enemyImage.destroy(true);
+            scene.gridEngine.stopMovement(spriteName);
+            scene.tweens.add({
+                targets: enemySprite,
+                duration: 30,
+                scale: 1.5,
+                alpha: 0.5,
+                ease: 'Power1',
+                onComplete: () => {
+                    emitter.explode(30);
+                    scene.gridEngine.removeCharacter(spriteName);
+                    enemySprite.destroy(true);
+                    enemyImage.destroy(true);
+                },
+            });
+
             return;
         }
 
