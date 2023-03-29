@@ -1,4 +1,4 @@
-import { Input, Math as PhaserMath, Display } from 'phaser';
+import { Input, Math as PhaserMath, Display, Physics } from 'phaser';
 
 // Constants
 import {
@@ -8,7 +8,6 @@ import {
     IDLE_FRAME,
     HERO_DEPTH,
     TILE_WIDTH,
-    ENEMY_DEPTH,
     TILE_HEIGHT,
     UP_DIRECTION,
     DOWN_DIRECTION,
@@ -189,9 +188,9 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
     const enemySprite = scene.physics.add
         .sprite(position.x, position.y, SLIME_SPRITE_NAME)
         .setName(spriteName)
-        .setOrigin(0, 0)
-        .setDepth(ENEMY_DEPTH);
+        .setOrigin(0, 0);
 
+    updateSpriteDepthBasedOnHeroPosition(enemySprite);
     enemySprite.body.setCircle(6);
     enemySprite.body.setOffset(enemySprite.body.width / 2, enemySprite.body.height + 1);
     enemySprite.behaviour = PATROL_BEHAVIOUR;
@@ -201,6 +200,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
     enemySprite.enemyType = enemyType;
 
     enemySprite.update = (time, delta) => {
+        updateSpriteDepthBasedOnHeroPosition(enemySprite);
         if (enemySprite.body.overlapR < 10 && enemySprite.body.overlapR > 0) {
             enemySprite.behaviour = PATROL_BEHAVIOUR;
         }
@@ -233,76 +233,30 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
         enemySprite.frame.name
     )
         .setOrigin(0.2, 0.35)
-        .setDepth(ENEMY_DEPTH)
+        .setDepth(enemySprite.depth)
         .setAlpha(0);
 
     enemySprite.handleTakeDamage = (damage, attackDirection) => {
         enemySprite.currentHealth -= damage;
 
+        // Display damage number
+        displayDamageNumber(scene, enemySprite, damage);
+
         if (enemySprite.currentHealth <= 0) {
-            // const tex = scene.textures.get('slime');
-            // let newTexture = tex.generateTexture('new', tex.width, tex.height);
-            // debugger;
-
-            const graphics = scene.add.graphics();
-            // const pixels = scene.textures.getPixel(16, 16, enemyImage.texture.key);
-            // const hexColor = Display.Color.RGBToString(pixels.r, pixels.g, pixels.b);
-
-            const source = enemyImage.texture.getSourceImage();
-            // TODO rename and destroy this canvas
-            const canvas = scene.textures.createCanvas('canvasName', source.width, source.height);
-            canvas.draw(0, 0, source);
-            const context = canvas.getContext('2d');
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-
-            let totalRed = 0;
-            let totalGreen = 0;
-            let totalBlue = 0;
-            const numPixels = pixels.length / 4;
-
-            for (let i = 0; i < pixels.length; i += 4) {
-                totalRed += pixels[i];
-                totalGreen += pixels[i + 1];
-                totalBlue += pixels[i + 2];
-            }
-
-            const avgRed = totalRed / numPixels;
-            const avgGreen = totalGreen / numPixels;
-            const avgBlue = totalBlue / numPixels;
-            const avgColor = Display.Color.GetColor(avgRed, avgGreen, avgBlue);
-
-            // const intColor = Number.parseInt(avgColor.replace('#', '0x'), 10);
-            graphics.fillStyle(avgColor, 1);
-            graphics.fillRect(0, 0, 2, 2);
-            graphics.generateTexture('blue-pixel', 2, 2);
-            // scene.textures.addTexture(texture);
-            const tex = scene.textures.get('blue-pixel');
-
-            const emitter = scene.add.particles(tex).createEmitter({
-                x: enemySprite.x + Math.round(enemySprite.width / 2),
-                y: enemySprite.y + Math.round(enemySprite.height / 2),
-                speed: { min: 50, max: 200 },
-                angle: { min: 0, max: 360 },
-                gravityY: 50,
-                lifespan: 350,
-                blendMode: 'ADD',
-                scale: { start: 1, end: 0 },
-                // quantity: 64,
-            });
-
+            const [emitter, canvas] = createEnemyDeathAnimation(scene, enemySprite);
             scene.gridEngine.stopMovement(spriteName);
             scene.tweens.add({
                 targets: enemySprite,
-                duration: 30,
+                duration: 70,
                 scale: 1.5,
                 alpha: 0.5,
                 ease: 'Power1',
                 onComplete: () => {
-                    emitter.explode(30);
+                    emitter.explode(PhaserMath.Between(20, 35));
                     scene.gridEngine.removeCharacter(spriteName);
                     enemySprite.destroy(true);
                     enemyImage.destroy(true);
+                    canvas.destroy();
                 },
             });
 
@@ -430,9 +384,6 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
             }
         }
 
-        // Display damage number
-        displayDamageNumber(scene, enemySprite, damage);
-
         // Add blinking effect
         createBlinkingEffect(
             scene,
@@ -485,6 +436,79 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
 
     // Create enemy animation
     handleCreateEnemiesAnimations(scene, enemySprite);
+};
+
+export const createEnemyDeathAnimation = (scene, enemySprite) => {
+    // const tex = scene.textures.get('slime');
+    // let newTexture = tex.generateTexture('new', tex.width, tex.height);
+    // debugger;
+
+    const graphics = scene.add.graphics();
+    // const pixels = scene.textures.getPixel(16, 16, enemyImage.texture.key);
+    // const hexColor = Display.Color.RGBToString(pixels.r, pixels.g, pixels.b);
+
+    const source = enemySprite.texture.getSourceImage(); // enemyImage
+    // TODO only create this canvas once for each type of enemy
+    const canvas = scene.textures.createCanvas(PhaserMath.RND.uuid(), source.width, source.height);
+    canvas.draw(0, 0, source);
+    const context = canvas.getContext('2d');
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+
+    let totalRed = 0;
+    let totalGreen = 0;
+    let totalBlue = 0;
+    const numPixels = pixels.length / 4;
+
+    for (let i = 0; i < pixels.length; i += 4) {
+        totalRed += pixels[i];
+        totalGreen += pixels[i + 1];
+        totalBlue += pixels[i + 2];
+    }
+
+    const avgRed = totalRed / numPixels;
+    const avgGreen = totalGreen / numPixels;
+    const avgBlue = totalBlue / numPixels;
+    const avgColor = Display.Color.GetColor(avgRed, avgGreen, avgBlue);
+
+    // const intColor = Number.parseInt(avgColor.replace('#', '0x'), 10);
+    graphics.fillStyle(avgColor, 1);
+    graphics.fillRect(0, 0, 2, 2);
+    graphics.generateTexture('blue-pixel', 2, 2);
+    // scene.textures.addTexture(texture);
+    const tex = scene.textures.get('blue-pixel');
+
+    const particles = scene.add.particles(tex);
+    const emitter = particles.createEmitter({
+        x: enemySprite.x + Math.round(enemySprite.width / 2),
+        y: enemySprite.y + Math.round(enemySprite.height / 2),
+        speed: { min: 50, max: 200 },
+        angle: { min: 0, max: 360 },
+        gravityY: 50,
+        lifespan: 350,
+        blendMode: 'ADD',
+        scale: { start: 1, end: 0 },
+        // quantity: 64,
+    });
+
+    emitter.onParticleDeath((particle) => {
+        emitter.active = false;
+        particles.destroy();
+    });
+
+    return [emitter, canvas];
+};
+
+export const updateSpriteDepthBasedOnHeroPosition = (sprite) => {
+    const { heroSprite } = sprite.scene;
+
+    if (sprite.y < heroSprite.y) {
+        if (sprite.depth > HERO_DEPTH) {
+            sprite.setDepth(HERO_DEPTH - 1);
+        }
+    } else if (sprite.depth < HERO_DEPTH) {
+        sprite.setDepth(HERO_DEPTH + 1);
+    }
 };
 
 export const subscribeToGridEngineEvents = (scene) => {
@@ -674,6 +698,10 @@ export const handleCreateHero = (scene) => {
             return;
         }
 
+        if (heroSprite.isTakingDamage) {
+            return;
+        }
+
         const { setHeroCurrentHealth } = getSelectorData(selectHeroSetters);
         const currentHealth = getSelectorData(selectHeroCurrentHealth);
         const newHealth = setHeroCurrentHealth(currentHealth - damage);
@@ -711,6 +739,7 @@ export const handleCreateHero = (scene) => {
                 heroEnemyOverlap.active = true;
                 // eslint-disable-next-line no-param-reassign
                 heroSprite.isTakingDamage = false;
+                heroSprite.body.setVelocity(0, 0);
             }
         );
 
@@ -723,6 +752,8 @@ export const handleCreateHero = (scene) => {
             duration: 40,
             onUpdate: () => {
                 scene.heroSprite.attackSprite.update?.();
+                // scene.physics.moveTo(heroSprite, heroSprite.x, heroSprite.y);
+                scene.heroSprite.body.setVelocity(1, 1); // TODO maybe
             },
             onComplete: () => {
                 heroSprite.updateActionCollider();
@@ -956,7 +987,7 @@ export const handleCreateHeroAnimations = (scene) => {
 
 export const handleHeroMovement = (scene, heroSpeed = 80) => {
     const dialogMessages = getSelectorData(selectDialogMessages);
-    if (dialogMessages.length > 0) {
+    if (dialogMessages.length > 0 || scene.heroSprite.isTakingDamage) {
         return;
     }
 
