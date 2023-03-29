@@ -18,6 +18,9 @@ export const ENEMY_SPRITE_PREFIX = 'enemy';
 export const SLIME = 1;
 export const DOOR = 6;
 
+// village_01
+export const BOX_INDEX = 312;
+
 export const IDLE_FRAME = 'walk_position_02';
 export const IDLE_FRAME_POSITION_KEY = 'position';
 

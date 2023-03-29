@@ -88,6 +88,7 @@ export function create() {
         // enemySprite.handleHeroOverlap?.(heroSprite);
     });
 
+    scene.physics.add.collider(scene.heroSprite, scene.elements);
     scene.physics.add.collider(scene.heroSprite, customColliders);
     scene.physics.add.overlap(
         scene.heroSprite.attackSprite,

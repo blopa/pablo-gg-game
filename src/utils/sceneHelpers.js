@@ -1,4 +1,4 @@
-import { Input, Math as PhaserMath, Display, Physics } from 'phaser';
+import { Input, Math as PhaserMath, Display } from 'phaser';
 
 // Constants
 import {
@@ -20,7 +20,7 @@ import {
     SWORD_SPRITE_NAME,
     SHOULD_TILE_COLLIDE,
     ENEMY_SPRITE_PREFIX,
-    IDLE_FRAME_POSITION_KEY,
+    IDLE_FRAME_POSITION_KEY, BOX_INDEX,
 } from '../constants';
 
 // Utils
@@ -76,6 +76,8 @@ export const handleCreateGroups = (scene) => {
     scene.items = scene.add.group();
     // eslint-disable-next-line no-param-reassign
     scene.mapLayers = scene.add.group();
+    // eslint-disable-next-line no-param-reassign
+    scene.elements = scene.add.group();
 };
 
 /**
@@ -98,7 +100,47 @@ export const handleCreateMap = (scene) => {
 
         layer.layer.data.forEach((tileRows) => {
             tileRows.forEach((tile) => {
-                const { index, tileset, properties } = tile;
+                const { index, tileset, properties, pixelX, pixelY } = tile;
+                if (index === -1) {
+                    return;
+                }
+
+                // TODO create a function that checkes this
+                if (index === BOX_INDEX) {
+                    // const gameObjects = layer.createFromTiles(
+                    //     index,
+                    //     -1,
+                    //     { key: tileset.name, frame: index },
+                    //     scene
+                    // );
+
+                    const gameObjects = scene.physics.add.sprite(
+                        pixelX,
+                        pixelY,
+                        tileset.name
+                    ).setOrigin(0, 0);
+                    gameObjects.setImmovable(true);
+
+                    const tilesPerRow = gameObjects.width / TILE_WIDTH;
+                    const totalRows = gameObjects.height / TILE_HEIGHT;
+                    const tileIndex = index - tileset.firstgid;
+                    const x = (tileIndex % tilesPerRow) * TILE_WIDTH;
+                    const y = Math.floor(tileIndex / totalRows) * TILE_HEIGHT;
+
+                    gameObjects.body.width = TILE_WIDTH;
+                    gameObjects.body.height = TILE_HEIGHT;
+                    gameObjects.body.setOffset(x, y);
+
+                    gameObjects.setCrop(x, y, TILE_WIDTH, TILE_HEIGHT);
+                    gameObjects.setPosition(gameObjects.x - x, gameObjects.y - y);
+
+                    layer.removeTileAt(tile.x, tile.y);
+
+                    scene.elements.add(gameObjects);
+
+                    return;
+                }
+
                 const { collideLeft, collideRight, collideUp, collideDown } = properties;
                 const tilesetCustomColliders = tileset?.getTileData?.(index);
                 const shouldCollide = Boolean(collideLeft)
