@@ -1,3 +1,4 @@
+import { Physics } from 'phaser';
 import { GridEngine } from 'grid-engine';
 
 // Utils
@@ -11,7 +12,7 @@ import {
     handleCreateControls,
     handleConfigureCamera,
     handleCreateHeroAnimations,
-    subscribeToGridEngineEvents,
+    subscribeToGridEngineEvents, calculateClosesestSprite,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
 
@@ -75,8 +76,8 @@ export function create() {
         handleConfigureCamera(scene);
     });
 
-    // Hero animations
-    handleCreateHeroAnimations(scene);
+    // TODO Hero animations
+    handleCreateHeroAnimations(scene.heroSprite);
 
     // Subscribe to grid-engine events
     subscribeToGridEngineEvents(scene);
@@ -90,6 +91,20 @@ export function create() {
 
     scene.physics.add.collider(scene.heroSprite, scene.elements);
     scene.physics.add.collider(scene.heroSprite, customColliders);
+
+    const overlaps = new Set();
+    scene.physics.add.overlap(scene.elements, scene.heroSprite.actionCollider, (element, actionCollider) => {
+        overlaps.add(element);
+    });
+
+    scene.heroSprite.actionCollider.on('overlapend', () => {
+        overlaps.clear();
+    });
+
+    // scene.heroSprite.actionCollider.on('overlapstart', () => {
+    //     // TODO
+    // });
+
     scene.physics.add.overlap(
         scene.heroSprite.attackSprite,
         scene.enemies,
@@ -106,8 +121,60 @@ export function create() {
         }
     );
 
+    // TODO
     scene.input.keyboard.on('keydown-SPACE', () => {
         if (scene.heroSprite.isAttacking) {
+            return;
+        }
+
+        const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
+        const element = calculateClosesestSprite(scene.heroSprite, overlaps);
+
+        if (element) {
+            let newX = element.x;
+            let newY = element.y;
+
+            switch (heroFacingDirection) {
+                case 'up':
+                    newY -= 16;
+                    break;
+                case 'down':
+                    newY += 16;
+                    break;
+                case 'left':
+                    newX -= 16;
+                    break;
+                case 'right':
+                    newX += 16;
+                    break;
+                default:
+                    // Handle invalid direction
+                    break;
+            }
+
+            const startX = element.x;
+            const startY = element.y;
+            const bodyStartX = element.body.x;
+            const bodyStartY = element.body.y;
+
+            scene.tweens.add({
+                targets: element,
+                x: newX,
+                y: newY,
+                duration: 500,
+                ease: 'Linear',
+                onUpdate: (tween, target) => {
+                    const { totalProgress } = tween;
+                    if (target.body && target.body.type === Physics.STATIC_BODY) {
+                        // eslint-disable-next-line no-param-reassign
+                        target.body.x = bodyStartX + (newX - startX) * totalProgress;
+                        // eslint-disable-next-line no-param-reassign
+                        target.body.y = bodyStartY + (newY - startY) * totalProgress;
+                    }
+                },
+            });
+
+            scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
             return;
         }
 
@@ -158,7 +225,6 @@ export function create() {
         };
 
         updateAttackPosition();
-        const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
         scene.heroSprite.attackSprite.update = updateAttackPosition;
         const handleAttackComplete = (animation, frame) => {
             if (!animation.key.includes('hero_attack')) {
@@ -188,13 +254,22 @@ export function create() {
             .once('animationcomplete', handleAttackComplete)
             .once('animationstop', handleAttackComplete);
     });
+
+    scene.heroSprite.on('animationstop', () => {
+        scene.heroSprite.actionCollider.body.setVelocity(0, 0);
+    });
+
+    scene.heroSprite.on('animationstart', () => {
+        const { heroSprite } = scene;
+        heroSprite.updateActionCollider();
+    });
 }
 
 export function update(time, delta) {
     const scene = sceneHelpers.getScene();
-    const shouldPause = getSelectorData(selectShouldPauseScene('GameScene'));
+    const shouldPause = getSelectorData(selectShouldPauseScene(key));
     if (shouldPause) {
-        // figure out a better way to do this
+        // TODO figure out a better way to do this
         scene.heroSprite.body.setVelocity(0, 0);
         scene.heroSprite.anims.pause();
         return;
@@ -202,6 +277,7 @@ export function update(time, delta) {
 
     handleHeroMovement(scene);
     scene.heroSprite.update(time, delta);
+    scene.heroSprite.actionCollider.update(time, delta);
     scene.enemies.getChildren().forEach((enemy) => {
         enemy?.update?.(time, delta);
     });

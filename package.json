@@ -50,7 +50,7 @@
     "react-intl": "^6.3.2",
     "react-scripts": "^5.0.1",
     "sass": "^1.60.0",
-    "zustand": "^4.3.6"
+    "zustand": "^4.3.7"
   },
   "overrides": {
     "react-router-dom": "5.3.4",

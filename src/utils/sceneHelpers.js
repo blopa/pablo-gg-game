@@ -38,8 +38,8 @@ import {
 } from '../zustand/hero/selectHeroData';
 import { selectGameSetters } from '../zustand/game/selectGameData';
 
-export const createAnimation = (scene, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
-    scene.anims.create({
+export const createAnimation = (sprite, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
+    sprite.anims.create({
         key: `${assetKey}_${animationName}`,
         frames: Array.from({ length: frameQuantity }).map((n, index) => ({
             key: assetKey,
@@ -114,12 +114,13 @@ export const handleCreateMap = (scene) => {
                     //     scene
                     // );
 
-                    const gameObjects = scene.physics.add.sprite(
+                    // TODO move most of these stuff into another function
+                    const gameObjects = scene.physics.add.staticSprite(
                         pixelX,
                         pixelY,
                         tileset.name
                     ).setOrigin(0, 0);
-                    gameObjects.setImmovable(true);
+                    // gameObjects.setImmovable(true);
 
                     const tilesPerRow = gameObjects.width / TILE_WIDTH;
                     const totalRows = gameObjects.height / TILE_HEIGHT;
@@ -129,10 +130,11 @@ export const handleCreateMap = (scene) => {
 
                     gameObjects.body.width = TILE_WIDTH;
                     gameObjects.body.height = TILE_HEIGHT;
-                    gameObjects.body.setOffset(x, y);
+                    gameObjects.body.setOffset(gameObjects.width / 2, gameObjects.height / 2);
 
                     gameObjects.setCrop(x, y, TILE_WIDTH, TILE_HEIGHT);
                     gameObjects.setPosition(gameObjects.x - x, gameObjects.y - y);
+                    gameObjects.elementType = BOX_INDEX;
 
                     layer.removeTileAt(tile.x, tile.y);
 
@@ -713,6 +715,17 @@ export const handleCreateHero = (scene) => {
         TILE_HEIGHT / 2
     );
 
+    // const canvas = scene.textures.createCanvas('transparent', 1, 1);
+    // const context = canvas.getContext('2d');
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+    // const sprite = scene.physics.add.sprite(
+    //     heroSprite.x + heroSprite.body.width / 2,
+    //     heroSprite.y + heroSprite.height,
+    //     'slime'
+    // );
+    // sprite.setSize(heroSprite.body.width, TILE_HEIGHT / 2);
+    // heroSprite.actionCollider = sprite;
+
     // heroSprite.attackCollider = createInteractiveGameObject(
     //     scene,
     //     0,
@@ -731,6 +744,61 @@ export const handleCreateHero = (scene) => {
         { x: 0, y: 0 },
         true
     );
+
+    const updatePresencePerceptionCircle = () => {
+        heroSprite.presencePerceptionCircle.setX(
+            heroSprite.x - Math.round(heroSprite.presencePerceptionCircle.width / 2 - heroSprite.width / 2)
+        );
+        heroSprite.presencePerceptionCircle.setY(
+            heroSprite.y - Math.round(heroSprite.presencePerceptionCircle.height / 2 - heroSprite.height / 2) + 6
+        );
+    };
+
+    const updateActionCollider = ({ top, right, bottom, left, width, height } = heroSprite.body) => {
+        const facingDirection = getSelectorData(selectHeroFacingDirection);
+
+        switch (facingDirection) {
+            case DOWN_DIRECTION: {
+                heroSprite.actionCollider.body.width = heroSprite.body.width;
+                heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
+                heroSprite.actionCollider.setX(left);
+                heroSprite.actionCollider.setY(bottom);
+
+                break;
+            }
+
+            case UP_DIRECTION: {
+                heroSprite.actionCollider.body.width = heroSprite.body.width;
+                heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
+                heroSprite.actionCollider.setX(left);
+                heroSprite.actionCollider.setY(top - heroSprite.actionCollider.body.height);
+
+                break;
+            }
+
+            case LEFT_DIRECTION: {
+                heroSprite.actionCollider.body.height = heroSprite.body.height;
+                heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
+                heroSprite.actionCollider.setX(left - heroSprite.actionCollider.body.width);
+                heroSprite.actionCollider.setY(top);
+
+                break;
+            }
+
+            case RIGHT_DIRECTION: {
+                heroSprite.actionCollider.body.height = heroSprite.body.height;
+                heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
+                heroSprite.actionCollider.setX(right);
+                heroSprite.actionCollider.setY(top);
+
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+    };
 
     heroSprite.handleTakeDamage = (damage, enemySprite, heroEnemyOverlap) => {
         if (
@@ -782,6 +850,8 @@ export const handleCreateHero = (scene) => {
                 // eslint-disable-next-line no-param-reassign
                 heroSprite.isTakingDamage = false;
                 heroSprite.body.setVelocity(0, 0);
+                updateActionCollider();
+                updatePresencePerceptionCircle();
             }
         );
 
@@ -793,68 +863,20 @@ export const handleCreateHero = (scene) => {
             ease: 'Power1',
             duration: 40,
             onUpdate: () => {
+                updateActionCollider();
+                updatePresencePerceptionCircle();
                 scene.heroSprite.attackSprite.update?.();
                 // scene.physics.moveTo(heroSprite, heroSprite.x, heroSprite.y);
                 scene.heroSprite.body.setVelocity(1, 1); // TODO maybe
             },
             onComplete: () => {
-                heroSprite.updateActionCollider();
+                updateActionCollider();
+                updatePresencePerceptionCircle();
             },
         });
     };
 
-    const updateActionCollider = ({ top, right, bottom, left, width, height } = heroSprite.body) => {
-        const facingDirection = getSelectorData(selectHeroFacingDirection);
-        heroSprite.presencePerceptionCircle.setX(
-            heroSprite.x - Math.round(heroSprite.presencePerceptionCircle.width / 2 - heroSprite.width / 2)
-        );
-        heroSprite.presencePerceptionCircle.setY(
-            heroSprite.y - Math.round(heroSprite.presencePerceptionCircle.height / 2 - heroSprite.height / 2) + 6
-        );
-
-        switch (facingDirection) {
-            case DOWN_DIRECTION: {
-                heroSprite.actionCollider.body.width = heroSprite.body.width;
-                heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
-                heroSprite.actionCollider.setX(left);
-                heroSprite.actionCollider.setY(bottom);
-
-                break;
-            }
-
-            case UP_DIRECTION: {
-                heroSprite.actionCollider.body.width = heroSprite.body.width;
-                heroSprite.actionCollider.body.height = TILE_HEIGHT / 2;
-                heroSprite.actionCollider.setX(left);
-                heroSprite.actionCollider.setY(top - heroSprite.actionCollider.body.height);
-
-                break;
-            }
-
-            case LEFT_DIRECTION: {
-                heroSprite.actionCollider.body.height = heroSprite.body.height;
-                heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
-                heroSprite.actionCollider.setX(left - heroSprite.actionCollider.body.width);
-                heroSprite.actionCollider.setY(top);
-
-                break;
-            }
-
-            case RIGHT_DIRECTION: {
-                heroSprite.actionCollider.body.height = heroSprite.body.height;
-                heroSprite.actionCollider.body.width = TILE_WIDTH / 2;
-                heroSprite.actionCollider.setX(right);
-                heroSprite.actionCollider.setY(top);
-
-                break;
-            }
-
-            default: {
-                break;
-            }
-        }
-    };
-
+    updatePresencePerceptionCircle();
     updateActionCollider({
         top: heroSprite.y + (heroSprite.height - heroSprite.body.height),
         right: heroSprite.x + heroSprite.width - (heroSprite.width - heroSprite.body.width) / 2,
@@ -868,14 +890,46 @@ export const handleCreateHero = (scene) => {
         }
 
         heroSprite.attackSprite.update?.();
-        updateActionCollider();
+        updatePresencePerceptionCircle();
     };
 
     heroSprite.updateActionCollider = updateActionCollider;
 
+    let lastEvent = 'overlapend';
+    heroSprite.actionCollider.update = (time, delta) => {
+        const touching = !heroSprite.actionCollider.body.touching.none;
+        const wasTouching = !heroSprite.actionCollider.body.wasTouching.none;
+        const { embedded } = heroSprite.actionCollider.body;
+        const hasVelocity = heroSprite.actionCollider.body.velocity.x !== 0
+            || heroSprite.actionCollider.body.velocity.y !== 0;
+
+        if (lastEvent !== 'overlapstart' && ((hasVelocity && touching && !wasTouching) || embedded)) {
+            lastEvent = 'overlapstart';
+            // heroSprite.actionCollider.emit(lastEvent);
+        } else if (lastEvent !== 'overlapend' && ((hasVelocity && !touching && wasTouching) || !embedded)) {
+            lastEvent = 'overlapend';
+            heroSprite.actionCollider.emit(lastEvent);
+        }
+    };
+
     // eslint-disable-next-line no-param-reassign
     scene.heroSprite = heroSprite;
     scene.sprites.add(heroSprite);
+};
+
+export const calculateClosesestSprite = (heroSprite, sprites) => {
+    let closestSprite;
+    let shortestDistance = Number.POSITIVE_INFINITY;
+
+    sprites.forEach((sprite) => {
+        const distance = PhaserMath.Distance.Between(heroSprite.x, heroSprite.y, sprite.x, sprite.y);
+        if (distance < shortestDistance) {
+            closestSprite = sprite;
+            shortestDistance = distance;
+        }
+    });
+
+    return closestSprite;
 };
 
 export const handleObjectsLayer = (scene) => {
@@ -975,7 +1029,7 @@ export const handleCreateEnemiesAnimations = (scene, enemySprite) => {
     // TODO check if animation already exists first
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
         createAnimation(
-            scene,
+            enemySprite,
             enemySprite.enemyFamily,
             `walk_${direction}`,
             3,
@@ -988,11 +1042,11 @@ export const handleCreateEnemiesAnimations = (scene, enemySprite) => {
     enemySprite.anims.play(`${enemySprite.enemyFamily}_walk_${DOWN_DIRECTION}`);
 };
 
-export const handleCreateHeroAnimations = (scene) => {
+export const handleCreateHeroAnimations = (heroSprite) => {
     // Animations
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
         createAnimation(
-            scene,
+            heroSprite,
             HERO_SPRITE_NAME,
             `walk_${direction}`,
             3,
@@ -1004,7 +1058,7 @@ export const handleCreateHeroAnimations = (scene) => {
 
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
         createAnimation(
-            scene,
+            heroSprite,
             HERO_SPRITE_NAME,
             `attack_${direction}`,
             1,
@@ -1016,7 +1070,7 @@ export const handleCreateHeroAnimations = (scene) => {
 
     // [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
     //     createAnimation(
-    //         scene,
+    //         sprite,
     //         SWORD_SPRITE_NAME,
     //         `attack_${direction}`,
     //         1,
@@ -1029,9 +1083,15 @@ export const handleCreateHeroAnimations = (scene) => {
 
 export const handleHeroMovement = (scene, heroSpeed = 80) => {
     const dialogMessages = getSelectorData(selectDialogMessages);
-    if (dialogMessages.length > 0 || scene.heroSprite.isTakingDamage) {
+    if (dialogMessages.length > 0) {
         return;
     }
+
+    // if (dialogMessages.length > 0 || scene.heroSprite.isTakingDamage) {
+    //     scene.heroSprite.actionCollider.body.setVelocity(0, 0); // TODO maybe
+    //     scene.heroSprite.updateActionCollider();
+    //     return;
+    // }
 
     const { setHeroFacingDirection } = getSelectorData(selectHeroSetters);
 
@@ -1071,10 +1131,30 @@ export const handleHeroMovement = (scene, heroSpeed = 80) => {
     }
 
     scene.heroSprite.body.setVelocity(velocityX, velocityY);
+    scene.heroSprite.actionCollider.body.setVelocity(velocityX, velocityY);
+
+    if (!scene.heroSprite.body.blocked.none || scene.heroSprite.body.speed === 0) {
+        scene.heroSprite.actionCollider.body.setVelocity(0, 0); // TODO maybe
+        scene.heroSprite.updateActionCollider();
+    }
+
+    if ((scene.heroSprite.body.blocked.up || scene.heroSprite.body.blocked.down) && velocityX !== 0) {
+        scene.heroSprite.actionCollider.body.setVelocity(velocityX, 0); // TODO maybe
+        scene.heroSprite.updateActionCollider();
+    }
+
+    if ((scene.heroSprite.body.blocked.left || scene.heroSprite.body.blocked.right) && velocityY !== 0) {
+        scene.heroSprite.actionCollider.body.setVelocity(0, velocityY); // TODO maybe
+        scene.heroSprite.updateActionCollider();
+    }
+
     if (animName) {
         scene.heroSprite.anims.play(animName, true);
     } else {
-        scene.heroSprite.anims.stop();
+        if (scene.heroSprite.anims.isPlaying) {
+            scene.heroSprite.anims.stop();
+        }
+
         const facingDirection = getSelectorData(selectHeroFacingDirection);
         scene.heroSprite.setFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
     }
