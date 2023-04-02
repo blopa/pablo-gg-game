@@ -10,6 +10,7 @@ import {
     HERO_DEPTH,
     TILE_WIDTH,
     TILE_HEIGHT,
+    GRASS_INDEX,
     UP_DIRECTION,
     DOWN_DIRECTION,
     LEFT_DIRECTION,
@@ -101,12 +102,25 @@ export const handleCreateMap = (scene) => {
 
         layer.layer.data.forEach((tileRows) => {
             tileRows.forEach((tile) => {
-                const { index, tileset, properties, pixelX, pixelY } = tile;
+                const { index, tileset, properties, x: tileX, y: tileY } = tile;
                 if (index === -1) {
                     return;
                 }
 
                 // TODO create a function that checkes this
+                // and also check for the tileset name I guess
+                if (index === GRASS_INDEX) {
+                    const gameObject = createGameObjectForTile(scene, tile);
+                    gameObject.elementType = GRASS_INDEX;
+                    layer.removeTileAt(tileX, tileY);
+
+                    scene.elements.add(gameObject);
+
+                    return;
+                }
+
+                // TODO create a function that checkes this
+                // and also check for the tileset name I guess
                 if (index === BOX_INDEX) {
                     // const gameObjects = layer.createFromTiles(
                     //     index,
@@ -115,32 +129,11 @@ export const handleCreateMap = (scene) => {
                     //     scene
                     // );
 
-                    // TODO move most of these stuff into another function
-                    const gameObjects = scene.physics.add.staticSprite(
-                        pixelX,
-                        pixelY,
-                        tileset.name
-                    ).setOrigin(0, 0);
-                    // gameObjects.setImmovable(true);
+                    const gameObject = createGameObjectForTile(scene, tile);
+                    gameObject.elementType = BOX_INDEX;
+                    layer.removeTileAt(tileX, tileY);
 
-                    const tilesPerRow = gameObjects.width / TILE_WIDTH;
-                    const totalRows = gameObjects.height / TILE_HEIGHT;
-                    const tileIndex = index - tileset.firstgid;
-                    const x = (tileIndex % tilesPerRow) * TILE_WIDTH;
-                    const y = Math.floor(tileIndex / totalRows) * TILE_HEIGHT;
-
-                    gameObjects.body.width = TILE_WIDTH;
-                    gameObjects.body.height = TILE_HEIGHT;
-                    // gameObjects.body.setOffset(x, y);
-                    gameObjects.body.setOffset(gameObjects.width / 2, gameObjects.height / 2);
-
-                    gameObjects.setCrop(x, y, TILE_WIDTH, TILE_HEIGHT);
-                    gameObjects.setPosition(gameObjects.x - x, gameObjects.y - y);
-                    gameObjects.elementType = BOX_INDEX;
-
-                    layer.removeTileAt(tile.x, tile.y);
-
-                    scene.elements.add(gameObjects);
+                    scene.elements.add(gameObject);
 
                     return;
                 }
@@ -227,6 +220,33 @@ export const handleCreateMap = (scene) => {
     scene.map = map;
 
     return customColliders;
+};
+
+export const createGameObjectForTile = (scene, tile) => {
+    const { index, tileset, properties, pixelX, pixelY } = tile;
+    const gameObject = scene.physics.add.staticSprite(
+        pixelX,
+        pixelY,
+        tileset.name
+    ).setOrigin(0, 0);
+    // gameObjects.setImmovable(true);
+
+    const columns = gameObject.width / TILE_WIDTH;
+    // const rows = gameObject.height / TILE_HEIGHT;
+    const tileIndex = index - tileset.firstgid;
+    const x = (tileIndex % columns) * TILE_WIDTH;
+    const y = Math.round(tileIndex / columns) * TILE_HEIGHT;
+    // const y = (Math.floor((tileIndex - 1) / columns) + 1) * TILE_HEIGHT;
+
+    gameObject.body.width = TILE_WIDTH;
+    gameObject.body.height = TILE_HEIGHT;
+    // gameObjects.body.setOffset(x, y);
+    gameObject.body.setOffset(gameObject.width / 2, gameObject.height / 2);
+
+    gameObject.setCrop(x, y, TILE_WIDTH, TILE_HEIGHT);
+    gameObject.setPosition(gameObject.x - x, gameObject.y - y);
+
+    return gameObject;
 };
 
 export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyFamily, enemyHealth) => {

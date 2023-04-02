@@ -20,6 +20,7 @@ export const DOOR = 6;
 
 // village_01
 export const BOX_INDEX = 312;
+export const GRASS_INDEX = 1248;
 
 export const IDLE_FRAME = 'walk_position_02';
 export const IDLE_FRAME_POSITION_KEY = 'position';

@@ -33,7 +33,7 @@ import {
     LEFT_DIRECTION,
     RIGHT_DIRECTION,
     HERO_SPRITE_NAME,
-    SHOULD_TILE_COLLIDE,
+    SHOULD_TILE_COLLIDE, GRASS_INDEX, BOX_INDEX,
 } from '../../constants';
 
 export const key = 'GameScene';
@@ -138,7 +138,7 @@ export function create() {
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
         const element = calculateClosesestStaticElement(scene.heroSprite, overlaps);
 
-        if (element) {
+        if (element && element.elementType === BOX_INDEX) {
             if (element.isMoving) {
                 return;
             }
@@ -233,6 +233,12 @@ export function create() {
             });
 
             return;
+        }
+
+        if (element.elementType === GRASS_INDEX) {
+            // TODO add animation etc
+            element.destroy();
+            overlaps.delete(element);
         }
 
         scene.heroSprite.isAttacking = true;
