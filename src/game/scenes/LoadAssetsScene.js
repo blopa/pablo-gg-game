@@ -19,12 +19,12 @@ import {
 
 // Selectors
 import {
-    selectLoadedAtlases,
-    selectAssetsSetters,
-    selectLoadedImages,
+    selectLoadedMaps,
     selectLoadedFonts,
     selectLoadedJSONs,
-    selectLoadedMaps,
+    selectLoadedImages,
+    selectAssetsSetters,
+    selectLoadedAtlases,
 } from '../../zustand/assets/selectLoadedAssets';
 import { selectMapSetters } from '../../zustand/map/selectMapData';
 import { selectGameSetters } from '../../zustand/game/selectGameData';

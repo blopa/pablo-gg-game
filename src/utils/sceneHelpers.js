@@ -5,6 +5,7 @@ import {
     DOOR,
     SLIME,
     UI_DEPTH,
+    BOX_INDEX,
     IDLE_FRAME,
     HERO_DEPTH,
     TILE_WIDTH,
@@ -20,7 +21,7 @@ import {
     SWORD_SPRITE_NAME,
     SHOULD_TILE_COLLIDE,
     ENEMY_SPRITE_PREFIX,
-    IDLE_FRAME_POSITION_KEY, BOX_INDEX,
+    IDLE_FRAME_POSITION_KEY,
 } from '../constants';
 
 // Utils
@@ -130,6 +131,7 @@ export const handleCreateMap = (scene) => {
 
                     gameObjects.body.width = TILE_WIDTH;
                     gameObjects.body.height = TILE_HEIGHT;
+                    // gameObjects.body.setOffset(x, y);
                     gameObjects.body.setOffset(gameObjects.width / 2, gameObjects.height / 2);
 
                     gameObjects.setCrop(x, y, TILE_WIDTH, TILE_HEIGHT);
@@ -706,7 +708,6 @@ export const handleCreateHero = (scene) => {
     //     IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection)
     // );
 
-    scene.physics.add.collider(heroSprite, scene.mapLayers);
     heroSprite.actionCollider = createInteractiveGameObject(
         scene,
         heroSprite.x + heroSprite.body.width / 2,
@@ -905,7 +906,7 @@ export const handleCreateHero = (scene) => {
 
         if (lastEvent !== 'overlapstart' && ((hasVelocity && touching && !wasTouching) || embedded)) {
             lastEvent = 'overlapstart';
-            // heroSprite.actionCollider.emit(lastEvent);
+            heroSprite.actionCollider.emit(lastEvent);
         } else if (lastEvent !== 'overlapend' && ((hasVelocity && !touching && wasTouching) || !embedded)) {
             lastEvent = 'overlapend';
             heroSprite.actionCollider.emit(lastEvent);
@@ -917,12 +918,12 @@ export const handleCreateHero = (scene) => {
     scene.sprites.add(heroSprite);
 };
 
-export const calculateClosesestSprite = (heroSprite, sprites) => {
+export const calculateClosesestStaticElement = (heroSprite, sprites) => {
     let closestSprite;
     let shortestDistance = Number.POSITIVE_INFINITY;
 
     sprites.forEach((sprite) => {
-        const distance = PhaserMath.Distance.Between(heroSprite.x, heroSprite.y, sprite.x, sprite.y);
+        const distance = PhaserMath.Distance.Between(heroSprite.x, heroSprite.y, sprite.body.x, sprite.body.y);
         if (distance < shortestDistance) {
             closestSprite = sprite;
             shortestDistance = distance;

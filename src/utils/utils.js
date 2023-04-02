@@ -1,13 +1,13 @@
 import { GameObjects } from 'phaser';
 import {
-    ARROW_RIGHT_KEY,
-    ARROW_DOWN_KEY,
-    ARROW_LEFT_KEY,
-    ARROW_UP_KEY,
-    TILE_HEIGHT,
-    TILE_WIDTH,
     ENTER_KEY,
     SPACE_KEY,
+    TILE_WIDTH,
+    TILE_HEIGHT,
+    ARROW_UP_KEY,
+    ARROW_LEFT_KEY,
+    ARROW_DOWN_KEY,
+    ARROW_RIGHT_KEY,
 } from '../constants';
 
 // Store

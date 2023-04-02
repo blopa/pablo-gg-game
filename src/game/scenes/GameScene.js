@@ -1,4 +1,4 @@
-import { Physics } from 'phaser';
+import { Physics, Geom } from 'phaser';
 import { GridEngine } from 'grid-engine';
 
 // Utils
@@ -12,7 +12,8 @@ import {
     handleCreateControls,
     handleConfigureCamera,
     handleCreateHeroAnimations,
-    subscribeToGridEngineEvents, calculateClosesestSprite,
+    subscribeToGridEngineEvents,
+    calculateClosesestStaticElement,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
 
@@ -25,11 +26,14 @@ import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 
 // Constants
 import {
-    HERO_SPRITE_NAME,
-    RIGHT_DIRECTION,
-    LEFT_DIRECTION,
-    DOWN_DIRECTION,
+    TILE_WIDTH,
+    TILE_HEIGHT,
     UP_DIRECTION,
+    DOWN_DIRECTION,
+    LEFT_DIRECTION,
+    RIGHT_DIRECTION,
+    HERO_SPRITE_NAME,
+    SHOULD_TILE_COLLIDE,
 } from '../../constants';
 
 export const key = 'GameScene';
@@ -83,13 +87,16 @@ export function create() {
     subscribeToGridEngineEvents(scene);
 
     // Handle collisions
+    scene.physics.add.collider(scene.heroSprite, scene.mapLayers);
     const heroEnemyOverlap = scene.physics.add.overlap(scene.heroSprite, scene.enemies, (heroSprite, enemySprite) => {
         // console.log('overlap', 'heroSprite, enemySprite', enemyHeroOverlap);
         heroSprite.handleTakeDamage(5, enemySprite, heroEnemyOverlap);
         // enemySprite.handleHeroOverlap?.(heroSprite);
     });
 
+    // scene.physics.add.collider(scene.mapLayers, scene.elements);
     scene.physics.add.collider(scene.heroSprite, scene.elements);
+    // scene.physics.add.collider(scene.elements, null);
     scene.physics.add.collider(scene.heroSprite, customColliders);
 
     const overlaps = new Set();
@@ -99,10 +106,11 @@ export function create() {
 
     scene.heroSprite.actionCollider.on('overlapend', () => {
         overlaps.clear();
+        // console.log('overlapend', overlaps);
     });
 
     // scene.heroSprite.actionCollider.on('overlapstart', () => {
-    //     // TODO
+    //     console.log('overlapstart', overlaps);
     // });
 
     scene.physics.add.overlap(
@@ -128,35 +136,82 @@ export function create() {
         }
 
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
-        const element = calculateClosesestSprite(scene.heroSprite, overlaps);
+        const element = calculateClosesestStaticElement(scene.heroSprite, overlaps);
 
         if (element) {
-            let newX = element.x;
-            let newY = element.y;
+            if (element.isMoving) {
+                return;
+            }
+
+            let diffX = 0;
+            let diffY = 0;
 
             switch (heroFacingDirection) {
-                case 'up':
-                    newY -= 16;
+                case UP_DIRECTION:
+                    diffY = -TILE_HEIGHT;
                     break;
-                case 'down':
-                    newY += 16;
+                case DOWN_DIRECTION:
+                    diffY = TILE_HEIGHT;
                     break;
-                case 'left':
-                    newX -= 16;
+                case LEFT_DIRECTION:
+                    diffX = -TILE_WIDTH;
                     break;
-                case 'right':
-                    newX += 16;
+                case RIGHT_DIRECTION:
+                    diffX = TILE_WIDTH;
                     break;
                 default:
                     // Handle invalid direction
                     break;
             }
 
+            // the actual sprite position is not acurate
+            // because of a lot of offsets
+            // so to get the real position we need to check for the body
+            // but to move the sprite image we need to move the sprite itself
+            // this is like this because I'm using the tile image as the sprite image
             const startX = element.x;
             const startY = element.y;
+            const newX = startX + diffX;
+            const newY = startY + diffY;
             const bodyStartX = element.body.x;
             const bodyStartY = element.body.y;
+            const bodyNewX = bodyStartX + diffX;
+            const bodyNewY = bodyStartY + diffY;
+            scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
 
+            // scene.physics.moveTo(element, newX, newY);
+            const isOccupiedByTile = scene.mapLayers.getChildren().some((layer) => {
+                const tile = scene.map.getTileAtWorldXY(bodyNewX, bodyNewY, false, undefined, layer);
+                return tile?.properties?.[SHOULD_TILE_COLLIDE] || false;
+            });
+
+            if (isOccupiedByTile) {
+                return;
+            }
+
+            const isOccupiedBySprite = scene.elements.getChildren().some((sprite) => {
+                if (sprite === element) {
+                    return false; // skip checking against itself
+                }
+
+                const spriteBounds = new Geom.Rectangle(
+                    sprite.body.x,
+                    sprite.body.y,
+                    sprite.body.width,
+                    sprite.body.height
+                );
+
+                return Geom.Rectangle.Overlaps(
+                    spriteBounds,
+                    new Geom.Rectangle(bodyNewX, bodyNewY, element.body.width, element.body.height)
+                );
+            });
+
+            if (isOccupiedBySprite) {
+                return;
+            }
+
+            element.isMoving = true;
             scene.tweens.add({
                 targets: element,
                 x: newX,
@@ -172,9 +227,11 @@ export function create() {
                         target.body.y = bodyStartY + (newY - startY) * totalProgress;
                     }
                 },
+                onComplete: () => {
+                    element.isMoving = false;
+                },
             });
 
-            scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
             return;
         }
 
