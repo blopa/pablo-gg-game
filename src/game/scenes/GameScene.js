@@ -13,7 +13,7 @@ import {
     handleConfigureCamera,
     handleCreateHeroAnimations,
     subscribeToGridEngineEvents,
-    calculateClosesestStaticElement,
+    calculateClosesestStaticElement, handleCreateBomb,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
 
@@ -132,6 +132,18 @@ export function create() {
     );
 
     // TODO
+    scene.input.keyboard.on('keydown-ENTER', () => {
+        // TODO adjust bomb position
+        const { heroSprite } = scene;
+        handleCreateBomb(
+            scene,
+            {
+                x: heroSprite.actionCollider.body.x,
+                y: heroSprite.actionCollider.body.y,
+            }
+        );
+    });
+
     scene.input.keyboard.on('keydown-SPACE', () => {
         if (scene.heroSprite.isAttacking) {
             return;

@@ -1,36 +1,37 @@
-import {Display, Input, Math as PhaserMath} from 'phaser';
+import { Display, Input, Math as PhaserMath } from 'phaser';
 
 // Constants
 import {
-    BOX_INDEX,
     DOOR,
-    DOWN_DIRECTION,
-    ENEMY_SPRITE_PREFIX,
-    FOLLOW_BEHAVIOUR,
-    GRASS_INDEX,
-    HERO_DEPTH,
-    HERO_SPRITE_NAME,
-    IDLE_FRAME,
-    IDLE_FRAME_POSITION_KEY,
-    LEFT_DIRECTION,
-    PATROL_BEHAVIOUR,
-    RIGHT_DIRECTION,
-    SHOULD_TILE_COLLIDE,
     SLIME,
+    UI_DEPTH,
+    BOX_INDEX,
+    TILE_WIDTH,
+    HERO_DEPTH,
+    IDLE_FRAME,
+    TILE_HEIGHT,
+    GRASS_INDEX,
+    UP_DIRECTION,
+    DOWN_DIRECTION,
+    LEFT_DIRECTION,
+    RIGHT_DIRECTION,
+    FOLLOW_BEHAVIOUR,
+    BOMB_SPRITE_NAME,
+    HERO_SPRITE_NAME,
+    PATROL_BEHAVIOUR,
     SLIME_SPRITE_NAME,
     SWORD_SPRITE_NAME,
-    TILE_HEIGHT,
-    TILE_WIDTH,
-    UI_DEPTH,
-    UP_DIRECTION,
+    ENEMY_SPRITE_PREFIX,
+    SHOULD_TILE_COLLIDE,
+    IDLE_FRAME_POSITION_KEY,
 } from '../constants';
 
 // Utils
-import {createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rotateRectangleInsideTile} from './utils';
+import { createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rotateRectangleInsideTile } from './utils';
 
 // Selectors
-import {selectDialogMessages} from '../zustand/dialog/selectDialog';
-import {selectMapKey, selectMapSetters, selectTilesets} from '../zustand/map/selectMapData';
+import { selectDialogMessages } from '../zustand/dialog/selectDialog';
+import { selectMapKey, selectMapSetters, selectTilesets } from '../zustand/map/selectMapData';
 import {
     selectHeroCurrentHealth,
     selectHeroFacingDirection,
@@ -38,7 +39,7 @@ import {
     selectHeroInitialPosition,
     selectHeroSetters,
 } from '../zustand/hero/selectHeroData';
-import {selectGameSetters} from '../zustand/game/selectGameData';
+import { selectGameSetters } from '../zustand/game/selectGameData';
 
 export const createAnimation = (sprite, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
     sprite.anims.create({
@@ -717,6 +718,14 @@ export const displayDamageNumber = (scene, targetSprite, damage) => {
     });
 };
 
+export const handleCreateBomb = (scene, position) => {
+    const bombSprite = scene.physics.add
+        .sprite(position.x, position.y, BOMB_SPRITE_NAME)
+        .setName(BOMB_SPRITE_NAME)
+        .setOrigin(0, 0)
+        .setDepth(HERO_DEPTH);
+};
+
 export const handleCreateHero = (scene) => {
     const initialFrame = getSelectorData(selectHeroInitialFrame);
     const initialPosition = getSelectorData(selectHeroInitialPosition);
@@ -1030,7 +1039,7 @@ export const handleObjectsLayer = (scene) => {
                         const { setShouldPauseScene } = getSelectorData(selectGameSetters);
                         setShouldPauseScene('GameScene', true);
                         changeScene(scene, 'GameScene', {
-                            atlases: ['hero', 'sword'],
+                            atlases: ['hero', 'sword', 'bomb'],
                             images: [],
                             mapKey: map,
                         }, {

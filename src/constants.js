@@ -9,6 +9,7 @@ export const RE_RESIZE_THRESHOLD = 10;
 export const OVERLAY_DIV_RESIZE_THRESHOLD = RE_RESIZE_THRESHOLD;
 
 export const HERO_SPRITE_NAME = 'hero';
+export const BOMB_SPRITE_NAME = 'bomb';
 
 export const SWORD_SPRITE_NAME = 'sword';
 export const SLIME_SPRITE_NAME = 'slime';

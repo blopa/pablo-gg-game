@@ -111,13 +111,8 @@ A dialog box will appear automatically whenever the `state.dialog.messages` vari
 setDialogMessages(['hello world', 'hello world 2']);
 ```
 
-# Assets by Kenney.nl:
-- https://www.kenney.nl/assets/rpg-urban-pack
-- https://www.kenney.nl/assets/roguelike-rpg-pack
-- https://www.kenney.nl/assets/pixel-platformer
-- https://www.kenney.nl/assets/onscreen-controls
-- https://www.kenney.nl/assets/background-elements-redux
-- https://kenney.itch.io/creature-mixer
+# Assets:
+https://opengameart.org/content/16-bit-animated-bomb
 
 # License
 MIT License

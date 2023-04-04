@@ -50,7 +50,7 @@ export function create() {
 
         changeScene(scene, 'GameScene', {
             // fonts: ['"Press Start 2P"'],
-            atlases: ['hero', 'sword'],
+            atlases: ['hero', 'sword', 'bomb'],
             images: [],
             mapKey: 'test_map',
             // mapKey: 'sample_indoor',
