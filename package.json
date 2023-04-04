@@ -27,15 +27,15 @@
     "eslint-plugin-unicorn": "^45.0.2",
     "eslint-plugin-unused-imports": "^2.0.0",
     "free-tex-packer-core": "^0.3.4",
-    "npm-check-updates": "^16.10.0",
+    "npm-check-updates": "^16.10.2",
     "sharp": "^0.32.0"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "@mikewesthad/dungeon": "^2.0.1",
-    "@mui/icons-material": "^5.11.11",
-    "@mui/material": "^5.11.15",
+    "@mui/icons-material": "^5.11.16",
+    "@mui/material": "^5.11.16",
     "@react-spring/web": "^9.7.1",
     "beautiful-react-hooks": "^3.12.2",
     "classnames": "^2.3.2",

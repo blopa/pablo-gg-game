@@ -26,14 +26,16 @@ import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 
 // Constants
 import {
+    BOX_INDEX,
     TILE_WIDTH,
+    GRASS_INDEX,
     TILE_HEIGHT,
     UP_DIRECTION,
     DOWN_DIRECTION,
     LEFT_DIRECTION,
     RIGHT_DIRECTION,
     HERO_SPRITE_NAME,
-    SHOULD_TILE_COLLIDE, GRASS_INDEX, BOX_INDEX,
+    SHOULD_TILE_COLLIDE,
 } from '../../constants';
 
 export const key = 'GameScene';
@@ -138,107 +140,109 @@ export function create() {
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
         const element = calculateClosesestStaticElement(scene.heroSprite, overlaps);
 
-        if (element && element.elementType === BOX_INDEX) {
-            if (element.isMoving) {
-                return;
-            }
-
-            let diffX = 0;
-            let diffY = 0;
-
-            switch (heroFacingDirection) {
-                case UP_DIRECTION:
-                    diffY = -TILE_HEIGHT;
-                    break;
-                case DOWN_DIRECTION:
-                    diffY = TILE_HEIGHT;
-                    break;
-                case LEFT_DIRECTION:
-                    diffX = -TILE_WIDTH;
-                    break;
-                case RIGHT_DIRECTION:
-                    diffX = TILE_WIDTH;
-                    break;
-                default:
-                    // Handle invalid direction
-                    break;
-            }
-
-            // the actual sprite position is not acurate
-            // because of a lot of offsets
-            // so to get the real position we need to check for the body
-            // but to move the sprite image we need to move the sprite itself
-            // this is like this because I'm using the tile image as the sprite image
-            const startX = element.x;
-            const startY = element.y;
-            const newX = startX + diffX;
-            const newY = startY + diffY;
-            const bodyStartX = element.body.x;
-            const bodyStartY = element.body.y;
-            const bodyNewX = bodyStartX + diffX;
-            const bodyNewY = bodyStartY + diffY;
-            scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
-
-            // scene.physics.moveTo(element, newX, newY);
-            const isOccupiedByTile = scene.mapLayers.getChildren().some((layer) => {
-                const tile = scene.map.getTileAtWorldXY(bodyNewX, bodyNewY, false, undefined, layer);
-                return tile?.properties?.[SHOULD_TILE_COLLIDE] || false;
-            });
-
-            if (isOccupiedByTile) {
-                return;
-            }
-
-            const isOccupiedBySprite = scene.elements.getChildren().some((sprite) => {
-                if (sprite === element) {
-                    return false; // skip checking against itself
+        if (element) {
+            if (element.elementType === BOX_INDEX) {
+                if (element.isMoving) {
+                    return;
                 }
 
-                const spriteBounds = new Geom.Rectangle(
-                    sprite.body.x,
-                    sprite.body.y,
-                    sprite.body.width,
-                    sprite.body.height
-                );
+                let diffX = 0;
+                let diffY = 0;
 
-                return Geom.Rectangle.Overlaps(
-                    spriteBounds,
-                    new Geom.Rectangle(bodyNewX, bodyNewY, element.body.width, element.body.height)
-                );
-            });
+                switch (heroFacingDirection) {
+                    case UP_DIRECTION:
+                        diffY = -TILE_HEIGHT;
+                        break;
+                    case DOWN_DIRECTION:
+                        diffY = TILE_HEIGHT;
+                        break;
+                    case LEFT_DIRECTION:
+                        diffX = -TILE_WIDTH;
+                        break;
+                    case RIGHT_DIRECTION:
+                        diffX = TILE_WIDTH;
+                        break;
+                    default:
+                        // Handle invalid direction
+                        break;
+                }
 
-            if (isOccupiedBySprite) {
+                // the actual sprite position is not acurate
+                // because of a lot of offsets
+                // so to get the real position we need to check for the body
+                // but to move the sprite image we need to move the sprite itself
+                // this is like this because I'm using the tile image as the sprite image
+                const startX = element.x;
+                const startY = element.y;
+                const newX = startX + diffX;
+                const newY = startY + diffY;
+                const bodyStartX = element.body.x;
+                const bodyStartY = element.body.y;
+                const bodyNewX = bodyStartX + diffX;
+                const bodyNewY = bodyStartY + diffY;
+                scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
+
+                // scene.physics.moveTo(element, newX, newY);
+                const isOccupiedByTile = scene.mapLayers.getChildren().some((layer) => {
+                    const tile = scene.map.getTileAtWorldXY(bodyNewX, bodyNewY, false, undefined, layer);
+                    return tile?.properties?.[SHOULD_TILE_COLLIDE] || false;
+                });
+
+                if (isOccupiedByTile) {
+                    return;
+                }
+
+                const isOccupiedBySprite = scene.elements.getChildren().some((sprite) => {
+                    if (sprite === element) {
+                        return false; // skip checking against itself
+                    }
+
+                    const spriteBounds = new Geom.Rectangle(
+                        sprite.body.x,
+                        sprite.body.y,
+                        sprite.body.width,
+                        sprite.body.height
+                    );
+
+                    return Geom.Rectangle.Overlaps(
+                        spriteBounds,
+                        new Geom.Rectangle(bodyNewX, bodyNewY, element.body.width, element.body.height)
+                    );
+                });
+
+                if (isOccupiedBySprite) {
+                    return;
+                }
+
+                element.isMoving = true;
+                scene.tweens.add({
+                    targets: element,
+                    x: newX,
+                    y: newY,
+                    duration: 500,
+                    ease: 'Linear',
+                    onUpdate: (tween, target) => {
+                        const { totalProgress } = tween;
+                        if (target.body && target.body.type === Physics.STATIC_BODY) {
+                            // eslint-disable-next-line no-param-reassign
+                            target.body.x = bodyStartX + (newX - startX) * totalProgress;
+                            // eslint-disable-next-line no-param-reassign
+                            target.body.y = bodyStartY + (newY - startY) * totalProgress;
+                        }
+                    },
+                    onComplete: () => {
+                        element.isMoving = false;
+                    },
+                });
+
                 return;
             }
 
-            element.isMoving = true;
-            scene.tweens.add({
-                targets: element,
-                x: newX,
-                y: newY,
-                duration: 500,
-                ease: 'Linear',
-                onUpdate: (tween, target) => {
-                    const { totalProgress } = tween;
-                    if (target.body && target.body.type === Physics.STATIC_BODY) {
-                        // eslint-disable-next-line no-param-reassign
-                        target.body.x = bodyStartX + (newX - startX) * totalProgress;
-                        // eslint-disable-next-line no-param-reassign
-                        target.body.y = bodyStartY + (newY - startY) * totalProgress;
-                    }
-                },
-                onComplete: () => {
-                    element.isMoving = false;
-                },
-            });
-
-            return;
-        }
-
-        if (element.elementType === GRASS_INDEX) {
-            // TODO add animation etc
-            element.destroy();
-            overlaps.delete(element);
+            // TODO move this to a overlap with the attack sprite
+            if (element.elementType === GRASS_INDEX) {
+                element.handleDestroyElement();
+                overlaps.delete(element);
+            }
         }
 
         scene.heroSprite.isAttacking = true;

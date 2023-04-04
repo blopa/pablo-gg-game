@@ -1,44 +1,44 @@
-import { Input, Math as PhaserMath, Display } from 'phaser';
+import {Display, Input, Math as PhaserMath} from 'phaser';
 
 // Constants
 import {
-    DOOR,
-    SLIME,
-    UI_DEPTH,
     BOX_INDEX,
-    IDLE_FRAME,
-    HERO_DEPTH,
-    TILE_WIDTH,
-    TILE_HEIGHT,
-    GRASS_INDEX,
-    UP_DIRECTION,
+    DOOR,
     DOWN_DIRECTION,
-    LEFT_DIRECTION,
-    RIGHT_DIRECTION,
-    PATROL_BEHAVIOUR,
+    ENEMY_SPRITE_PREFIX,
     FOLLOW_BEHAVIOUR,
+    GRASS_INDEX,
+    HERO_DEPTH,
     HERO_SPRITE_NAME,
+    IDLE_FRAME,
+    IDLE_FRAME_POSITION_KEY,
+    LEFT_DIRECTION,
+    PATROL_BEHAVIOUR,
+    RIGHT_DIRECTION,
+    SHOULD_TILE_COLLIDE,
+    SLIME,
     SLIME_SPRITE_NAME,
     SWORD_SPRITE_NAME,
-    SHOULD_TILE_COLLIDE,
-    ENEMY_SPRITE_PREFIX,
-    IDLE_FRAME_POSITION_KEY,
+    TILE_HEIGHT,
+    TILE_WIDTH,
+    UI_DEPTH,
+    UP_DIRECTION,
 } from '../constants';
 
 // Utils
-import { createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rotateRectangleInsideTile } from './utils';
+import {createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rotateRectangleInsideTile} from './utils';
 
 // Selectors
-import { selectDialogMessages } from '../zustand/dialog/selectDialog';
-import { selectMapKey, selectMapSetters, selectTilesets } from '../zustand/map/selectMapData';
+import {selectDialogMessages} from '../zustand/dialog/selectDialog';
+import {selectMapKey, selectMapSetters, selectTilesets} from '../zustand/map/selectMapData';
 import {
-    selectHeroSetters,
-    selectHeroInitialFrame,
     selectHeroCurrentHealth,
-    selectHeroInitialPosition,
     selectHeroFacingDirection,
+    selectHeroInitialFrame,
+    selectHeroInitialPosition,
+    selectHeroSetters,
 } from '../zustand/hero/selectHeroData';
-import { selectGameSetters } from '../zustand/game/selectGameData';
+import {selectGameSetters} from '../zustand/game/selectGameData';
 
 export const createAnimation = (sprite, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
     sprite.anims.create({
@@ -113,6 +113,25 @@ export const handleCreateMap = (scene) => {
                     const gameObject = createGameObjectForTile(scene, tile);
                     gameObject.elementType = GRASS_INDEX;
                     layer.removeTileAt(tileX, tileY);
+                    gameObject.handleDestroyElement = () => {
+                        const lifespan = 700;
+                        const tex = generatePixelTexture(scene, gameObject, 'grass');
+                        const particles = scene.add.particles(tex);
+                        const emitter = particles.createEmitter({
+                            x: gameObject.body.x + Math.round(gameObject.body.width / 2),
+                            y: gameObject.body.y + Math.round(gameObject.body.height / 2),
+                            speed: { min: 20, max: 60 },
+                            angle: { min: 0, max: 360 },
+                            gravityY: 50,
+                            lifespan,
+                            blendMode: 'ADD',
+                            scale: { start: 1, end: 0 },
+                            // quantity: 64,
+                        });
+
+                        gameObject.destroy();
+                        emitter.explode(PhaserMath.Between(20, 35));
+                    };
 
                     scene.elements.add(gameObject);
 
@@ -309,7 +328,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
         displayDamageNumber(scene, enemySprite, damage);
 
         if (enemySprite.currentHealth <= 0) {
-            const [emitter, canvas] = createEnemyDeathAnimation(scene, enemySprite);
+            const emitter = createEnemyDeathAnimation(scene, enemySprite);
             scene.gridEngine.stopMovement(spriteName);
             scene.tweens.add({
                 targets: enemySprite,
@@ -322,7 +341,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
                     scene.gridEngine.removeCharacter(spriteName);
                     enemySprite.destroy(true);
                     enemyImage.destroy(true);
-                    canvas.destroy();
+                    // canvas.destroy();
                 },
             });
 
@@ -504,22 +523,26 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
     handleCreateEnemiesAnimations(scene, enemySprite);
 };
 
-export const createEnemyDeathAnimation = (scene, enemySprite) => {
+export const generatePixelTexture = (scene, sprite, textureName) => {
     // const tex = scene.textures.get('slime');
     // let newTexture = tex.generateTexture('new', tex.width, tex.height);
-    // debugger;
+    const tex = scene.textures.get(textureName);
+    if (tex.key === textureName) {
+        return tex;
+    }
 
     const graphics = scene.add.graphics();
     // const pixels = scene.textures.getPixel(16, 16, enemyImage.texture.key);
     // const hexColor = Display.Color.RGBToString(pixels.r, pixels.g, pixels.b);
 
-    const source = enemySprite.texture.getSourceImage(); // enemyImage
+    const source = sprite.texture.getSourceImage(); // enemyImage
     // TODO only create this canvas once for each type of enemy
     const canvas = scene.textures.createCanvas(PhaserMath.RND.uuid(), source.width, source.height);
     canvas.draw(0, 0, source);
     const context = canvas.getContext('2d');
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = imageData.data;
+    canvas.destroy();
 
     let totalRed = 0;
     let totalGreen = 0;
@@ -540,10 +563,14 @@ export const createEnemyDeathAnimation = (scene, enemySprite) => {
     // const intColor = Number.parseInt(avgColor.replace('#', '0x'), 10);
     graphics.fillStyle(avgColor, 1);
     graphics.fillRect(0, 0, 2, 2);
-    graphics.generateTexture('blue-pixel', 2, 2);
+    graphics.generateTexture(textureName, 2, 2);
     // scene.textures.addTexture(texture);
-    const tex = scene.textures.get('blue-pixel');
 
+    return scene.textures.get(textureName);
+};
+
+export const createEnemyDeathAnimation = (scene, enemySprite) => {
+    const tex = generatePixelTexture(scene, enemySprite, 'blue-pixel');
     const particles = scene.add.particles(tex);
     const emitter = particles.createEmitter({
         x: enemySprite.x + Math.round(enemySprite.width / 2),
@@ -562,7 +589,7 @@ export const createEnemyDeathAnimation = (scene, enemySprite) => {
         particles.destroy();
     });
 
-    return [emitter, canvas];
+    return emitter;
 };
 
 export const updateSpriteDepthBasedOnHeroPosition = (sprite) => {
