@@ -142,6 +142,7 @@ export const instantiatePhaserGame = (gameTitle = 'some-game-title') => {
             mode: Scale.NONE,
         },
         scene: getScenesModules(),
+        roundPixels: true,
         physics: {
             default: 'arcade',
             arcade: {

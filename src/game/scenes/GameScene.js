@@ -5,6 +5,7 @@ import { GridEngine } from 'grid-engine';
 import {
     fadeIn,
     handleCreateMap,
+    handleCreateBomb,
     handleCreateHero,
     handleObjectsLayer,
     handleHeroMovement,
@@ -13,7 +14,7 @@ import {
     handleConfigureCamera,
     handleCreateHeroAnimations,
     subscribeToGridEngineEvents,
-    calculateClosesestStaticElement, handleCreateBomb,
+    calculateClosesestStaticElement,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
 
@@ -90,11 +91,17 @@ export function create() {
 
     // Handle collisions
     scene.physics.add.collider(scene.heroSprite, scene.mapLayers);
+    scene.physics.add.collider(scene.heroSprite, scene.bombs);
     const heroEnemyOverlap = scene.physics.add.overlap(scene.heroSprite, scene.enemies, (heroSprite, enemySprite) => {
         // console.log('overlap', 'heroSprite, enemySprite', enemyHeroOverlap);
         heroSprite.handleTakeDamage(5, enemySprite, heroEnemyOverlap);
         // enemySprite.handleHeroOverlap?.(heroSprite);
     });
+
+    // scene.physics.world.on('worldstep', () => {
+    //     scene.heroSprite.x = PhaserMath.snapTo(scene.heroSprite.x, 1);
+    //     scene.heroSprite.y = PhaserMath.snapTo(scene.heroSprite.y, 1);
+    // });
 
     // scene.physics.add.collider(scene.mapLayers, scene.elements);
     scene.physics.add.collider(scene.heroSprite, scene.elements);
@@ -353,7 +360,7 @@ export function update(time, delta) {
     scene.enemies.getChildren().forEach((enemy) => {
         enemy?.update?.(time, delta);
     });
-    scene.items.getChildren().forEach((item) => {
+    scene.bombs.getChildren().forEach((item) => {
         item?.update?.(time, delta);
     });
 }

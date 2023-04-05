@@ -78,6 +78,8 @@ export const handleCreateGroups = (scene) => {
     // eslint-disable-next-line no-param-reassign
     scene.items = scene.add.group();
     // eslint-disable-next-line no-param-reassign
+    scene.bombs = scene.add.group();
+    // eslint-disable-next-line no-param-reassign
     scene.mapLayers = scene.add.group();
     // eslint-disable-next-line no-param-reassign
     scene.elements = scene.add.group();
@@ -596,8 +598,10 @@ export const createEnemyDeathAnimation = (scene, enemySprite) => {
 export const updateSpriteDepthBasedOnHeroPosition = (scene, sprite) => {
     const { heroSprite } = scene;
 
-    // TODO this doesn't work for items
-    if (sprite.y < heroSprite.y) {
+    const spriteBounds = sprite.getBounds();
+    const heroBounds = heroSprite.getBounds();
+
+    if (spriteBounds.bottom - 1 <= heroBounds.bottom) {
         if (sprite.depth > HERO_DEPTH) {
             sprite.setDepth(HERO_DEPTH - 1);
         }
@@ -720,61 +724,26 @@ export const displayDamageNumber = (scene, targetSprite, damage) => {
 };
 
 export const handleCreateBomb = (scene, heroSprite) => {
-    const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
-    let position = {
-        x: heroSprite.x,
-        y: heroSprite.y,
+    const position = {
+        x: heroSprite.x + heroSprite.body.width / 2,
+        y: heroSprite.y + heroSprite.body.height - 4,
     };
-
-    switch (heroFacingDirection) {
-        case UP_DIRECTION: {
-            position = {
-                x: heroSprite.x + heroSprite.body.width / 2,
-                y: heroSprite.y - 3,
-            };
-            break;
-        }
-        case DOWN_DIRECTION: {
-            position = {
-                x: heroSprite.x + heroSprite.body.width / 2,
-                y: heroSprite.y + heroSprite.body.height * 2 - 6,
-            };
-            break;
-        }
-        case LEFT_DIRECTION: {
-            position = {
-                x: heroSprite.x - heroSprite.body.width / 2,
-                y: heroSprite.y + heroSprite.body.height / 2 + 3,
-            };
-            break;
-        }
-        case RIGHT_DIRECTION: {
-            position = {
-                x: heroSprite.x + heroSprite.body.width * 2 - 7,
-                y: heroSprite.y + heroSprite.body.height / 2 + 3,
-            };
-            break;
-        }
-        default: {
-            // Handle invalid direction
-            break;
-        }
-    }
 
     const bombSprite = scene.physics.add
         .sprite(position.x, position.y, BOMB_SPRITE_NAME)
         .setName(BOMB_SPRITE_NAME)
-        .setOrigin(0, 0)
-        .setDepth(HERO_DEPTH);
+        .setOrigin(0, 0);
 
+    bombSprite.body.setImmovable(true);
     bombSprite.body.width = TILE_WIDTH - 4;
     bombSprite.body.height = TILE_HEIGHT - 4;
-    bombSprite.body.setOffset(0, 4);
+    bombSprite.body.setOffset(1, 3);
+    updateSpriteDepthBasedOnHeroPosition(scene, bombSprite);
     bombSprite.update = (time, delta) => {
         updateSpriteDepthBasedOnHeroPosition(scene, bombSprite);
     };
 
-    scene.items.add(bombSprite);
+    scene.bombs.add(bombSprite);
 };
 
 export const handleCreateHero = (scene) => {
@@ -994,6 +963,9 @@ export const handleCreateHero = (scene) => {
 
     heroSprite.update = (time, delta) => {
         if (heroSprite.body.velocity.y === 0 && heroSprite.body.velocity.x === 0) {
+            heroSprite.x = PhaserMath.Snap.To(heroSprite.x, 1);
+            heroSprite.y = PhaserMath.Snap.To(heroSprite.y, 1);
+
             return;
         }
 
