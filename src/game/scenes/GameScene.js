@@ -134,14 +134,7 @@ export function create() {
     // TODO
     scene.input.keyboard.on('keydown-ENTER', () => {
         // TODO adjust bomb position
-        const { heroSprite } = scene;
-        handleCreateBomb(
-            scene,
-            {
-                x: heroSprite.actionCollider.body.x,
-                y: heroSprite.actionCollider.body.y,
-            }
-        );
+        handleCreateBomb(scene, scene.heroSprite);
     });
 
     scene.input.keyboard.on('keydown-SPACE', () => {
@@ -359,5 +352,8 @@ export function update(time, delta) {
     scene.heroSprite.actionCollider.update(time, delta);
     scene.enemies.getChildren().forEach((enemy) => {
         enemy?.update?.(time, delta);
+    });
+    scene.items.getChildren().forEach((item) => {
+        item?.update?.(time, delta);
     });
 }
