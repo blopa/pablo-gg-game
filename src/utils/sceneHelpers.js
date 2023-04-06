@@ -41,13 +41,16 @@ import {
 } from '../zustand/hero/selectHeroData';
 import { selectGameSetters } from '../zustand/game/selectGameData';
 
-export const createAnimation = (sprite, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
-    sprite.anims.create({
+export const createAnimation = (animationManager, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
+    const frames = Array.from({ length: frameQuantity }).map((n, index) => ({
+        key: assetKey,
+        frame: `${animationName}_${(index + 1).toString().padStart(2, '0')}`,
+    }));
+
+    // console.log(frames);
+    animationManager.create({
         key: `${assetKey}_${animationName}`,
-        frames: Array.from({ length: frameQuantity }).map((n, index) => ({
-            key: assetKey,
-            frame: `${animationName}_${(index + 1).toString().padStart(2, '0')}`,
-        })),
+        frames,
         frameRate,
         repeat,
         yoyo,
@@ -523,7 +526,7 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
     scene.enemies.add(enemySprite);
 
     // Create enemy animation
-    handleCreateEnemiesAnimations(scene, enemySprite);
+    handleCreateEnemyAnimations(scene, enemySprite);
 };
 
 export const generatePixelTexture = (scene, sprite, textureName) => {
@@ -534,7 +537,6 @@ export const generatePixelTexture = (scene, sprite, textureName) => {
         return tex;
     }
 
-    const graphics = scene.add.graphics();
     // const pixels = scene.textures.getPixel(16, 16, enemyImage.texture.key);
     // const hexColor = Display.Color.RGBToString(pixels.r, pixels.g, pixels.b);
 
@@ -564,12 +566,17 @@ export const generatePixelTexture = (scene, sprite, textureName) => {
     const avgColor = Display.Color.GetColor(avgRed, avgGreen, avgBlue);
 
     // const intColor = Number.parseInt(avgColor.replace('#', '0x'), 10);
-    graphics.fillStyle(avgColor, 1);
-    graphics.fillRect(0, 0, 2, 2);
-    graphics.generateTexture(textureName, 2, 2);
-    // scene.textures.addTexture(texture);
+    generateTextureFromColor(scene, avgColor, textureName);
 
     return scene.textures.get(textureName);
+};
+
+export const generateTextureFromColor = (scene, color, textureName) => {
+    const graphics = scene.add.graphics();
+    graphics.fillStyle(color, 1);
+    graphics.fillRect(0, 0, 2, 2);
+    return graphics.generateTexture(textureName, 2, 2);
+    // scene.textures.addTexture(texture);
 };
 
 export const createEnemyDeathAnimation = (scene, enemySprite) => {
@@ -742,6 +749,65 @@ export const handleCreateBomb = (scene, heroSprite) => {
     bombSprite.update = (time, delta) => {
         updateSpriteDepthBasedOnHeroPosition(scene, bombSprite);
     };
+
+    // TODO
+    handleCreateItemAnimations(scene, bombSprite, BOMB_SPRITE_NAME);
+    bombSprite.anims.play('bomb_idle');
+
+    const textureName = 'TODO_explosion';
+    const tex = scene.textures.get(textureName);
+    if (tex.key !== textureName) {
+        const yellowInt = Display.Color.IntegerToColor(0xffff00).color;
+        generateTextureFromColor(scene, yellowInt, textureName);
+    }
+
+    scene.time.delayedCall(200, () => {
+        const speedUpTween = scene.tweens.add({
+            targets: bombSprite,
+            alpha: 0.3,
+            duration: 200,
+            yoyo: true,
+            repeat: 25,
+            totalDuration: 5000,
+            ease: 'Linear',
+            loop: 0,
+            onStart: () => {
+                speedUpTween.timeScale = 1;
+            },
+            onRepeat: () => {
+                speedUpTween.timeScale += 0.025;
+            },
+            onComplete: () => {
+                scene.tweens.add({
+                    targets: bombSprite,
+                    x: bombSprite.x - Math.round(bombSprite.body.width / 2),
+                    y: bombSprite.y - Math.round(bombSprite.body.height / 2),
+                    duration: 50,
+                    scale: 1.5,
+                    alpha: 0.5,
+                    ease: 'Power1',
+                    onComplete: () => {
+                        const explosionParticles = scene.add.particles(textureName);
+                        const explosionEmitter = explosionParticles.createEmitter({
+                            x: bombSprite.x + Math.round(bombSprite.width / 2),
+                            y: bombSprite.y + Math.round(bombSprite.height / 2),
+                            quantity: 200,
+                            speed: { min: 50, max: 200 },
+                            angle: { min: 0, max: 360 },
+                            gravityY: 50,
+                            lifespan: 350,
+                            blendMode: 'ADD',
+                            scale: { start: 1, end: 0 },
+                        });
+
+                        // TODO add collision here
+                        explosionEmitter.explode();
+                        bombSprite.destroy();
+                    },
+                });
+            },
+        });
+    });
 
     scene.bombs.add(bombSprite);
 };
@@ -1105,11 +1171,23 @@ export const handleConfigureCamera = (scene) => {
     }
 };
 
-export const handleCreateEnemiesAnimations = (scene, enemySprite) => {
+export const handleCreateItemAnimations = (scene, itemSprite, assetKey) => {
+    createAnimation(
+        itemSprite.anims,
+        assetKey,
+        'idle',
+        3,
+        3,
+        -1,
+        true
+    );
+};
+
+export const handleCreateEnemyAnimations = (scene, enemySprite) => {
     // TODO check if animation already exists first
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
         createAnimation(
-            enemySprite,
+            enemySprite.anims,
             enemySprite.enemyFamily,
             `walk_${direction}`,
             3,
@@ -1126,7 +1204,7 @@ export const handleCreateHeroAnimations = (heroSprite) => {
     // Animations
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
         createAnimation(
-            heroSprite,
+            heroSprite.anims,
             HERO_SPRITE_NAME,
             `walk_${direction}`,
             3,
@@ -1138,7 +1216,7 @@ export const handleCreateHeroAnimations = (heroSprite) => {
 
     [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
         createAnimation(
-            heroSprite,
+            heroSprite.anims,
             HERO_SPRITE_NAME,
             `attack_${direction}`,
             1,
@@ -1150,7 +1228,7 @@ export const handleCreateHeroAnimations = (heroSprite) => {
 
     // [UP_DIRECTION, DOWN_DIRECTION, LEFT_DIRECTION, RIGHT_DIRECTION].forEach((direction) => {
     //     createAnimation(
-    //         sprite,
+    //         sprite.anims,
     //         SWORD_SPRITE_NAME,
     //         `attack_${direction}`,
     //         1,
