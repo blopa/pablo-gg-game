@@ -139,6 +139,27 @@ export function create() {
     );
 
     // TODO
+    // scene.input.keyboard.on('keydown-SHIFT', () => {
+    //     const { heroSprite } = scene;
+    //     const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
+    //     const jumpTween = scene.tweens.add({
+    //         targets: heroSprite,
+    //         duration: 300,
+    //         ease: 'Quad.easeOut',
+    //         y: heroSprite.y - 24,
+    //         // y: heroSprite.y + (heroFacingDirection === 'up' ? 16 : heroFacingDirection === 'down' ? -16 : 0),
+    //         x: heroSprite.x + (heroFacingDirection === 'left' ? -32 : heroFacingDirection === 'right' ? 32 : 0),
+    //         onComplete: () => {
+    //             scene.tweens.add({
+    //                 targets: heroSprite,
+    //                 duration: 300,
+    //                 ease: 'Quad.easeIn',
+    //                 y: heroSprite.y + 24,
+    //             });
+    //         },
+    //     });
+    // });
+
     scene.input.keyboard.on('keydown-ENTER', () => {
         // TODO adjust bomb position
         handleCreateBomb(scene, scene.heroSprite);

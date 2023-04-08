@@ -85,7 +85,7 @@ export const handleCreateGroups = (scene) => {
     // eslint-disable-next-line no-param-reassign
     scene.mapLayers = scene.add.group();
     // eslint-disable-next-line no-param-reassign
-    scene.elements = scene.add.group();
+    scene.elements = scene.physics.add.staticGroup();
 };
 
 /**
@@ -444,7 +444,8 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
 
                 break;
             }
-            case 'attack_left_01': {
+            case 'attack_left_01':
+            default: {
                 const newPos = {
                     x: pos.x - 1,
                     y: pos.y,
@@ -467,10 +468,6 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
                     ease: 'Power1',
                 });
 
-                break;
-            }
-
-            default: {
                 break;
             }
         }
@@ -741,6 +738,16 @@ export const handleCreateBomb = (scene, heroSprite) => {
         .setName(BOMB_SPRITE_NAME)
         .setOrigin(0, 0);
 
+    const explosionCollider = createInteractiveGameObject(
+        scene,
+        bombSprite.x - bombSprite.body.width / 2 - 1,
+        bombSprite.y - bombSprite.body.height / 2,
+        TILE_WIDTH * 2,
+        TILE_HEIGHT * 2,
+        { x: 0, y: 0 },
+        true
+    );
+
     bombSprite.body.setImmovable(true);
     bombSprite.body.width = TILE_WIDTH - 4;
     bombSprite.body.height = TILE_HEIGHT - 4;
@@ -757,36 +764,61 @@ export const handleCreateBomb = (scene, heroSprite) => {
     const textureName = 'TODO_explosion';
     const tex = scene.textures.get(textureName);
     if (tex.key !== textureName) {
-        const yellowInt = Display.Color.IntegerToColor(0xffff00).color;
+        const yellowInt = Display.Color.IntegerToColor(0xFFFF00).color;
         generateTextureFromColor(scene, yellowInt, textureName);
     }
 
     scene.time.delayedCall(200, () => {
+        // console.time('bomb');
         const speedUpTween = scene.tweens.add({
             targets: bombSprite,
             alpha: 0.3,
             duration: 200,
             yoyo: true,
-            repeat: 25,
-            totalDuration: 5000,
+            repeat: 15,
             ease: 'Linear',
             loop: 0,
             onStart: () => {
                 speedUpTween.timeScale = 1;
             },
             onRepeat: () => {
-                speedUpTween.timeScale += 0.025;
+                speedUpTween.timeScale += 0.08;
             },
             onComplete: () => {
+                // console.timeEnd('bomb');
+                let hasExploded = false;
+                // explosionCollider.body.setVelocity(1, 1);
+                const enemiesOverlap = scene.physics.overlap(
+                    explosionCollider,
+                    scene.enemies,
+                    (explosion, enemySprite) => {
+                        if (!hasExploded) {
+                            enemySprite.handleTakeDamage(20, null);
+                        }
+                    }
+                );
+
+                const elementsOverlap = scene.physics.overlap(
+                    explosionCollider,
+                    scene.elements,
+                    (explosion, elementSprite) => {
+                        if (!hasExploded) {
+                            // TODO add destroy animation
+                            elementSprite.destroy();
+                        }
+                    }
+                );
+
                 scene.tweens.add({
                     targets: bombSprite,
                     x: bombSprite.x - Math.round(bombSprite.body.width / 2),
                     y: bombSprite.y - Math.round(bombSprite.body.height / 2),
-                    duration: 50,
+                    duration: 40,
                     scale: 1.5,
                     alpha: 0.5,
                     ease: 'Power1',
                     onComplete: () => {
+                        hasExploded = true;
                         const explosionParticles = scene.add.particles(textureName);
                         const explosionEmitter = explosionParticles.createEmitter({
                             x: bombSprite.x + Math.round(bombSprite.width / 2),
@@ -803,6 +835,11 @@ export const handleCreateBomb = (scene, heroSprite) => {
                         // TODO add collision here
                         explosionEmitter.explode();
                         bombSprite.destroy();
+                        scene.time.delayedCall(10, () => {
+                            explosionCollider.destroy();
+                            scene.physics.world.removeCollider(enemiesOverlap);
+                            scene.physics.world.removeCollider(elementsOverlap);
+                        });
                     },
                 });
             },
