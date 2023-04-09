@@ -19,6 +19,7 @@ const store = createStore((set) => ({
         atlases: [],
         images: [],
         maps: [],
+        worlds: [],
         jsons: [],
         setters: setLoadedAssets(set),
     },
