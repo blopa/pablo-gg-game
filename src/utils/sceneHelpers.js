@@ -18,9 +18,11 @@ import {
     FOLLOW_BEHAVIOUR,
     BOMB_SPRITE_NAME,
     HERO_SPRITE_NAME,
+    ELEMENT_BOX_TYPE,
     PATROL_BEHAVIOUR,
     SLIME_SPRITE_NAME,
     SWORD_SPRITE_NAME,
+    ELEMENT_GRASS_TYPE,
     ENEMY_SPRITE_PREFIX,
     SHOULD_TILE_COLLIDE,
     IDLE_FRAME_POSITION_KEY,
@@ -39,7 +41,7 @@ import {
     selectHeroInitialPosition,
     selectHeroSetters,
 } from '../zustand/hero/selectHeroData';
-import { selectGameSetters } from '../zustand/game/selectGameData';
+import {selectGameHeight, selectGameSetters, selectGameWidth} from '../zustand/game/selectGameData';
 
 export const createAnimation = (animationManager, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
     const frames = Array.from({ length: frameQuantity }).map((n, index) => ({
@@ -113,11 +115,11 @@ export const handleCreateMap = (scene) => {
                     return;
                 }
 
-                // TODO create a function that checkes this
+                // TODO create a function that checks this
                 // and also check for the tileset name I guess
                 if (index === GRASS_INDEX) {
                     const gameObject = createGameObjectForTile(scene, tile);
-                    gameObject.elementType = GRASS_INDEX;
+                    gameObject.elementType = ELEMENT_GRASS_TYPE;
                     layer.removeTileAt(tileX, tileY);
                     gameObject.handleDestroyElement = () => {
                         const lifespan = 700;
@@ -155,7 +157,7 @@ export const handleCreateMap = (scene) => {
                     // );
 
                     const gameObject = createGameObjectForTile(scene, tile);
-                    gameObject.elementType = BOX_INDEX;
+                    gameObject.elementType = ELEMENT_BOX_TYPE;
                     layer.removeTileAt(tileX, tileY);
 
                     scene.elements.add(gameObject);
@@ -538,7 +540,6 @@ export const generatePixelTexture = (scene, sprite, textureName) => {
     // const hexColor = Display.Color.RGBToString(pixels.r, pixels.g, pixels.b);
 
     const source = sprite.texture.getSourceImage(); // enemyImage
-    // TODO only create this canvas once for each type of enemy
     const canvas = scene.textures.createCanvas(PhaserMath.RND.uuid(), source.width, source.height);
     canvas.draw(0, 0, source);
     const context = canvas.getContext('2d');
@@ -757,10 +758,10 @@ export const handleCreateBomb = (scene, heroSprite) => {
         updateSpriteDepthBasedOnHeroPosition(scene, bombSprite);
     };
 
-    // TODO
     handleCreateItemAnimations(scene, bombSprite, BOMB_SPRITE_NAME);
     bombSprite.anims.play('bomb_idle');
 
+    // TODO because need to make this look better
     const textureName = 'TODO_explosion';
     const tex = scene.textures.get(textureName);
     if (tex.key !== textureName) {
@@ -804,6 +805,7 @@ export const handleCreateBomb = (scene, heroSprite) => {
                     (explosion, elementSprite) => {
                         if (!hasExploded) {
                             // TODO add destroy animation
+                            // and check if element should be destroyed or not
                             elementSprite.destroy();
                         }
                     }
@@ -832,7 +834,6 @@ export const handleCreateBomb = (scene, heroSprite) => {
                             scale: { start: 1, end: 0 },
                         });
 
-                        // TODO add collision here
                         explosionEmitter.explode();
                         bombSprite.destroy();
                         scene.time.delayedCall(10, () => {
@@ -1388,16 +1389,25 @@ const fade = (scene, callback, direction, type) => {
     const multiplier = direction === 'right' ? 1 : -1;
     blackBlock.fillStyle(0x000000);
 
-    // TODO get sizes from store
+    const gameWidth = getSelectorData(selectGameWidth);
+    const gameHeight = getSelectorData(selectGameHeight);
     blackBlock.fillRect(
-        -scene.game.config.width * (type === 'in' ? 0 : multiplier),
+        -gameWidth * (type === 'in' ? -0 : multiplier),
         0,
-        scene.game.config.width,
-        scene.game.config.height
+        gameWidth,
+        gameHeight
     );
     // blackBlock.setAlpha(0);
     blackBlock.setDepth(Number.POSITIVE_INFINITY);
 
+    const updatePosition = (camera, sprite) => {
+        blackBlock.setPosition(
+            blackBlock.x + camera.scrollX,
+            blackBlock.y + camera.scrollY
+        );
+    };
+
+    scene.cameras.main.on('followupdate', updatePosition);
     scene.tweens.add({
         targets: blackBlock,
         x: scene.game.config.width * (type === 'in' ? -2 : multiplier),
@@ -1406,6 +1416,7 @@ const fade = (scene, callback, direction, type) => {
         ease: 'Power2',
         onComplete: () => {
             callback?.();
+            scene.cameras.main.off('followupdate', updatePosition);
             // blackBlock.clear();
             // blackBlock.destroy();
         },

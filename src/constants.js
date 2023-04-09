@@ -23,6 +23,10 @@ export const DOOR = 6;
 export const BOX_INDEX = 312;
 export const GRASS_INDEX = 1248;
 
+// Element types
+export const ELEMENT_BOX_TYPE = 'box_type';
+export const ELEMENT_GRASS_TYPE = 'grass_type';
+
 export const IDLE_FRAME = 'walk_position_02';
 export const IDLE_FRAME_POSITION_KEY = 'position';
 

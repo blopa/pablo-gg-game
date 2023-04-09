@@ -27,15 +27,15 @@ import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 
 // Constants
 import {
-    BOX_INDEX,
     TILE_WIDTH,
-    GRASS_INDEX,
     TILE_HEIGHT,
     UP_DIRECTION,
     DOWN_DIRECTION,
     LEFT_DIRECTION,
     RIGHT_DIRECTION,
     HERO_SPRITE_NAME,
+    ELEMENT_BOX_TYPE,
+    ELEMENT_GRASS_TYPE,
     SHOULD_TILE_COLLIDE,
 } from '../../constants';
 
@@ -131,6 +131,16 @@ export function create() {
     );
 
     scene.physics.add.overlap(
+        scene.heroSprite.attackSprite,
+        scene.elements,
+        (attackSprite, elementSprite) => {
+            if (elementSprite.elementType === ELEMENT_GRASS_TYPE) {
+                elementSprite.handleDestroyElement();
+            }
+        }
+    );
+
+    scene.physics.add.overlap(
         scene.heroSprite.presencePerceptionCircle,
         scene.enemies,
         (presencePerceptionCircle, enemySprite) => {
@@ -174,7 +184,8 @@ export function create() {
         const element = calculateClosesestStaticElement(scene.heroSprite, overlaps);
 
         if (element) {
-            if (element.elementType === BOX_INDEX) {
+            // eslint-disable-next-line unicorn/no-lonely-if
+            if (element.elementType === ELEMENT_BOX_TYPE) {
                 if (element.isMoving) {
                     return;
                 }
@@ -200,7 +211,7 @@ export function create() {
                         break;
                 }
 
-                // the actual sprite position is not acurate
+                // the actual sprite position is not accurate
                 // because of a lot of offsets
                 // so to get the real position we need to check for the body
                 // but to move the sprite image we need to move the sprite itself
@@ -269,12 +280,6 @@ export function create() {
                 });
 
                 return;
-            }
-
-            // TODO move this to a overlap with the attack sprite
-            if (element.elementType === GRASS_INDEX) {
-                element.handleDestroyElement();
-                overlaps.delete(element);
             }
         }
 
