@@ -20,8 +20,8 @@ export function create() {
     const { setMenuItems, setMenuOnSelect } = getSelectorData(selectMenuSetters);
 
     setMenuItems(['start_game', 'exit']);
-    setMenuOnSelect((key, item) => {
-        if (key === 'start_game') {
+    setMenuOnSelect((itemKey, item) => {
+        if (itemKey === 'start_game') {
             handleStartGameSelected();
         } else {
             setMenuItems([]);
@@ -31,9 +31,10 @@ export function create() {
     });
 
     const handleStartGameSelected = () => {
+        const testMapKey = 'test_map';
         setMenuItems([]);
         setMenuOnSelect(null);
-        setMapKey('test_map');
+        setMapKey(testMapKey);
         const {
             setHeroPreviousPosition,
             setHeroFacingDirection,
@@ -52,7 +53,7 @@ export function create() {
             // fonts: ['"Press Start 2P"'],
             atlases: ['hero', 'sword', 'bomb'],
             images: [],
-            mapKey: 'test_map',
+            mapKey: testMapKey,
             // mapKey: 'sample_indoor',
         });
     };

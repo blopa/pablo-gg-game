@@ -3,28 +3,25 @@ import { Display } from 'phaser';
 // Utils
 import {
     getSelectorData,
-    isMapFileAvailable,
-    isImageFileAvailable,
-    isTilesetFileAvailable,
     isGeneratedAtlasFileAvailable,
+    isImageFileAvailable,
+    isMapFileAvailable,
+    isTilesetFileAvailable,
 } from '../../utils/utils';
 import { asyncLoader } from '../../utils/phaser';
 
 // Constants
-import {
-    SLIME,
-    IGNORED_TILESETS,
-    SLIME_SPRITE_NAME,
-} from '../../constants';
+import { IGNORED_TILESETS, SLIME, SLIME_SPRITE_NAME } from '../../constants';
 
 // Selectors
 import {
-    selectLoadedMaps,
-    selectLoadedFonts,
-    selectLoadedJSONs,
-    selectLoadedImages,
     selectAssetsSetters,
     selectLoadedAtlases,
+    selectLoadedFonts,
+    selectLoadedImages,
+    selectLoadedJSONs,
+    selectLoadedMaps,
+    selectLoadedWorlds,
 } from '../../zustand/assets/selectLoadedAssets';
 import { selectMapSetters } from '../../zustand/map/selectMapData';
 import { selectGameSetters } from '../../zustand/game/selectGameData';
@@ -40,7 +37,8 @@ export async function create(initData) {
         fonts = [],
         atlases = [],
         images = [],
-        mapKey = '',
+        mapKey: extraMapKey = '',
+        worldKey = '',
     } = initData?.assets || {};
 
     const {
@@ -48,6 +46,7 @@ export async function create(initData) {
         addLoadedFont,
         addLoadedImage,
         addLoadedMap,
+        addLoadedWorld,
         addLoadedJson,
     } = getSelectorData(selectAssetsSetters);
 
@@ -55,6 +54,7 @@ export async function create(initData) {
     const loadedImages = getSelectorData(selectLoadedImages);
     const loadedFonts = getSelectorData(selectLoadedFonts);
     const loadedMaps = getSelectorData(selectLoadedMaps);
+    const loadedWorlds = getSelectorData(selectLoadedWorlds);
 
     // setup loading bar
     const progressBar = scene.add.graphics();
@@ -96,7 +96,7 @@ export async function create(initData) {
             return;
         }
 
-        if (!mapKey && atlases.length === 0 && images.length === 0) {
+        if (!extraMapKey && atlases.length === 0 && images.length === 0) {
             handleBarProgress(fonts.length - (fonts.length - (idx + 1)));
         }
 
@@ -115,118 +115,143 @@ export async function create(initData) {
         );
     });
 
-    // Load the Tiled map needed for the next scene
-    if (
-        mapKey
-        && !loadedMaps.includes(mapKey)
-        && isMapFileAvailable(`${mapKey}.json`)
-    ) {
-        const { default: mapJson } = await import(`../../assets/maps/${mapKey}.json`);
-        const tilesets = mapJson.tilesets.map((tileset) =>
-            // the string will be something like "../tilesets/village.json" or "../tilesets/village.png"
-            tileset.source?.split('/').pop().split('.')[0] || tileset.image?.split('/').pop().split('.')[0]);
+    const mapKeys = [];
+    if (worldKey) {
+        addLoadedWorld(worldKey);
+        const { default: worldJson } = await import(`../../assets/maps/worlds/${worldKey}.json`);
+        mapKeys.push(
+            ...worldJson.maps.map((mapData) => {
+                const { filename } = mapData;
+                const nameWithExtension = filename.split('/').pop();
+                return nameWithExtension.replace(/\.[^/.]+$/, '');
+            })
+        );
+    }
 
-        // Load objects assets
-        const objectLayers = mapJson.layers.filter((layer) => layer.type === 'objectgroup');
-        objectLayers.forEach((layer) => {
-            layer.objects.forEach(async (object) => {
-                const { gid, properties } = object;
-                switch (gid) {
-                    case SLIME: {
-                        // for some reason, if I don't assign this constant to a local variable
-                        // webpack production build do something that the code doesn't work properly
-                        // on the browser
-                        const spriteName = SLIME_SPRITE_NAME;
+    // BIG TODO
+    if (extraMapKey) {
+        mapKeys.push(extraMapKey);
+    }
 
-                        if (
-                            isGeneratedAtlasFileAvailable(`${spriteName}.json`)
-                            && isGeneratedAtlasFileAvailable(`${spriteName}.png`)
-                            && !loadedAtlases.includes(spriteName)
-                        ) {
-                            // eslint-disable-next-line no-await-in-loop
-                            const { default: jsonPath } =
-                                await import(`../../assets/atlases/generated/${spriteName}.json`);
-                            // eslint-disable-next-line no-await-in-loop
-                            const { default: imagePath } =
-                                await import(`../../assets/atlases/generated/${spriteName}.png`);
+    // TODO no need to load all maps at the same time, probably best to load only the adjacent maps
+    // or even only load the current map and load the adjacent maps when the player is close to them
+    // eslint-disable-next-line no-restricted-syntax
+    for (const mapKey of mapKeys) {
+        // Load the Tiled map needed for the next scene
+        if (
+            mapKey
+            && !loadedMaps.includes(mapKey)
+            && isMapFileAvailable(`${mapKey}.json`)
+        ) {
+            // eslint-disable-next-line no-await-in-loop
+            const { default: mapJson } = await import(`../../assets/maps/${mapKey}.json`);
+            const tilesets = mapJson.tilesets.map((tileset) =>
+                // the string will be something like "../tilesets/village.json" or "../tilesets/village.png"
+                tileset.source?.split('/').pop().split('.')[0] || tileset.image?.split('/').pop().split('.')[0]);
 
-                            addLoadedAtlas(spriteName);
-                            await asyncLoader(scene.load.atlas(spriteName, imagePath, jsonPath));
+            // Load objects assets
+            const objectLayers = mapJson.layers.filter((layer) => layer.type === 'objectgroup');
+            objectLayers.forEach((layer) => {
+                layer.objects.forEach(async (object) => {
+                    const { gid, properties } = object;
+                    switch (gid) {
+                        case SLIME: {
+                            // for some reason, if I don't assign this constant to a local variable
+                            // webpack production build do something that the code doesn't work properly
+                            // on the browser
+                            const spriteName = SLIME_SPRITE_NAME;
+
+                            if (
+                                isGeneratedAtlasFileAvailable(`${spriteName}.json`)
+                                && isGeneratedAtlasFileAvailable(`${spriteName}.png`)
+                                && !loadedAtlases.includes(spriteName)
+                            ) {
+                                // eslint-disable-next-line no-await-in-loop
+                                const { default: jsonPath } =
+                                    await import(`../../assets/atlases/generated/${spriteName}.json`);
+                                // eslint-disable-next-line no-await-in-loop
+                                const { default: imagePath } =
+                                    await import(`../../assets/atlases/generated/${spriteName}.png`);
+
+                                addLoadedAtlas(spriteName);
+                                await asyncLoader(scene.load.atlas(spriteName, imagePath, jsonPath));
+                            }
+
+                            break;
                         }
 
-                        break;
+                        default: {
+                            break;
+                        }
                     }
 
-                    default: {
-                        break;
-                    }
-                }
-
-                properties?.forEach((property) => {
-                    // TODO
-                    const { name, type, value } = property;
+                    properties?.forEach((property) => {
+                        // TODO
+                        const { name, type, value } = property;
+                    });
                 });
             });
-        });
 
-        const loadedJSONs = getSelectorData(selectLoadedJSONs);
-        // eslint-disable-next-line no-restricted-syntax
-        for (const tilesetName of tilesets) {
-            if (tilesetName && !IGNORED_TILESETS.includes(tilesetName)) {
-                let tilesetJson = {};
-                if (!loadedJSONs.includes(tilesetName) && isTilesetFileAvailable(`${tilesetName}.json`)) {
-                    // eslint-disable-next-line no-await-in-loop
-                    const { default: jsonResult } = await import(`../../assets/tilesets/${tilesetName}.json`);
-                    tilesetJson = jsonResult;
+            const loadedJSONs = getSelectorData(selectLoadedJSONs);
+            // eslint-disable-next-line no-restricted-syntax
+            for (const tilesetName of tilesets) {
+                if (tilesetName && !IGNORED_TILESETS.includes(tilesetName)) {
+                    let tilesetJson = {};
+                    if (!loadedJSONs.includes(tilesetName) && isTilesetFileAvailable(`${tilesetName}.json`)) {
+                        // eslint-disable-next-line no-await-in-loop
+                        const { default: jsonResult } = await import(`../../assets/tilesets/${tilesetName}.json`);
+                        tilesetJson = jsonResult;
 
-                    addLoadedJson(tilesetName);
-                    // eslint-disable-next-line no-await-in-loop
-                    await asyncLoader(scene.load.json(tilesetName, tilesetJson));
-                } else {
-                    tilesetJson = scene.cache.json.get(tilesetName);
+                        addLoadedJson(tilesetName);
+                        // eslint-disable-next-line no-await-in-loop
+                        await asyncLoader(scene.load.json(tilesetName, tilesetJson));
+                    } else {
+                        tilesetJson = scene.cache.json.get(tilesetName);
+                    }
+
+                    if (!loadedImages.includes(tilesetName) && isTilesetFileAvailable(tilesetJson.image)) {
+                        // remove the file extension so webpack only pre-load the files with the png extension
+                        const fileName = tilesetJson.image.replace(/\.[^/.]+$/, '');
+                        // eslint-disable-next-line no-await-in-loop
+                        const { default: tilesetImage } = await import(
+                            `../../assets/tilesets/${fileName}.png`
+                        );
+
+                        addLoadedImage(tilesetName);
+                        // eslint-disable-next-line no-await-in-loop
+                        await asyncLoader(scene.load.image(tilesetName, tilesetImage));
+                    }
+
+                    mapJson.tilesets = mapJson.tilesets
+                        .filter(
+                            (tileset) => !IGNORED_TILESETS.includes(tileset.source?.split('/')?.pop()?.split('.')?.[0])
+                        ).map((tileset) => {
+                            if (tileset.source?.includes(`/${tilesetName}.json`)) {
+                                const imageExtension = tilesetJson.image.split('.').pop();
+                                const imagePath = tileset.source.replace('.json', `.${imageExtension}`);
+                                // eslint-disable-next-line no-param-reassign
+                                delete tileset.source;
+
+                                return {
+                                    ...tileset,
+                                    ...tilesetJson,
+                                    image: imagePath, // not really necessary but why not
+                                };
+                            }
+
+                            return tileset;
+                        });
+
+                    const { addTileset } = getSelectorData(selectMapSetters);
+                    addTileset(tilesetName);
                 }
-
-                if (!loadedImages.includes(tilesetName) && isTilesetFileAvailable(tilesetJson.image)) {
-                    // remove the file extension so webpack only pre-load the files with the png extension
-                    const fileName = tilesetJson.image.replace(/\.[^/.]+$/, '');
-                    // eslint-disable-next-line no-await-in-loop
-                    const { default: tilesetImage } = await import(
-                        `../../assets/tilesets/${fileName}.png`
-                    );
-
-                    addLoadedImage(tilesetName);
-                    // eslint-disable-next-line no-await-in-loop
-                    await asyncLoader(scene.load.image(tilesetName, tilesetImage));
-                }
-
-                mapJson.tilesets = mapJson.tilesets
-                    .filter(
-                        (tileset) => !IGNORED_TILESETS.includes(tileset.source?.split('/')?.pop()?.split('.')?.[0])
-                    ).map((tileset) => {
-                        if (tileset.source?.includes(`/${tilesetName}.json`)) {
-                            const imageExtension = tilesetJson.image.split('.').pop();
-                            const imagePath = tileset.source.replace('.json', `.${imageExtension}`);
-                            // eslint-disable-next-line no-param-reassign
-                            delete tileset.source;
-
-                            return {
-                                ...tileset,
-                                ...tilesetJson,
-                                image: imagePath, // not really necessary but why not
-                            };
-                        }
-
-                        return tileset;
-                    });
-
-                const { addTileset } = getSelectorData(selectMapSetters);
-                addTileset(tilesetName);
             }
-        }
 
-        addLoadedMap(mapKey);
-        // Load map with preloaded tilesets
-        await asyncLoader(scene.load.tilemapTiledJSON(mapKey, mapJson));
+            addLoadedMap(mapKey);
+            // Load map with preloaded tilesets
+            // eslint-disable-next-line no-await-in-loop
+            await asyncLoader(scene.load.tilemapTiledJSON(mapKey, mapJson));
+        }
     }
 
     // Load all the atlases needed for the next scene

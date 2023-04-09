@@ -97,6 +97,16 @@ export const isMapFileAvailable = (file) => {
     }
 };
 
+export const isWorldFileAvailable = (file) => {
+    try {
+        require.resolveWeak(`../assets/maps/world/${file}`);
+        return true;
+    } catch {
+        console.error(`Error loading file ${file}`);
+        return false;
+    }
+};
+
 export const isImageFileAvailable = (file) => {
     try {
         require.resolveWeak(`../assets/images/${file}`);
