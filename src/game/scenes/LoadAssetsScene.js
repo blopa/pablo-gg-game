@@ -9,7 +9,7 @@ import {
     isTilesetFileAvailable,
 } from '../../utils/utils';
 import { asyncLoader } from '../../utils/phaser';
-import {findAdjacentMaps} from "../../utils/sceneHelpers";
+import { findAdjacentMaps } from '../../utils/sceneHelpers';
 
 // Constants
 import { IGNORED_TILESETS, SLIME, SLIME_SPRITE_NAME } from '../../constants';
@@ -26,9 +26,8 @@ import {
 } from '../../zustand/assets/selectLoadedAssets';
 import {
     selectCurrentMapKey,
-    selectMapKeyData,
     selectMapSetters,
-    selectWorldData
+    selectWorldData,
 } from '../../zustand/map/selectMapData';
 import { selectGameSetters } from '../../zustand/game/selectGameData';
 

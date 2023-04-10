@@ -24,7 +24,6 @@ import {
     selectShouldPauseScene,
 } from '../../zustand/game/selectGameData';
 import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
-import {selectCurrentMapKey, selectMapKeyData, selectTilesets} from '../../zustand/map/selectMapData';
 
 // Constants
 import {

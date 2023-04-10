@@ -33,7 +33,13 @@ import { createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rot
 
 // Selectors
 import { selectDialogMessages } from '../zustand/dialog/selectDialog';
-import {selectCurrentMapKey, selectMapKeyData, selectMapSetters, selectTilesets} from '../zustand/map/selectMapData';
+import {
+    selectCurrentMapKey,
+    selectMapKeyData,
+    selectMapSetters,
+    selectTilesets,
+    selectWorldData,
+} from '../zustand/map/selectMapData';
 import {
     selectHeroCurrentHealth,
     selectHeroFacingDirection,
@@ -99,17 +105,108 @@ export const findAdjacentMaps = (currentMap, maps) => maps.filter((map) => (
         || (map.x === currentMap.x - currentMap.width && map.y === currentMap.y + currentMap.height) // down-left
 ));
 
+export const getAdjacentMapsPositions = (currentMap, adjacentMaps) => adjacentMaps.reduce((adjacentMapObj, map) => {
+    const dx = map.x - currentMap.x;
+    const dy = map.y - currentMap.y;
+
+    if (dx === -currentMap.width && dy === 0) { // left
+        return { ...adjacentMapObj, left: map };
+    }
+
+    if (dx === currentMap.width && dy === 0) { // right
+        return { ...adjacentMapObj, right: map };
+    }
+
+    if (dx === 0 && dy === -currentMap.height) { // up
+        return { ...adjacentMapObj, up: map };
+    }
+
+    if (dx === 0 && dy === currentMap.height) { // down
+        return { ...adjacentMapObj, down: map };
+    }
+
+    if (dx === currentMap.width && dy === -currentMap.height) { // up-right
+        return { ...adjacentMapObj, up_right: map };
+    }
+
+    if (dx === -currentMap.width && dy === -currentMap.height) { // up-left
+        return { ...adjacentMapObj, up_left: map };
+    }
+
+    if (dx === currentMap.width && dy === currentMap.height) { // down-right
+        return { ...adjacentMapObj, down_right: map };
+    }
+
+    if (dx === -currentMap.width && dy === currentMap.height) { // down-left
+        return { ...adjacentMapObj, down_left: map };
+    }
+
+    return adjacentMapObj;
+}, {});
+
 /**
  * @param scene
  * @returns Phaser.GameObjects.Group
  */
 export const handleCreateMap = (scene) => {
-    const mapKey = getSelectorData(selectCurrentMapKey);
-    const tilesets = getSelectorData(selectTilesets(mapKey));
-    const mapData = getSelectorData(selectMapKeyData(mapKey));
+    const currentMapKey = getSelectorData(selectCurrentMapKey);
+    const tilesets = getSelectorData(selectTilesets(currentMapKey));
+    const currentMapKeyData = getSelectorData(selectMapKeyData(currentMapKey));
+    const worldData = getSelectorData(selectWorldData);
     const customColliders = scene.add.group();
+    const adjacentMaps = findAdjacentMaps(currentMapKeyData, worldData.maps);
+    const adjacentMapsPositions = getAdjacentMapsPositions(currentMapKeyData, adjacentMaps);
 
-    return createTilemap(scene, mapKey, mapData, tilesets, customColliders);
+    return createTilemap(
+        scene,
+        currentMapKey,
+        currentMapKeyData,
+        tilesets,
+        customColliders,
+        adjacentMapsPositions
+    );
+};
+
+export const createTeleportObject = (scene, position, mapKey, targetPosition, type) => {
+    const customCollider = createInteractiveGameObject(
+        scene,
+        position.x,
+        position.y,
+        TILE_WIDTH,
+        TILE_HEIGHT,
+        {
+            x: 0,
+            y: 1,
+        }
+    );
+
+    const overlapCollider = scene.physics.add.overlap(scene.heroSprite, customCollider, () => {
+        scene.physics.world.removeCollider(overlapCollider);
+        const {
+            setHeroInitialFrame,
+            setHeroFacingDirection,
+            setHeroInitialPosition,
+            setHeroPreviousPosition,
+        } = getSelectorData(selectHeroSetters);
+        const { setCurrentMapKey } = getSelectorData(selectMapSetters);
+        const facingDirection = getSelectorData(selectHeroFacingDirection);
+
+        setCurrentMapKey(mapKey);
+        setHeroFacingDirection(facingDirection);
+        setHeroInitialFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
+        setHeroInitialPosition({ x: targetPosition.x, y: targetPosition.y });
+        setHeroPreviousPosition({ x: targetPosition.x, y: targetPosition.y });
+
+        const { setShouldPauseScene } = getSelectorData(selectGameSetters);
+        setShouldPauseScene('GameScene', true);
+        changeScene(scene, 'GameScene', {
+            atlases: ['hero', 'sword', 'bomb'],
+            images: [],
+            mapKey,
+        }, {
+            fadeType: 'out',
+        });
+    });
 };
 
 /**
@@ -121,7 +218,14 @@ export const handleCreateMap = (scene) => {
  * @returns Phaser.GameObjects.Group
  * TODO it's currently not possible to create a tilemap with custom positions
  */
-export const createTilemap = (scene, mapKey, mapData, tilesets, customColliders) => {
+export const createTilemap = (
+    scene,
+    mapKey,
+    mapData,
+    tilesets,
+    customColliders,
+    adjacentMapsPositions = []
+) => {
     // Create the map
     const map = scene.make.tilemap({ key: mapKey });
     // TODO check if tileset is already added
@@ -139,9 +243,15 @@ export const createTilemap = (scene, mapKey, mapData, tilesets, customColliders)
             // mapData.y
         );
 
-        layer.layer.data.forEach((tileRows) => {
-            tileRows.forEach((tile) => {
+        const columnLength = layer.layer.data.length;
+        layer.layer.data.forEach((tileRows, columnIndex) => {
+            const rowLength = tileRows.length;
+            tileRows.forEach((tile, rowIndex) => {
                 const { index, tileset, properties, x: tileX, y: tileY } = tile;
+                if (rowIndex === rowLength - 1) {
+                    // TODO
+                }
+
                 if (index === -1) {
                     return;
                 }
@@ -268,7 +378,11 @@ export const createTilemap = (scene, mapKey, mapData, tilesets, customColliders)
         scene.mapLayers.add(layer);
     });
 
-    const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
+    // const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
+    // const tilesWithCollision = layersWithCollision.flatMap(
+    //     (layer) => layer.layer.data.flat().filter((tile, idx) => tile?.properties?.[SHOULD_TILE_COLLIDE])
+    // );
+
     scene.gridEngine.create(map, {
         characters: [],
         collisionTilePropertyName: SHOULD_TILE_COLLIDE,
@@ -1170,40 +1284,16 @@ export const handleObjectsLayer = (scene) => {
                 }
 
                 case DOOR: {
-                    const { type, map, position } = propertiesObject;
-                    const customCollider = createInteractiveGameObject(scene, x, y, TILE_WIDTH, TILE_HEIGHT, {
-                        x: 0,
-                        y: 1,
-                    });
+                    const { type, map: mapKey, position } = propertiesObject;
+                    const [posX, posY] = position.split(';');
 
-                    const overlapCollider = scene.physics.add.overlap(scene.heroSprite, customCollider, () => {
-                        scene.physics.world.removeCollider(overlapCollider);
-                        const [posX, posY] = position.split(';');
-                        const {
-                            setHeroInitialFrame,
-                            setHeroFacingDirection,
-                            setHeroInitialPosition,
-                            setHeroPreviousPosition,
-                        } = getSelectorData(selectHeroSetters);
-                        const { setCurrentMapKey } = getSelectorData(selectMapSetters);
-                        const facingDirection = getSelectorData(selectHeroFacingDirection);
-
-                        setCurrentMapKey(map);
-                        setHeroFacingDirection(facingDirection);
-                        setHeroInitialFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
-                        setHeroInitialPosition({ x: posX, y: posY });
-                        setHeroPreviousPosition({ x: posX, y: posY });
-
-                        const { setShouldPauseScene } = getSelectorData(selectGameSetters);
-                        setShouldPauseScene('GameScene', true);
-                        changeScene(scene, 'GameScene', {
-                            atlases: ['hero', 'sword', 'bomb'],
-                            images: [],
-                            mapKey: map,
-                        }, {
-                            fadeType: 'out',
-                        });
-                    });
+                    createTeleportObject(
+                        scene,
+                        { x, y },
+                        mapKey,
+                        { x: Number.parseInt(posX, 10), y: Number.parseInt(posY, 10) },
+                        type
+                    );
 
                     break;
                 }
