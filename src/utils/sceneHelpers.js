@@ -265,16 +265,33 @@ export const createTilemap = (
                     pixelY,
                 } = tile;
 
-                if (rowIndex === rowLength - 1 && adjacentMapsPositions.right) {
-                    const { fileName } = adjacentMapsPositions.right;
-                    const targetMapKey = getFileNameWithoutExtension(fileName);
-                    // debugger;
-                    createTeleportObject(
-                        scene,
-                        { x: pixelX + TILE_WIDTH, y: pixelY },
-                        targetMapKey,
-                        { x: 0, y: tileY }
-                    );
+                const { collideLeft, collideRight, collideUp, collideDown } = properties;
+                const shouldCollide = Boolean(collideLeft)
+                    || Boolean(collideRight)
+                    || Boolean(collideUp)
+                    || Boolean(collideDown);
+
+                // TODO move this logic to a loop with the tilesWithCollision array
+                if (!shouldCollide) {
+                    if (adjacentMapsPositions.right && rowIndex === rowLength - 1) {
+                        const { fileName } = adjacentMapsPositions.right;
+                        const targetMapKey = getFileNameWithoutExtension(fileName);
+                        createTeleportObject(
+                            scene,
+                            { x: pixelX + TILE_WIDTH, y: pixelY + TILE_HEIGHT },
+                            targetMapKey,
+                            { x: 0, y: tileY - 1 }
+                        );
+                    } else if (adjacentMapsPositions.left && rowIndex === 0) {
+                        const { fileName, width } = adjacentMapsPositions.left;
+                        const targetMapKey = getFileNameWithoutExtension(fileName);
+                        createTeleportObject(
+                            scene,
+                            { x: pixelX - TILE_WIDTH, y: pixelY + TILE_HEIGHT },
+                            targetMapKey,
+                            { x: (width / TILE_WIDTH) - 2, y: tileY - 1 }
+                        );
+                    }
                 }
 
                 if (index === -1) {
@@ -331,12 +348,7 @@ export const createTilemap = (
                     return;
                 }
 
-                const { collideLeft, collideRight, collideUp, collideDown } = properties;
                 const tilesetCustomColliders = tileset?.getTileData?.(index);
-                const shouldCollide = Boolean(collideLeft)
-                    || Boolean(collideRight)
-                    || Boolean(collideUp)
-                    || Boolean(collideDown);
 
                 if (shouldCollide) {
                     properties[SHOULD_TILE_COLLIDE] = shouldCollide;
@@ -403,10 +415,10 @@ export const createTilemap = (
         scene.mapLayers.add(layer);
     });
 
-    // const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
-    // const tilesWithCollision = layersWithCollision.flatMap(
-    //     (layer) => layer.layer.data.flat().filter((tile, idx) => tile?.properties?.[SHOULD_TILE_COLLIDE])
-    // );
+    const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
+    const tilesWithCollision = layersWithCollision.flatMap(
+        (layer) => layer.layer.data.flat().filter((tile, idx) => tile?.properties?.[SHOULD_TILE_COLLIDE])
+    );
 
     scene.gridEngine.create(map, {
         characters: [],
@@ -1549,7 +1561,7 @@ const fade = (scene, callback, direction, type) => {
     if (type === 'in') {
         const addOnX = camera.scrollX > 0 ? scene.heroSprite.height : 0;
         const addOnY = camera.scrollY > 0 ? scene.heroSprite.width : 0;
-        targetX = (camera.scrollX + addOnX) - (gameWidth + marginWidth);
+        targetX = (camera.scrollX + addOnX) - (gameWidth + marginWidth * 2);
         blackBlock.setPosition(
             camera.scrollX + addOnX,
             camera.scrollY + addOnY
@@ -1567,16 +1579,23 @@ const fade = (scene, callback, direction, type) => {
         blackBlock.y - marginHeight / 2
     );
 
+    const duration = type === 'in' ? 700 : 1200;
+    scene.time.delayedCall(duration * 0.7, () => {
+        callback?.();
+    });
+
     scene.tweens.add({
         targets: blackBlock,
         x: targetX,
         // alpha: 1,
-        duration: type === 'in' ? 700 : 1200,
+        duration,
         ease: 'Power2',
         onComplete: () => {
-            callback?.();
-            // blackBlock.clear();
-            // blackBlock.destroy();
+            // callback?.();
+            scene.time.delayedCall(10, () => {
+                blackBlock.clear();
+                blackBlock.destroy();
+            });
         },
     });
 };
