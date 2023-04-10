@@ -84,6 +84,11 @@ export const createInteractiveGameObject = (
     return customCollider;
 };
 
+// export const getFileNameWithoutPathOrExtension = (fileName) => {
+//     const nameWithExtension = fileName.split('/').pop();
+//     return nameWithExtension.replace(/\.[^/.]+$/, '');
+// };
+
 // Functions to check if a file exists within Webpack modules
 // This might look dumb, but due to the way Webpack works, this is the only way to properly check
 // Using a full path as a variable doesn't work because: https://github.com/webpack/webpack/issues/6680#issuecomment-370800037

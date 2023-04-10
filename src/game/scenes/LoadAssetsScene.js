@@ -2,6 +2,7 @@ import { Display } from 'phaser';
 
 // Utils
 import {
+    getFileNameWithoutExtension,
     getSelectorData,
     isGeneratedAtlasFileAvailable,
     isImageFileAvailable,
@@ -136,10 +137,7 @@ export async function create(initData) {
         const adjacentMaps = findAdjacentMaps(currentMapKeyData, worldJson.maps);
 
         mapKeys.push(
-            ...adjacentMaps.map((mapData) => {
-                const nameWithExtension = mapData.fileName.split('/').pop();
-                return nameWithExtension.replace(/\.[^/.]+$/, '');
-            })
+            ...adjacentMaps.map((mapData) => getFileNameWithoutExtension(mapData.fileName))
         );
     }
 

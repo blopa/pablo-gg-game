@@ -56,11 +56,8 @@ export function create() {
     //     console.log('clicky click');
     // });
     const { addGameCameraSizeUpdateCallback, setGameShowHeadsUpDisplay } = getSelectorData(selectGameSetters);
-    setGameShowHeadsUpDisplay(true);
 
     // All of these functions need to be called in order
-
-    fadeIn(scene);
 
     // Create controls
     handleCreateControls(scene);
@@ -68,11 +65,11 @@ export function create() {
     // Create game groups
     handleCreateGroups(scene);
 
-    // Create the map
-    const customColliders = handleCreateMap(scene);
-
     // Create hero sprite
     handleCreateHero(scene);
+
+    // Create the map
+    const customColliders = handleCreateMap(scene);
 
     // Load game objects like items, enemies, etc
     handleObjectsLayer(scene);
@@ -88,6 +85,10 @@ export function create() {
 
     // Subscribe to grid-engine events
     subscribeToGridEngineEvents(scene);
+
+    fadeIn(scene, () => {
+        setGameShowHeadsUpDisplay(true);
+    });
 
     // Handle collisions
     scene.physics.add.collider(scene.heroSprite, scene.mapLayers);

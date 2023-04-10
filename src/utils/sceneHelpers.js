@@ -29,7 +29,13 @@ import {
 } from '../constants';
 
 // Utils
-import { createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rotateRectangleInsideTile } from './utils';
+import {
+    createInteractiveGameObject,
+    getDegreeFromRadians,
+    getFileNameWithoutExtension,
+    getSelectorData,
+    rotateRectangleInsideTile,
+} from './utils';
 
 // Selectors
 import { selectDialogMessages } from '../zustand/dialog/selectDialog';
@@ -167,7 +173,7 @@ export const handleCreateMap = (scene) => {
     );
 };
 
-export const createTeleportObject = (scene, position, mapKey, targetPosition, type) => {
+export const createTeleportObject = (scene, position, mapKey, targetTilePosition, type) => {
     const customCollider = createInteractiveGameObject(
         scene,
         position.x,
@@ -194,11 +200,13 @@ export const createTeleportObject = (scene, position, mapKey, targetPosition, ty
         setCurrentMapKey(mapKey);
         setHeroFacingDirection(facingDirection);
         setHeroInitialFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
-        setHeroInitialPosition({ x: targetPosition.x, y: targetPosition.y });
-        setHeroPreviousPosition({ x: targetPosition.x, y: targetPosition.y });
+        setHeroInitialPosition({ x: targetTilePosition.x, y: targetTilePosition.y });
+        setHeroPreviousPosition({ x: targetTilePosition.x, y: targetTilePosition.y });
 
-        const { setShouldPauseScene } = getSelectorData(selectGameSetters);
+        const { setShouldPauseScene, setGameShowHeadsUpDisplay } = getSelectorData(selectGameSetters);
         setShouldPauseScene('GameScene', true);
+        setGameShowHeadsUpDisplay(false);
+
         changeScene(scene, 'GameScene', {
             atlases: ['hero', 'sword', 'bomb'],
             images: [],
@@ -247,9 +255,26 @@ export const createTilemap = (
         layer.layer.data.forEach((tileRows, columnIndex) => {
             const rowLength = tileRows.length;
             tileRows.forEach((tile, rowIndex) => {
-                const { index, tileset, properties, x: tileX, y: tileY } = tile;
-                if (rowIndex === rowLength - 1) {
-                    // TODO
+                const {
+                    index,
+                    tileset,
+                    properties,
+                    x: tileX,
+                    y: tileY,
+                    pixelX,
+                    pixelY,
+                } = tile;
+
+                if (rowIndex === rowLength - 1 && adjacentMapsPositions.right) {
+                    const { fileName } = adjacentMapsPositions.right;
+                    const targetMapKey = getFileNameWithoutExtension(fileName);
+                    // debugger;
+                    createTeleportObject(
+                        scene,
+                        { x: pixelX + TILE_WIDTH, y: pixelY },
+                        targetMapKey,
+                        { x: 0, y: tileY }
+                    );
                 }
 
                 if (index === -1) {
@@ -1506,38 +1531,50 @@ export const fadeIn = (scene, callback = null, direction = 'left') => {
 };
 
 const fade = (scene, callback, direction, type) => {
+    const camera = scene.cameras.main;
+    const gameWidth = getSelectorData(selectGameWidth);
+    const gameHeight = getSelectorData(selectGameHeight);
+
     const blackBlock = scene.add.graphics();
     const multiplier = direction === 'right' ? 1 : -1;
     blackBlock.fillStyle(0x000000);
+    const marginWidth = gameWidth * 0.1;
+    const marginHeight = gameHeight * 0.1;
 
-    const gameWidth = getSelectorData(selectGameWidth);
-    const gameHeight = getSelectorData(selectGameHeight);
-    blackBlock.fillRect(
-        -gameWidth * (type === 'in' ? -0 : multiplier),
-        0,
-        gameWidth,
-        gameHeight
-    );
-    // blackBlock.setAlpha(0);
+    blackBlock.fillRect(0, 0, gameWidth + marginWidth, gameHeight + marginHeight);
+    let targetX = 0;
     blackBlock.setDepth(Number.POSITIVE_INFINITY);
+    // blackBlock.setAlpha(0);
 
-    const updatePosition = (camera, sprite) => {
+    if (type === 'in') {
+        const addOnX = camera.scrollX > 0 ? scene.heroSprite.height : 0;
+        const addOnY = camera.scrollY > 0 ? scene.heroSprite.width : 0;
+        targetX = (camera.scrollX + addOnX) - (gameWidth + marginWidth);
         blackBlock.setPosition(
-            blackBlock.x + camera.scrollX,
-            blackBlock.y + camera.scrollY
+            camera.scrollX + addOnX,
+            camera.scrollY + addOnY
         );
-    };
+    } else {
+        targetX = camera.scrollX;
+        blackBlock.setPosition(
+            camera.scrollX - gameWidth,
+            camera.scrollY
+        );
+    }
 
-    scene.cameras.main.on('followupdate', updatePosition);
+    blackBlock.setPosition(
+        blackBlock.x - marginWidth / 2,
+        blackBlock.y - marginHeight / 2
+    );
+
     scene.tweens.add({
         targets: blackBlock,
-        x: scene.game.config.width * (type === 'in' ? -2 : multiplier),
+        x: targetX,
         // alpha: 1,
-        duration: 500,
+        duration: type === 'in' ? 700 : 1200,
         ease: 'Power2',
         onComplete: () => {
             callback?.();
-            scene.cameras.main.off('followupdate', updatePosition);
             // blackBlock.clear();
             // blackBlock.destroy();
         },
