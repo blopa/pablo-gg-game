@@ -1,0 +1,83 @@
+{
+  "maps": [
+    {
+      "fileName": "../test_map.json",
+      "height": 800,
+      "width": 800,
+      "x": -320,
+      "y": 0
+    },
+    {
+      "fileName": "../test_map_02.json",
+      "height": 800,
+      "width": 800,
+      "x": 480,
+      "y": 0
+    },
+    {
+      "fileName": "../test_map_03.json",
+      "height": 800,
+      "width": 800,
+      "x": 480,
+      "y": -800
+    },
+    {
+      "fileName": "../test_map_04.json",
+      "height": 800,
+      "width": 800,
+      "x": -320,
+      "y": -800
+    },
+    {
+      "fileName": "../test_map_05.json",
+      "height": 800,
+      "width": 800,
+      "x": -1120,
+      "y": -800
+    },
+    {
+      "fileName": "../test_map_06.json",
+      "height": 800,
+      "width": 800,
+      "x": -1120,
+      "y": 0
+    },
+    {
+      "fileName": "../test_map_07.json",
+      "height": 800,
+      "width": 800,
+      "x": -1120,
+      "y": 800
+    },
+    {
+      "fileName": "../test_map_08.json",
+      "height": 800,
+      "width": 800,
+      "x": -320,
+      "y": 800
+    },
+    {
+      "fileName": "../test_map_09.json",
+      "height": 800,
+      "width": 800,
+      "x": 480,
+      "y": 800
+    },
+    {
+      "fileName": "../test_map_10.json",
+      "height": 800,
+      "width": 800,
+      "x": 1280,
+      "y": 800
+    },
+    {
+      "fileName": "../test_map_11.json",
+      "height": 800,
+      "width": 800,
+      "x": 1280,
+      "y": 0
+    }
+  ],
+  "onlyShowAdjacentMaps": false,
+  "type": "world"
+}
