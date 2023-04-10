@@ -119,6 +119,7 @@ export const handleCreateMap = (scene) => {
  * @param tilesets
  * @param customColliders
  * @returns Phaser.GameObjects.Group
+ * TODO it's currently not possible to create a tilemap with custom positions
  */
 export const createTilemap = (scene, mapKey, mapData, tilesets, customColliders) => {
     // Create the map
@@ -129,7 +130,14 @@ export const createTilemap = (scene, mapKey, mapData, tilesets, customColliders)
     });
 
     map.layers.forEach((layerData, idx) => {
-        const layer = map.createLayer(layerData.name, tilesets, mapData.x, mapData.y);
+        const layer = map.createLayer(
+            layerData.name,
+            tilesets,
+            0,
+            0
+            // mapData.x,
+            // mapData.y
+        );
 
         layer.layer.data.forEach((tileRows) => {
             tileRows.forEach((tile) => {
