@@ -24,6 +24,7 @@ import {
     selectShouldPauseScene,
 } from '../../zustand/game/selectGameData';
 import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
+import { selectCurrentMapKey, selectTilesets } from '../../zustand/map/selectMapData';
 
 // Constants
 import {
@@ -69,7 +70,10 @@ export function create() {
     handleCreateGroups(scene);
 
     // Create the map
-    const customColliders = handleCreateMap(scene);
+    const mapKey = getSelectorData(selectCurrentMapKey);
+    const tilesets = getSelectorData(selectTilesets(mapKey));
+    const customColliders = scene.add.group();
+    handleCreateMap(scene, mapKey, tilesets, customColliders);
 
     // Create hero sprite
     handleCreateHero(scene);

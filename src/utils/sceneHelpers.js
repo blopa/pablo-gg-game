@@ -33,7 +33,7 @@ import { createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rot
 
 // Selectors
 import { selectDialogMessages } from '../zustand/dialog/selectDialog';
-import { selectMapKey, selectMapSetters, selectTilesets } from '../zustand/map/selectMapData';
+import { selectMapSetters } from '../zustand/map/selectMapData';
 import {
     selectHeroCurrentHealth,
     selectHeroFacingDirection,
@@ -41,7 +41,7 @@ import {
     selectHeroInitialPosition,
     selectHeroSetters,
 } from '../zustand/hero/selectHeroData';
-import {selectGameHeight, selectGameSetters, selectGameWidth} from '../zustand/game/selectGameData';
+import { selectGameHeight, selectGameSetters, selectGameWidth } from '../zustand/game/selectGameData';
 
 export const createAnimation = (animationManager, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
     const frames = Array.from({ length: frameQuantity }).map((n, index) => ({
@@ -94,11 +94,7 @@ export const handleCreateGroups = (scene) => {
  * @param scene
  * @returns Phaser.GameObjects.Group
  */
-export const handleCreateMap = (scene) => {
-    const mapKey = getSelectorData(selectMapKey);
-    const tilesets = getSelectorData(selectTilesets);
-    const customColliders = scene.add.group();
-
+export const handleCreateMap = (scene, mapKey, tilesets, customColliders) => {
     // Create the map
     const map = scene.make.tilemap({ key: mapKey });
     tilesets.forEach((tilesetName) => {
@@ -1154,10 +1150,10 @@ export const handleObjectsLayer = (scene) => {
                             setHeroInitialPosition,
                             setHeroPreviousPosition,
                         } = getSelectorData(selectHeroSetters);
-                        const { setMapKey } = getSelectorData(selectMapSetters);
+                        const { setCurrentMapKey } = getSelectorData(selectMapSetters);
                         const facingDirection = getSelectorData(selectHeroFacingDirection);
 
-                        setMapKey(map);
+                        setCurrentMapKey(map);
                         setHeroFacingDirection(facingDirection);
                         setHeroInitialFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
                         setHeroInitialPosition({ x: posX, y: posY });

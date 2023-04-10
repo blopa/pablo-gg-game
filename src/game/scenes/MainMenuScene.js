@@ -16,7 +16,7 @@ export const key = 'MainMenuScene';
 
 export function create() {
     const scene = sceneHelpers.getScene();
-    const { setMapKey } = getSelectorData(selectMapSetters);
+    const { setCurrentMapKey } = getSelectorData(selectMapSetters);
     const { setMenuItems, setMenuOnSelect } = getSelectorData(selectMenuSetters);
 
     setMenuItems(['start_game', 'exit']);
@@ -34,7 +34,7 @@ export function create() {
         const testMapKey = 'test_map';
         setMenuItems([]);
         setMenuOnSelect(null);
-        setMapKey(testMapKey);
+        setCurrentMapKey(testMapKey);
         const {
             setHeroPreviousPosition,
             setHeroFacingDirection,

@@ -41,7 +41,7 @@ export default (set) => ({
             loadedAssets: {
                 ...state.loadedAssets,
                 // TODO make this a Set()
-                maps: [...state.loadedAssets.worlds, world],
+                worlds: [...state.loadedAssets.worlds, world],
             },
         })),
     addLoadedJson: (json) =>

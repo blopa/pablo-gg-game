@@ -23,7 +23,7 @@ import {
     selectLoadedMaps,
     selectLoadedWorlds,
 } from '../../zustand/assets/selectLoadedAssets';
-import { selectMapSetters } from '../../zustand/map/selectMapData';
+import { selectMapSetters, selectWorldData } from '../../zustand/map/selectMapData';
 import { selectGameSetters } from '../../zustand/game/selectGameData';
 
 export const sceneHelpers = {};
@@ -49,6 +49,7 @@ export async function create(initData) {
         addLoadedWorld,
         addLoadedJson,
     } = getSelectorData(selectAssetsSetters);
+    const { setWorldData, addMapKeyData, addMapKeyDataTileset } = getSelectorData(selectMapSetters);
 
     const loadedAtlases = getSelectorData(selectLoadedAtlases);
     const loadedImages = getSelectorData(selectLoadedImages);
@@ -117,8 +118,10 @@ export async function create(initData) {
 
     const mapKeys = [];
     if (worldKey) {
-        addLoadedWorld(worldKey);
         const { default: worldJson } = await import(`../../assets/maps/worlds/${worldKey}.json`);
+        addLoadedWorld(worldKey);
+        setWorldData(worldJson);
+
         mapKeys.push(
             ...worldJson.maps.map((mapData) => {
                 const { filename } = mapData;
@@ -145,6 +148,26 @@ export async function create(initData) {
         ) {
             // eslint-disable-next-line no-await-in-loop
             const { default: mapJson } = await import(`../../assets/maps/${mapKey}.json`);
+            const worldData = getSelectorData(selectWorldData);
+            if (worldData.maps.length > 0) {
+                const mapData = worldData.maps.find((map) => map.filename.includes(`${mapKey}.json`));
+                addMapKeyData(mapKey, { ...mapData, tilesets: [] });
+            } else {
+                const mapData = {
+                    tilesets: [],
+                    filename: `../${mapKey}.json`,
+                    height: mapJson.height * mapJson.tileheight,
+                    width: mapJson.width * mapJson.tilewidth,
+                    x: 0,
+                    y: 0,
+                };
+                setWorldData({
+                    ...worldData,
+                    maps: [...worldData.maps, mapData],
+                });
+                addMapKeyData(mapKey, mapData);
+            }
+
             const tilesets = mapJson.tilesets.map((tileset) =>
                 // the string will be something like "../tilesets/village.json" or "../tilesets/village.png"
                 tileset.source?.split('/').pop().split('.')[0] || tileset.image?.split('/').pop().split('.')[0]);
@@ -242,8 +265,7 @@ export async function create(initData) {
                             return tileset;
                         });
 
-                    const { addTileset } = getSelectorData(selectMapSetters);
-                    addTileset(tilesetName);
+                    addMapKeyDataTileset(mapKey, tilesetName);
                 }
             }
 

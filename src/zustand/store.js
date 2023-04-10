@@ -38,8 +38,19 @@ const store = createStore((set) => ({
         setters: setHeroData(set),
     },
     mapData: {
-        mapKey: '',
-        tilesets: [],
+        // '[mapKey]': {
+        //     tilesets: [],
+        //     height: 800,
+        //     width: 800,
+        //     x: -320,
+        //     y: 0,
+        // },
+        currentMapKey: '',
+        worldData: {
+            maps: [],
+            onlyShowAdjacentMaps: false,
+            type: 'world',
+        },
         setters: setMapData(set),
     },
     game: {
