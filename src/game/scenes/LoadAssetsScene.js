@@ -9,6 +9,7 @@ import {
     isTilesetFileAvailable,
 } from '../../utils/utils';
 import { asyncLoader } from '../../utils/phaser';
+import {findAdjacentMaps} from "../../utils/sceneHelpers";
 
 // Constants
 import { IGNORED_TILESETS, SLIME, SLIME_SPRITE_NAME } from '../../constants';
@@ -23,7 +24,12 @@ import {
     selectLoadedMaps,
     selectLoadedWorlds,
 } from '../../zustand/assets/selectLoadedAssets';
-import { selectMapSetters, selectWorldData } from '../../zustand/map/selectMapData';
+import {
+    selectCurrentMapKey,
+    selectMapKeyData,
+    selectMapSetters,
+    selectWorldData
+} from '../../zustand/map/selectMapData';
 import { selectGameSetters } from '../../zustand/game/selectGameData';
 
 export const sceneHelpers = {};
@@ -118,14 +124,21 @@ export async function create(initData) {
 
     const mapKeys = [];
     if (worldKey) {
+        const currentMapKey = getSelectorData(selectCurrentMapKey);
+        if (!currentMapKey) {
+            throw new Error('No current map key found');
+        }
+
+        mapKeys.push(currentMapKey);
         const { default: worldJson } = await import(`../../assets/maps/worlds/${worldKey}.json`);
+        const currentMapKeyData = worldJson.maps.find((map) => map.fileName.includes(`${currentMapKey}.json`));
         addLoadedWorld(worldKey);
         setWorldData(worldJson);
+        const adjacentMaps = findAdjacentMaps(currentMapKeyData, worldJson.maps);
 
         mapKeys.push(
-            ...worldJson.maps.map((mapData) => {
-                const { filename } = mapData;
-                const nameWithExtension = filename.split('/').pop();
+            ...adjacentMaps.map((mapData) => {
+                const nameWithExtension = mapData.fileName.split('/').pop();
                 return nameWithExtension.replace(/\.[^/.]+$/, '');
             })
         );
@@ -150,12 +163,12 @@ export async function create(initData) {
             const { default: mapJson } = await import(`../../assets/maps/${mapKey}.json`);
             const worldData = getSelectorData(selectWorldData);
             if (worldData.maps.length > 0) {
-                const mapData = worldData.maps.find((map) => map.filename.includes(`${mapKey}.json`));
+                const mapData = worldData.maps.find((map) => map.fileName.includes(`${mapKey}.json`));
                 addMapKeyData(mapKey, { ...mapData, tilesets: [] });
             } else {
                 const mapData = {
                     tilesets: [],
-                    filename: `../${mapKey}.json`,
+                    fileName: `../${mapKey}.json`,
                     height: mapJson.height * mapJson.tileheight,
                     width: mapJson.width * mapJson.tilewidth,
                     x: 0,

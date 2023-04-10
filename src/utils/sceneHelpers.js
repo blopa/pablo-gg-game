@@ -2,30 +2,30 @@ import { Display, Input, Math as PhaserMath } from 'phaser';
 
 // Constants
 import {
-    DOOR,
-    SLIME,
-    UI_DEPTH,
-    BOX_INDEX,
-    TILE_WIDTH,
-    HERO_DEPTH,
-    IDLE_FRAME,
-    TILE_HEIGHT,
-    GRASS_INDEX,
-    UP_DIRECTION,
-    DOWN_DIRECTION,
-    LEFT_DIRECTION,
-    RIGHT_DIRECTION,
-    FOLLOW_BEHAVIOUR,
     BOMB_SPRITE_NAME,
-    HERO_SPRITE_NAME,
+    BOX_INDEX,
+    DOOR,
+    DOWN_DIRECTION,
     ELEMENT_BOX_TYPE,
-    PATROL_BEHAVIOUR,
-    SLIME_SPRITE_NAME,
-    SWORD_SPRITE_NAME,
     ELEMENT_GRASS_TYPE,
     ENEMY_SPRITE_PREFIX,
-    SHOULD_TILE_COLLIDE,
+    FOLLOW_BEHAVIOUR,
+    GRASS_INDEX,
+    HERO_DEPTH,
+    HERO_SPRITE_NAME,
+    IDLE_FRAME,
     IDLE_FRAME_POSITION_KEY,
+    LEFT_DIRECTION,
+    PATROL_BEHAVIOUR,
+    RIGHT_DIRECTION,
+    SHOULD_TILE_COLLIDE,
+    SLIME,
+    SLIME_SPRITE_NAME,
+    SWORD_SPRITE_NAME,
+    TILE_HEIGHT,
+    TILE_WIDTH,
+    UI_DEPTH,
+    UP_DIRECTION,
 } from '../constants';
 
 // Utils
@@ -33,7 +33,7 @@ import { createInteractiveGameObject, getDegreeFromRadians, getSelectorData, rot
 
 // Selectors
 import { selectDialogMessages } from '../zustand/dialog/selectDialog';
-import { selectMapSetters } from '../zustand/map/selectMapData';
+import {selectCurrentMapKey, selectMapKeyData, selectMapSetters, selectTilesets} from '../zustand/map/selectMapData';
 import {
     selectHeroCurrentHealth,
     selectHeroFacingDirection,
@@ -90,19 +90,46 @@ export const handleCreateGroups = (scene) => {
     scene.elements = scene.physics.add.staticGroup();
 };
 
+export const findAdjacentMaps = (currentMap, maps) => maps.filter((map) => (
+    (Math.abs(map.x - currentMap.x) === currentMap.width && map.y === currentMap.y) // left/right
+        || (Math.abs(map.y - currentMap.y) === currentMap.height && map.x === currentMap.x) // up/down
+        || (map.x === currentMap.x + currentMap.width && map.y === currentMap.y - currentMap.height) // up-right
+        || (map.x === currentMap.x - currentMap.width && map.y === currentMap.y - currentMap.height) // up-left
+        || (map.x === currentMap.x + currentMap.width && map.y === currentMap.y + currentMap.height) // down-right
+        || (map.x === currentMap.x - currentMap.width && map.y === currentMap.y + currentMap.height) // down-left
+));
+
 /**
  * @param scene
  * @returns Phaser.GameObjects.Group
  */
-export const handleCreateMap = (scene, mapKey, tilesets, customColliders) => {
+export const handleCreateMap = (scene) => {
+    const mapKey = getSelectorData(selectCurrentMapKey);
+    const tilesets = getSelectorData(selectTilesets(mapKey));
+    const mapData = getSelectorData(selectMapKeyData(mapKey));
+    const customColliders = scene.add.group();
+
+    return createTilemap(scene, mapKey, mapData, tilesets, customColliders);
+};
+
+/**
+ * @param scene
+ * @param mapKey
+ * @param mapData
+ * @param tilesets
+ * @param customColliders
+ * @returns Phaser.GameObjects.Group
+ */
+export const createTilemap = (scene, mapKey, mapData, tilesets, customColliders) => {
     // Create the map
     const map = scene.make.tilemap({ key: mapKey });
+    // TODO check if tileset is already added
     tilesets.forEach((tilesetName) => {
         map.addTilesetImage(tilesetName, tilesetName);
     });
 
     map.layers.forEach((layerData, idx) => {
-        const layer = map.createLayer(layerData.name, tilesets, 0, 0);
+        const layer = map.createLayer(layerData.name, tilesets, mapData.x, mapData.y);
 
         layer.layer.data.forEach((tileRows) => {
             tileRows.forEach((tile) => {

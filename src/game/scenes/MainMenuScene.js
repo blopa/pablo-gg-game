@@ -53,7 +53,8 @@ export function create() {
             // fonts: ['"Press Start 2P"'],
             atlases: ['hero', 'sword', 'bomb'],
             images: [],
-            mapKey: testMapKey,
+            worldKey: 'test_world',
+            // mapKey: testMapKey,
             // mapKey: 'sample_indoor',
         });
     };
