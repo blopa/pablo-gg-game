@@ -1,0 +1,15 @@
+{
+  "columns": 15,
+  "image": "custom_tileset.png",
+  "imageheight": 240,
+  "imagewidth": 240,
+  "margin": 0,
+  "name": "custom_tileset",
+  "spacing": 0,
+  "tilecount": 225,
+  "tiledversion": "1.10.0",
+  "tileheight": 16,
+  "tilewidth": 16,
+  "type": "tileset",
+  "version": "1.10"
+}

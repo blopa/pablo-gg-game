@@ -1,0 +1,15 @@
+{
+  "columns": 10,
+  "image": "tileset_objects.png",
+  "imageheight": 80,
+  "imagewidth": 160,
+  "margin": 0,
+  "name": "tileset_objects",
+  "spacing": 0,
+  "tilecount": 50,
+  "tiledversion": "1.9.2",
+  "tileheight": 16,
+  "tilewidth": 16,
+  "type": "tileset",
+  "version": "1.9"
+}
