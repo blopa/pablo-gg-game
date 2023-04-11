@@ -385,6 +385,7 @@ export const createTilemap = (
                         const lifespan = 700;
                         const tex = generatePixelTexture(scene, gameObject, 'grass');
                         const particles = scene.add.particles(tex);
+                        particles.setDepth(Number.POSITIVE_INFINITY);
                         const emitter = particles.createEmitter({
                             x: gameObject.body.x + Math.round(gameObject.body.width / 2),
                             y: gameObject.body.y + Math.round(gameObject.body.height / 2),
@@ -904,6 +905,7 @@ export const generateTextureFromColor = (scene, color, textureName) => {
 export const createEnemyDeathAnimation = (scene, enemySprite) => {
     const tex = generatePixelTexture(scene, enemySprite, 'blue-pixel');
     const particles = scene.add.particles(tex);
+    particles.setDepth(Number.POSITIVE_INFINITY);
     const emitter = particles.createEmitter({
         x: enemySprite.x + Math.round(enemySprite.width / 2),
         y: enemySprite.y + Math.round(enemySprite.height / 2),
@@ -1146,6 +1148,7 @@ export const handleCreateBomb = (scene, heroSprite) => {
                     onComplete: () => {
                         hasExploded = true;
                         const explosionParticles = scene.add.particles(textureName);
+                        explosionParticles.setDepth(Number.POSITIVE_INFINITY);
                         const explosionEmitter = explosionParticles.createEmitter({
                             x: bombSprite.x + Math.round(bombSprite.width / 2),
                             y: bombSprite.y + Math.round(bombSprite.height / 2),
