@@ -173,7 +173,101 @@ export const handleCreateMap = (scene) => {
     );
 };
 
-export const createTeleportObject = (scene, position, mapKey, targetTilePosition, type) => {
+export const createMapChangeTeleportObject = (
+    scene,
+    width,
+    height,
+    position,
+    mapData,
+    origin = { x: 0, y: 0 }
+) => {
+    const { fileName, width: mapWidth, height: mapHeight } = mapData;
+    const targetMapKey = getFileNameWithoutExtension(fileName);
+
+    const customCollider = createInteractiveGameObject(
+        scene,
+        position.x,
+        position.y,
+        width,
+        height,
+        origin
+    );
+
+    const overlapCollider = scene.physics.add.overlap(scene.heroSprite, customCollider, () => {
+        scene.physics.world.removeCollider(overlapCollider);
+        const facingDirection = getSelectorData(selectHeroFacingDirection);
+        let targetTilePosition = {
+            x: 1,
+            y: 1,
+        };
+
+        switch (facingDirection) {
+            case UP_DIRECTION: {
+                targetTilePosition = {
+                    x: Math.round(scene.heroSprite.x / TILE_WIDTH),
+                    y: (mapHeight / TILE_HEIGHT) - 2,
+                };
+
+                break;
+            }
+            case DOWN_DIRECTION: {
+                targetTilePosition = {
+                    x: Math.round(scene.heroSprite.x / TILE_WIDTH),
+                    y: 0,
+                };
+
+                break;
+            }
+            case LEFT_DIRECTION: {
+                targetTilePosition = {
+                    x: (mapWidth / TILE_WIDTH) - 2,
+                    y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
+                };
+
+                break;
+            }
+            case RIGHT_DIRECTION: {
+                targetTilePosition = {
+                    x: 0,
+                    y: Math.round(scene.heroSprite.y / TILE_HEIGHT),
+                };
+
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+
+        const {
+            setHeroInitialFrame,
+            setHeroFacingDirection,
+            setHeroInitialPosition,
+            setHeroPreviousPosition,
+        } = getSelectorData(selectHeroSetters);
+        const { setCurrentMapKey } = getSelectorData(selectMapSetters);
+
+        setCurrentMapKey(targetMapKey);
+        setHeroFacingDirection(facingDirection);
+        setHeroInitialFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
+        setHeroInitialPosition({ x: targetTilePosition.x, y: targetTilePosition.y });
+        setHeroPreviousPosition({ x: targetTilePosition.x, y: targetTilePosition.y });
+
+        const { setShouldPauseScene, setGameShowHeadsUpDisplay } = getSelectorData(selectGameSetters);
+        setShouldPauseScene('GameScene', true);
+        setGameShowHeadsUpDisplay(false);
+
+        changeScene(scene, 'GameScene', {
+            atlases: ['hero', 'sword', 'bomb'],
+            images: [],
+            mapKey: targetMapKey,
+        }, {
+            fadeType: 'out',
+        });
+    });
+};
+
+export const createTeleportTileObject = (scene, position, mapKey, targetTilePosition, type) => {
     const customCollider = createInteractiveGameObject(
         scene,
         position.x,
@@ -223,6 +317,7 @@ export const createTeleportObject = (scene, position, mapKey, targetTilePosition
  * @param mapData
  * @param tilesets
  * @param customColliders
+ * @param adjacentMapsPositions
  * @returns Phaser.GameObjects.Group
  * TODO it's currently not possible to create a tilemap with custom positions
  */
@@ -232,7 +327,7 @@ export const createTilemap = (
     mapData,
     tilesets,
     customColliders,
-    adjacentMapsPositions = []
+    adjacentMapsPositions = {}
 ) => {
     // Create the map
     const map = scene.make.tilemap({ key: mapKey });
@@ -241,6 +336,7 @@ export const createTilemap = (
         map.addTilesetImage(tilesetName, tilesetName);
     });
 
+    // const tilesWithoutCollision = [];
     map.layers.forEach((layerData, idx) => {
         const layer = map.createLayer(
             layerData.name,
@@ -251,9 +347,9 @@ export const createTilemap = (
             // mapData.y
         );
 
-        const columnLength = layer.layer.data.length;
+        // const columnLength = layer.layer.data.length;
         layer.layer.data.forEach((tileRows, columnIndex) => {
-            const rowLength = tileRows.length;
+            // const rowLength = tileRows.length;
             tileRows.forEach((tile, rowIndex) => {
                 const {
                     index,
@@ -261,8 +357,8 @@ export const createTilemap = (
                     properties,
                     x: tileX,
                     y: tileY,
-                    pixelX,
-                    pixelY,
+                    // pixelX,
+                    // pixelY,
                 } = tile;
 
                 const { collideLeft, collideRight, collideUp, collideDown } = properties;
@@ -271,28 +367,9 @@ export const createTilemap = (
                     || Boolean(collideUp)
                     || Boolean(collideDown);
 
-                // TODO move this logic to a loop with the tilesWithCollision array
-                if (!shouldCollide) {
-                    if (adjacentMapsPositions.right && rowIndex === rowLength - 1) {
-                        const { fileName } = adjacentMapsPositions.right;
-                        const targetMapKey = getFileNameWithoutExtension(fileName);
-                        createTeleportObject(
-                            scene,
-                            { x: pixelX + TILE_WIDTH, y: pixelY + TILE_HEIGHT },
-                            targetMapKey,
-                            { x: 0, y: tileY - 1 }
-                        );
-                    } else if (adjacentMapsPositions.left && rowIndex === 0) {
-                        const { fileName, width } = adjacentMapsPositions.left;
-                        const targetMapKey = getFileNameWithoutExtension(fileName);
-                        createTeleportObject(
-                            scene,
-                            { x: pixelX - TILE_WIDTH, y: pixelY + TILE_HEIGHT },
-                            targetMapKey,
-                            { x: (width / TILE_WIDTH) - 2, y: tileY - 1 }
-                        );
-                    }
-                }
+                // if (!shouldCollide) {
+                //     tilesWithoutCollision.push(tile);
+                // }
 
                 if (index === -1) {
                     return;
@@ -415,10 +492,75 @@ export const createTilemap = (
         scene.mapLayers.add(layer);
     });
 
-    const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
-    const tilesWithCollision = layersWithCollision.flatMap(
-        (layer) => layer.layer.data.flat().filter((tile, idx) => tile?.properties?.[SHOULD_TILE_COLLIDE])
-    );
+    // const layersWithCollision = scene.mapLayers.getChildren().filter((layer) => layer.containsCollision);
+    // const tilesWithCollision = layersWithCollision.flatMap(
+    //     (layer) => layer.layer.data.flat().filter((tile, idx) => tile?.properties?.[SHOULD_TILE_COLLIDE])
+    // );
+
+    // tilesWithoutCollision.forEach((tile) => {
+    //     const { height, width } = mapData;
+    //     const { pixelX, pixelY, x: tileX, y: tileY } = tile;
+    //     if (adjacentMapsPositions.right && pixelX === width - TILE_WIDTH) {
+    //         const { fileName } = adjacentMapsPositions.right;
+    //         const targetMapKey = getFileNameWithoutExtension(fileName);
+    //         createTeleportTileObject(
+    //             scene,
+    //             { x: pixelX + TILE_WIDTH, y: pixelY + TILE_HEIGHT },
+    //             targetMapKey,
+    //             { x: 0, y: tileY - 1 }
+    //         );
+    //     } else if (adjacentMapsPositions.left && pixelX === 0) {
+    //         const { fileName, width } = adjacentMapsPositions.left;
+    //         const targetMapKey = getFileNameWithoutExtension(fileName);
+    //         createTeleportTileObject(
+    //             scene,
+    //             { x: pixelX - TILE_WIDTH, y: pixelY + TILE_HEIGHT },
+    //             targetMapKey,
+    //             { x: (width / TILE_WIDTH) - 2, y: tileY - 1 }
+    //         );
+    //     }
+    // });
+
+    const { width: mapWidth, height: mapHeight } = mapData;
+    if (adjacentMapsPositions.right) {
+        createMapChangeTeleportObject(
+            scene,
+            TILE_WIDTH,
+            mapHeight,
+            { x: mapWidth, y: 0 },
+            adjacentMapsPositions.right
+        );
+    }
+
+    if (adjacentMapsPositions.left) {
+        createMapChangeTeleportObject(
+            scene,
+            TILE_WIDTH,
+            mapHeight,
+            { x: -TILE_WIDTH, y: 0 },
+            adjacentMapsPositions.left
+        );
+    }
+
+    if (adjacentMapsPositions.up) {
+        createMapChangeTeleportObject(
+            scene,
+            mapWidth,
+            TILE_HEIGHT,
+            { x: 0, y: -TILE_HEIGHT },
+            adjacentMapsPositions.up
+        );
+    }
+
+    if (adjacentMapsPositions.down) {
+        createMapChangeTeleportObject(
+            scene,
+            mapWidth,
+            TILE_HEIGHT,
+            { x: 0, y: mapHeight },
+            adjacentMapsPositions.down
+        );
+    }
 
     scene.gridEngine.create(map, {
         characters: [],
@@ -1324,7 +1466,7 @@ export const handleObjectsLayer = (scene) => {
                     const { type, map: mapKey, position } = propertiesObject;
                     const [posX, posY] = position.split(';');
 
-                    createTeleportObject(
+                    createTeleportTileObject(
                         scene,
                         { x, y },
                         mapKey,
