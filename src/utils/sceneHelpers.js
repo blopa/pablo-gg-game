@@ -385,7 +385,7 @@ export const createTilemap = (
                         const lifespan = 700;
                         const tex = generatePixelTexture(scene, gameObject, 'grass');
                         const particles = scene.add.particles(tex);
-                        particles.setDepth(Number.POSITIVE_INFINITY);
+                        particles.setDepth(Number.MAX_SAFE_INTEGER - 1);
                         const emitter = particles.createEmitter({
                             x: gameObject.body.x + Math.round(gameObject.body.width / 2),
                             y: gameObject.body.y + Math.round(gameObject.body.height / 2),
@@ -393,7 +393,7 @@ export const createTilemap = (
                             angle: { min: 0, max: 360 },
                             gravityY: 50,
                             lifespan,
-                            blendMode: 'ADD',
+                            // blendMode: 'ADD',
                             scale: { start: 1, end: 0 },
                             // quantity: 64,
                         });
@@ -894,18 +894,18 @@ export const generatePixelTexture = (scene, sprite, textureName) => {
     return scene.textures.get(textureName);
 };
 
-export const generateTextureFromColor = (scene, color, textureName) => {
+export const generateTextureFromColor = (scene, color, textureName, width = 2, height = 2) => {
     const graphics = scene.add.graphics();
     graphics.fillStyle(color, 1);
-    graphics.fillRect(0, 0, 2, 2);
-    return graphics.generateTexture(textureName, 2, 2);
+    graphics.fillRect(0, 0, width, height);
+    return graphics.generateTexture(textureName, width, height);
     // scene.textures.addTexture(texture);
 };
 
 export const createEnemyDeathAnimation = (scene, enemySprite) => {
     const tex = generatePixelTexture(scene, enemySprite, 'blue-pixel');
     const particles = scene.add.particles(tex);
-    particles.setDepth(Number.POSITIVE_INFINITY);
+    particles.setDepth(Number.MAX_SAFE_INTEGER - 1);
     const emitter = particles.createEmitter({
         x: enemySprite.x + Math.round(enemySprite.width / 2),
         y: enemySprite.y + Math.round(enemySprite.height / 2),
@@ -1148,7 +1148,7 @@ export const handleCreateBomb = (scene, heroSprite) => {
                     onComplete: () => {
                         hasExploded = true;
                         const explosionParticles = scene.add.particles(textureName);
-                        explosionParticles.setDepth(Number.POSITIVE_INFINITY);
+                        explosionParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
                         const explosionEmitter = explosionParticles.createEmitter({
                             x: bombSprite.x + Math.round(bombSprite.width / 2),
                             y: bombSprite.y + Math.round(bombSprite.height / 2),
@@ -1157,7 +1157,7 @@ export const handleCreateBomb = (scene, heroSprite) => {
                             angle: { min: 0, max: 360 },
                             gravityY: 50,
                             lifespan: 350,
-                            blendMode: 'ADD',
+                            // blendMode: 'ADD',
                             scale: { start: 1, end: 0 },
                         });
 
@@ -1428,7 +1428,7 @@ export const handleCreateHero = (scene) => {
     scene.sprites.add(heroSprite);
 };
 
-export const calculateClosesestStaticElement = (heroSprite, sprites) => {
+export const calculateClosestStaticElement = (heroSprite, sprites) => {
     let closestSprite;
     let shortestDistance = Number.POSITIVE_INFINITY;
 
@@ -1687,6 +1687,7 @@ export const fadeIn = (scene, callback = null, direction = 'left') => {
     fade(scene, callback, direction, 'in');
 };
 
+// TODO make this into a new scene
 const fade = (scene, callback, direction, type) => {
     const camera = scene.cameras.main;
     const gameWidth = getSelectorData(selectGameWidth);

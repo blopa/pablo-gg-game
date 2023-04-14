@@ -1,4 +1,4 @@
-import { Physics, Geom } from 'phaser';
+import {Physics, Geom, Display, Math as PhaserMath} from 'phaser';
 import { GridEngine } from 'grid-engine';
 
 // Utils
@@ -12,15 +12,17 @@ import {
     handleCreateGroups,
     handleCreateControls,
     handleConfigureCamera,
+    generateTextureFromColor,
     handleCreateHeroAnimations,
     subscribeToGridEngineEvents,
-    calculateClosesestStaticElement,
+    calculateClosestStaticElement,
 } from '../../utils/sceneHelpers';
 import { getSelectorData } from '../../utils/utils';
 
 // Selectors
 import {
-    selectGameSetters,
+    selectGameHeight,
+    selectGameSetters, selectGameWidth,
     selectShouldPauseScene,
 } from '../../zustand/game/selectGameData';
 import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
@@ -182,7 +184,7 @@ export function create() {
         }
 
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
-        const element = calculateClosesestStaticElement(scene.heroSprite, overlaps);
+        const element = calculateClosestStaticElement(scene.heroSprite, overlaps);
 
         if (element) {
             // eslint-disable-next-line unicorn/no-lonely-if
@@ -368,6 +370,68 @@ export function create() {
     scene.heroSprite.on('animationstart', () => {
         const { heroSprite } = scene;
         heroSprite.updateActionCollider();
+    });
+
+    // TODO move this to somewhere else
+    const rainTextureName = 'TODO_rain';
+    const rainTexture = scene.textures.get(rainTextureName);
+    if (rainTexture.key !== rainTextureName) {
+        const darkBlue = Display.Color.GetColor(0, 176, 245);
+        generateTextureFromColor(scene, darkBlue, rainTextureName, 1, 8);
+    }
+
+    const camera = scene.cameras.main;
+    const gameWidth = getSelectorData(selectGameWidth);
+    const gameHeight = getSelectorData(selectGameHeight);
+    const rainParticles = scene.add.particles(rainTextureName);
+    rainParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
+    rainParticles.createEmitter({
+        rotate: 30,
+        y: 0,
+        x: { min: 0, max: gameWidth * 2.2 },
+        lifespan: 2000,
+        speedY: { min: 300, max: 400 },
+        scale: { start: 1, end: 0 },
+        quantity: 5,
+        // follow: scene.heroSprite,
+        emitCallback: (particle) => {
+            // eslint-disable-next-line no-param-reassign
+            particle.velocityX = -(particle.velocityY / 2);
+            // eslint-disable-next-line no-param-reassign
+            particle.x += camera.scrollX;
+            // eslint-disable-next-line no-param-reassign
+            particle.y += camera.scrollY;
+        },
+    });
+
+    // TODO move this to somewhere else
+    const dropTextureName = 'TODO_drop';
+    const dropTexture = scene.textures.get(dropTextureName);
+    if (dropTexture.key !== dropTextureName) {
+        const darkBlue = Display.Color.GetColor(0, 176, 245);
+        generateTextureFromColor(scene, darkBlue, dropTextureName);
+    }
+
+    const dropParticles = scene.add.particles(dropTextureName);
+    const emitter = dropParticles.createEmitter({
+        speed: { min: 10, max: 40 },
+        angle: { min: 0, max: 360 },
+        gravityY: 50,
+        lifespan: 400,
+        scale: { start: 1, end: 0 },
+        // quantity: 64,
+    });
+
+    scene.time.addEvent({
+        delay: 50,
+        loop: true,
+        callback: () => {
+            emitter.setPosition(
+                PhaserMath.Between(0, gameWidth) + camera.scrollX,
+                PhaserMath.Between(0, gameHeight) + camera.scrollY,
+            );
+            emitter.explode(PhaserMath.Between(3, 10));
+        },
     });
 }
 
