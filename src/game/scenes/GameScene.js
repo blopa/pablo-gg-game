@@ -1,4 +1,4 @@
-import {Physics, Geom, Display, Math as PhaserMath} from 'phaser';
+import { Physics, Geom, Display, Math as PhaserMath } from 'phaser';
 import { GridEngine } from 'grid-engine';
 
 // Utils
@@ -372,6 +372,9 @@ export function create() {
         heroSprite.updateActionCollider();
     });
 
+    const weatherDirection = 'left';
+    const multiplier = weatherDirection === 'left' ? 1 : -1;
+
     // TODO move this to somewhere else
     const rainTextureName = 'TODO_rain';
     const rainTexture = scene.textures.get(rainTextureName);
@@ -383,12 +386,13 @@ export function create() {
     const camera = scene.cameras.main;
     const gameWidth = getSelectorData(selectGameWidth);
     const gameHeight = getSelectorData(selectGameHeight);
+    const spwanLocation = [0, gameWidth, gameWidth * 2.2 * multiplier];
     const rainParticles = scene.add.particles(rainTextureName);
     rainParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
     rainParticles.createEmitter({
-        rotate: 30,
+        rotate: 30 * multiplier,
         y: 0,
-        x: { min: 0, max: gameWidth * 2.2 },
+        x: { min: Math.min(...spwanLocation), max: Math.max(...spwanLocation) },
         lifespan: 2000,
         speedY: { min: 300, max: 400 },
         scale: { start: 1, end: 0 },
@@ -396,7 +400,7 @@ export function create() {
         // follow: scene.heroSprite,
         emitCallback: (particle) => {
             // eslint-disable-next-line no-param-reassign
-            particle.velocityX = -(particle.velocityY / 2);
+            particle.velocityX = -(particle.velocityY / 2) * multiplier;
             // eslint-disable-next-line no-param-reassign
             particle.x += camera.scrollX;
             // eslint-disable-next-line no-param-reassign
@@ -404,7 +408,6 @@ export function create() {
         },
     });
 
-    // TODO move this to somewhere else
     const dropTextureName = 'TODO_drop';
     const dropTexture = scene.textures.get(dropTextureName);
     if (dropTexture.key !== dropTextureName) {
@@ -428,7 +431,7 @@ export function create() {
         callback: () => {
             emitter.setPosition(
                 PhaserMath.Between(0, gameWidth) + camera.scrollX,
-                PhaserMath.Between(0, gameHeight) + camera.scrollY,
+                PhaserMath.Between(0, gameHeight) + camera.scrollY
             );
             emitter.explode(PhaserMath.Between(3, 10));
         },
