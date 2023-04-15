@@ -17,7 +17,7 @@ import {
     subscribeToGridEngineEvents,
     calculateClosestStaticElement,
 } from '../../utils/sceneHelpers';
-import { getSelectorData } from '../../utils/utils';
+import { getSelectorData, getStageWeatherFromMap } from '../../utils/utils';
 
 // Selectors
 import {
@@ -39,6 +39,11 @@ import {
     ELEMENT_BOX_TYPE,
     ELEMENT_GRASS_TYPE,
     SHOULD_TILE_COLLIDE,
+    RAINY_WEATHER,
+    WEATHER_DIRECTION_LEFT,
+    WEATHER_STRENGTH_WEAK,
+    WEATHER_STRENGTH_MEDIUM,
+    WEATHER_STRENGTH_STRONG,
 } from '../../constants';
 
 export const key = 'GameScene';
@@ -372,70 +377,81 @@ export function create() {
         heroSprite.updateActionCollider();
     });
 
-    const weatherDirection = 'left';
-    const multiplier = weatherDirection === 'left' ? 1 : -1;
+    const weatherData = getStageWeatherFromMap(scene.map);
+    const { type: weatherType, direction: weatherDirection, strength: weatherStrength } = weatherData;
+    if (weatherType === RAINY_WEATHER) {
+        const strengthMultiplier = {
+            [WEATHER_STRENGTH_WEAK]: 1,
+            [WEATHER_STRENGTH_MEDIUM]: 2,
+            [WEATHER_STRENGTH_STRONG]: 3,
+        };
 
-    // TODO move this to somewhere else
-    const rainTextureName = 'TODO_rain';
-    const rainTexture = scene.textures.get(rainTextureName);
-    if (rainTexture.key !== rainTextureName) {
-        const darkBlue = Display.Color.GetColor(0, 176, 245);
-        generateTextureFromColor(scene, darkBlue, rainTextureName, 1, 8);
+        const multiplier = weatherDirection === WEATHER_DIRECTION_LEFT ? 1 : -1;
+
+        // TODO move this to somewhere else
+        const rainTextureName = 'TODO_rain';
+        const rainTexture = scene.textures.get(rainTextureName);
+        if (rainTexture.key !== rainTextureName) {
+            const darkBlue = Display.Color.GetColor(0, 176, 245);
+            generateTextureFromColor(scene, darkBlue, rainTextureName, 1, 8);
+        }
+
+        const camera = scene.cameras.main;
+        const gameWidth = getSelectorData(selectGameWidth);
+        const gameHeight = getSelectorData(selectGameHeight);
+        const spwanLocation = [0, gameWidth, gameWidth * 2.2 * multiplier];
+        const rainParticles = scene.add.particles(rainTextureName);
+        rainParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
+        rainParticles.createEmitter({
+            rotate: 30 * multiplier,
+            y: 0,
+            x: { min: Math.min(...spwanLocation), max: Math.max(...spwanLocation) },
+            lifespan: 2000,
+            speedY: { min: 300, max: 400 },
+            scale: { start: 1, end: 0 },
+            quantity: 2 * strengthMultiplier[weatherStrength],
+            // follow: scene.heroSprite,
+            emitCallback: (particle) => {
+                // eslint-disable-next-line no-param-reassign
+                particle.velocityX = -(particle.velocityY / 2) * multiplier;
+                // eslint-disable-next-line no-param-reassign
+                particle.x += camera.scrollX;
+                // eslint-disable-next-line no-param-reassign
+                particle.y += camera.scrollY;
+            },
+        });
+
+        const dropTextureName = 'TODO_drop';
+        const dropTexture = scene.textures.get(dropTextureName);
+        if (dropTexture.key !== dropTextureName) {
+            const darkBlue = Display.Color.GetColor(0, 176, 245);
+            generateTextureFromColor(scene, darkBlue, dropTextureName);
+        }
+
+        const dropParticles = scene.add.particles(dropTextureName);
+        const emitter = dropParticles.createEmitter({
+            speed: { min: 10, max: 40 },
+            angle: { min: 0, max: 360 },
+            gravityY: 50,
+            lifespan: 400,
+            scale: { start: 1, end: 0 },
+            // quantity: 64,
+        });
+
+        scene.time.addEvent({
+            delay: 50,
+            loop: true,
+            callback: () => {
+                Array.from({ length: strengthMultiplier[weatherStrength] }).fill(null).forEach(() => {
+                    emitter.setPosition(
+                        PhaserMath.Between(0, gameWidth) + camera.scrollX,
+                        PhaserMath.Between(0, gameHeight) + camera.scrollY
+                    );
+                    emitter.explode(PhaserMath.Between(3, 10));
+                });
+            },
+        });
     }
-
-    const camera = scene.cameras.main;
-    const gameWidth = getSelectorData(selectGameWidth);
-    const gameHeight = getSelectorData(selectGameHeight);
-    const spwanLocation = [0, gameWidth, gameWidth * 2.2 * multiplier];
-    const rainParticles = scene.add.particles(rainTextureName);
-    rainParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
-    rainParticles.createEmitter({
-        rotate: 30 * multiplier,
-        y: 0,
-        x: { min: Math.min(...spwanLocation), max: Math.max(...spwanLocation) },
-        lifespan: 2000,
-        speedY: { min: 300, max: 400 },
-        scale: { start: 1, end: 0 },
-        quantity: 5,
-        // follow: scene.heroSprite,
-        emitCallback: (particle) => {
-            // eslint-disable-next-line no-param-reassign
-            particle.velocityX = -(particle.velocityY / 2) * multiplier;
-            // eslint-disable-next-line no-param-reassign
-            particle.x += camera.scrollX;
-            // eslint-disable-next-line no-param-reassign
-            particle.y += camera.scrollY;
-        },
-    });
-
-    const dropTextureName = 'TODO_drop';
-    const dropTexture = scene.textures.get(dropTextureName);
-    if (dropTexture.key !== dropTextureName) {
-        const darkBlue = Display.Color.GetColor(0, 176, 245);
-        generateTextureFromColor(scene, darkBlue, dropTextureName);
-    }
-
-    const dropParticles = scene.add.particles(dropTextureName);
-    const emitter = dropParticles.createEmitter({
-        speed: { min: 10, max: 40 },
-        angle: { min: 0, max: 360 },
-        gravityY: 50,
-        lifespan: 400,
-        scale: { start: 1, end: 0 },
-        // quantity: 64,
-    });
-
-    scene.time.addEvent({
-        delay: 50,
-        loop: true,
-        callback: () => {
-            emitter.setPosition(
-                PhaserMath.Between(0, gameWidth) + camera.scrollX,
-                PhaserMath.Between(0, gameHeight) + camera.scrollY
-            );
-            emitter.explode(PhaserMath.Between(3, 10));
-        },
-    });
 }
 
 export function update(time, delta) {

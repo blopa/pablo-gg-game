@@ -66,3 +66,19 @@ export const HERO_DEPTH = 100;
 export const UI_DEPTH = 200;
 export const ENEMY_DEPTH = 20;
 export const ITEM_DEPTH = 10;
+
+export const RAINY_WEATHER = 'rainy';
+
+export const SNOWY_WEATHER = 'snowy';
+
+export const STORMY_WEATHER = 'stormy';
+
+export const WEATHER_STRENGTH_WEAK = 'weak';
+
+export const WEATHER_STRENGTH_MEDIUM = 'medium';
+
+export const WEATHER_STRENGTH_STRONG = 'strong';
+
+export const WEATHER_DIRECTION_LEFT = 'left';
+
+export const WEATHER_DIRECTION_RIGHT = 'right';

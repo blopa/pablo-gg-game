@@ -362,8 +362,24 @@
  "nextlayerid":14,
  "nextobjectid":31,
  "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"weather_direction",
+         "type":"string",
+         "value":"right"
+        }, 
+        {
+         "name":"weather_strength",
+         "type":"string",
+         "value":"strong"
+        }, 
+        {
+         "name":"weather_type",
+         "type":"string",
+         "value":"rainy"
+        }],
  "renderorder":"right-down",
- "tiledversion":"1.10.0",
+ "tiledversion":"1.10.1",
  "tileheight":16,
  "tilesets":[
         {

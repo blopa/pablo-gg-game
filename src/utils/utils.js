@@ -7,7 +7,7 @@ import {
     ARROW_UP_KEY,
     ARROW_LEFT_KEY,
     ARROW_DOWN_KEY,
-    ARROW_RIGHT_KEY,
+    ARROW_RIGHT_KEY, WEATHER_STRENGTH_MEDIUM, WEATHER_DIRECTION_LEFT,
 } from '../constants';
 
 // Store
@@ -21,6 +21,30 @@ export const isObjectEmpty = (obj) =>
 
 export const isObjectNotEmpty = (obj) =>
     isObject(obj) && Object.keys(obj).length > 0;
+
+export const getStageWeatherFromMap = (map) => {
+    const weatherType = map.properties?.find(
+        (property) => property.name === 'weather_type'
+    );
+
+    if (!weatherType?.value) {
+        return {};
+    }
+
+    const weatherStrength = map.properties?.find(
+        (property) => property.name === 'weather_strength'
+    );
+
+    const weatherDirection = map.properties?.find(
+        (property) => property.name === 'weather_direction'
+    );
+
+    return {
+        type: weatherType.value,
+        strength: weatherStrength?.value || WEATHER_STRENGTH_MEDIUM,
+        direction: weatherDirection?.value || WEATHER_DIRECTION_LEFT,
+    };
+};
 
 /**
  * source https://gist.github.com/GlauberF/d8278ce3aa592389e6e3d4e758e6a0c2
