@@ -480,13 +480,13 @@ export function create() {
             canvas.style.filter = `sepia(${sepia}) brightness(${brightness})`;
 
             if (progress < 1) {
-                requestAnimationFrame(update);
+                scene.time.delayedCall(1, update);
             } else {
                 scene.time.delayedCall(durationPartsOfDay, onComplete);
             }
         };
 
-        requestAnimationFrame(update);
+        scene.time.delayedCall(1, update);
     };
 
     const startAnimation = () => {
