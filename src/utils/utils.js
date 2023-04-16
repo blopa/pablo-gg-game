@@ -23,7 +23,7 @@ export const isObjectNotEmpty = (obj) =>
     isObject(obj) && Object.keys(obj).length > 0;
 
 export const getStageWeatherFromMap = (map) => {
-    const weatherType = map.properties?.find(
+    const weatherType = map.properties?.find?.(
         (property) => property.name === 'weather_type'
     );
 
@@ -31,11 +31,11 @@ export const getStageWeatherFromMap = (map) => {
         return {};
     }
 
-    const weatherStrength = map.properties?.find(
+    const weatherStrength = map.properties.find(
         (property) => property.name === 'weather_strength'
     );
 
-    const weatherDirection = map.properties?.find(
+    const weatherDirection = map.properties.find(
         (property) => property.name === 'weather_direction'
     );
 

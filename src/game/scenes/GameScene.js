@@ -21,9 +21,10 @@ import { getSelectorData, getStageWeatherFromMap } from '../../utils/utils';
 
 // Selectors
 import {
+    selectGameWidth,
     selectGameHeight,
-    selectGameSetters, selectGameWidth,
-    selectShouldPauseScene,
+    selectGameSetters,
+    selectShouldPauseScene, selectGameCanvasElement,
 } from '../../zustand/game/selectGameData';
 import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
 
@@ -32,6 +33,7 @@ import {
     TILE_WIDTH,
     TILE_HEIGHT,
     UP_DIRECTION,
+    RAINY_WEATHER,
     DOWN_DIRECTION,
     LEFT_DIRECTION,
     RIGHT_DIRECTION,
@@ -39,9 +41,8 @@ import {
     ELEMENT_BOX_TYPE,
     ELEMENT_GRASS_TYPE,
     SHOULD_TILE_COLLIDE,
-    RAINY_WEATHER,
-    WEATHER_DIRECTION_LEFT,
     WEATHER_STRENGTH_WEAK,
+    WEATHER_DIRECTION_LEFT,
     WEATHER_STRENGTH_MEDIUM,
     WEATHER_STRENGTH_STRONG,
 } from '../../constants';
@@ -52,7 +53,10 @@ export const sceneHelpers = {};
 
 export const preload = () => {
     const scene = sceneHelpers.getScene();
-    scene.load.scenePlugin('gridEngine', GridEngine, 'gridEngine', 'gridEngine');
+
+    if (!scene.gridEngine) {
+        scene.load.scenePlugin('gridEngine', GridEngine, 'gridEngine', 'gridEngine');
+    }
 };
 
 export function create() {
@@ -397,6 +401,7 @@ export function create() {
         }
 
         const camera = scene.cameras.main;
+        window.camcam = camera;
         const gameWidth = getSelectorData(selectGameWidth);
         const gameHeight = getSelectorData(selectGameHeight);
         const spwanLocation = [0, gameWidth, gameWidth * 2.2 * multiplier];
@@ -435,6 +440,7 @@ export function create() {
             gravityY: 50,
             lifespan: 400,
             scale: { start: 1, end: 0 },
+            alpha: { start: 1, end: 0 },
             // quantity: 64,
         });
 
@@ -447,11 +453,73 @@ export function create() {
                         PhaserMath.Between(0, gameWidth) + camera.scrollX,
                         PhaserMath.Between(0, gameHeight) + camera.scrollY
                     );
-                    emitter.explode(PhaserMath.Between(3, 10));
+                    emitter.explode(PhaserMath.Between(2, 6));
                 });
             },
         });
     }
+
+    // TODO also move this somewhere else
+    const canvas = getSelectorData(selectGameCanvasElement);
+    let sepia = 0;
+    let brightness = 1;
+
+    function updateFilter() {
+        canvas.style.filter = `sepia(${sepia}) brightness(${brightness})`;
+    }
+
+    function animate() {
+        const startSepia = sepia;
+        const startBrightness = brightness;
+        const endSepia = 0.6;
+        const endBrightness = 0.6;
+        const duration = 12000; // 12 seconds in milliseconds
+        const startTime = Date.now();
+
+        function update() {
+            const elapsedTime = Date.now() - startTime;
+            const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
+            sepia = startSepia + (endSepia - startSepia) * progress;
+            brightness = startBrightness + (endBrightness - startBrightness) * progress;
+            updateFilter();
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            } else {
+                setTimeout(animateBackToZero, 12000); // Start 12 seconds at 0.6
+            }
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    function animateBackToZero() {
+        const startSepia = sepia;
+        const startBrightness = brightness;
+        const endSepia = 0;
+        const endBrightness = 1; // Change this line
+        const duration = 12000; // 12 seconds in milliseconds
+        const startTime = Date.now();
+
+        function update() {
+            const elapsedTime = Date.now() - startTime;
+            const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
+            sepia = startSepia + (endSepia - startSepia) * progress;
+            brightness = startBrightness + (endBrightness - startBrightness) * progress;
+            updateFilter();
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            } else {
+                setTimeout(animate, 12000); // Start 12 seconds at 1
+            }
+        }
+
+        requestAnimationFrame(update);
+    }
+
+// Start the animation
+    animate();
 }
 
 export function update(time, delta) {
