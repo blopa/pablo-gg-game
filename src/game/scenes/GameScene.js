@@ -401,7 +401,6 @@ export function create() {
         }
 
         const camera = scene.cameras.main;
-        window.camcam = camera;
         const gameWidth = getSelectorData(selectGameWidth);
         const gameHeight = getSelectorData(selectGameHeight);
         const spwanLocation = [0, gameWidth, gameWidth * 2.2 * multiplier];
@@ -466,36 +465,36 @@ export function create() {
     let sepia = 0;
     let brightness = 1;
 
-    const animate = (endSepia, endBrightness, onComplete) => {
+    const animate = (endSepia, endBrightness, canvas, duration, onComplete) => {
         const startSepia = sepia;
         const startBrightness = brightness;
-        const duration = durationPartsOfDay;
         const startTime = Date.now();
 
-        const update = () => {
+        const updateDayNightCycle = () => {
             const elapsedTime = Date.now() - startTime;
             const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
             sepia = startSepia + (endSepia - startSepia) * progress;
             brightness = startBrightness + (endBrightness - startBrightness) * progress;
+            // eslint-disable-next-line no-param-reassign
             canvas.style.filter = `sepia(${sepia}) brightness(${brightness})`;
 
             if (progress < 1) {
-                scene.time.delayedCall(1, update);
+                scene.time.delayedCall(1, updateDayNightCycle);
             } else {
-                scene.time.delayedCall(durationPartsOfDay, onComplete);
+                scene.time.delayedCall(duration, onComplete);
             }
         };
 
-        scene.time.delayedCall(1, update);
+        scene.time.delayedCall(1, updateDayNightCycle);
     };
 
-    const startAnimation = () => {
-        animate(0.6, 0.6, () => {
-            animate(0, 1, startAnimation);
+    const startDayNightCycle = () => {
+        animate(0.6, 0.6, canvas, durationPartsOfDay, () => {
+            animate(0, 1, canvas, durationPartsOfDay, startDayNightCycle);
         });
     };
 
-    startAnimation();
+    startDayNightCycle();
 }
 
 export function update(time, delta) {
