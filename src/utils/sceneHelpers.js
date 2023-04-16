@@ -311,6 +311,36 @@ export const createTeleportTileObject = (scene, position, mapKey, targetTilePosi
     });
 };
 
+export const animateCanvasDayNightEffect = (
+    scene,
+    startSepia,
+    startBrightness,
+    endSepia,
+    endBrightness,
+    canvas,
+    duration,
+    onComplete
+) => {
+    const startTime = Date.now();
+
+    const updateDayNightCycle = () => {
+        const elapsedTime = Date.now() - startTime;
+        const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
+        const sepia = startSepia + (endSepia - startSepia) * progress;
+        const brightness = startBrightness + (endBrightness - startBrightness) * progress;
+        // eslint-disable-next-line no-param-reassign
+        canvas.style.filter = `sepia(${sepia}) brightness(${brightness})`;
+
+        if (progress < 1) {
+            scene.time.delayedCall(1, updateDayNightCycle);
+        } else {
+            scene.time.delayedCall(duration, onComplete);
+        }
+    };
+
+    scene.time.delayedCall(1, updateDayNightCycle);
+};
+
 /**
  * @param scene
  * @param mapKey

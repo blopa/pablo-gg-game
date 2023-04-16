@@ -14,6 +14,7 @@ import {
     handleConfigureCamera,
     generateTextureFromColor,
     handleCreateHeroAnimations,
+    animateCanvasDayNightEffect,
     subscribeToGridEngineEvents,
     calculateClosestStaticElement,
 } from '../../utils/sceneHelpers';
@@ -462,36 +463,31 @@ export function create() {
     const durationOfDay = 60 * 1000 * 4; // 4 minutes in milliseconds
     const durationPartsOfDay = durationOfDay / 4;
     const canvas = getSelectorData(selectGameCanvasElement);
-    let sepia = 0;
-    let brightness = 1;
 
-    const animate = (endSepia, endBrightness, canvas, duration, onComplete) => {
-        const startSepia = sepia;
-        const startBrightness = brightness;
-        const startTime = Date.now();
-
-        const updateDayNightCycle = () => {
-            const elapsedTime = Date.now() - startTime;
-            const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
-            sepia = startSepia + (endSepia - startSepia) * progress;
-            brightness = startBrightness + (endBrightness - startBrightness) * progress;
-            // eslint-disable-next-line no-param-reassign
-            canvas.style.filter = `sepia(${sepia}) brightness(${brightness})`;
-
-            if (progress < 1) {
-                scene.time.delayedCall(1, updateDayNightCycle);
-            } else {
-                scene.time.delayedCall(duration, onComplete);
-            }
-        };
-
-        scene.time.delayedCall(1, updateDayNightCycle);
-    };
-
+    const startSepia = 0;
+    const endSepia = 0.6;
+    const startBrightness = 1;
+    const endBrightness = 0.6;
     const startDayNightCycle = () => {
-        animate(0.6, 0.6, canvas, durationPartsOfDay, () => {
-            animate(0, 1, canvas, durationPartsOfDay, startDayNightCycle);
-        });
+        animateCanvasDayNightEffect(
+            scene,
+            startSepia,
+            startBrightness,
+            endSepia,
+            endBrightness,
+            canvas,
+            durationPartsOfDay,
+            () => animateCanvasDayNightEffect(
+                scene,
+                endSepia,
+                endBrightness,
+                startSepia,
+                startBrightness,
+                canvas,
+                durationPartsOfDay,
+                startDayNightCycle
+            )
+        );
     };
 
     startDayNightCycle();
