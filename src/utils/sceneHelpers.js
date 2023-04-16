@@ -6,11 +6,10 @@ import {
     BOX_INDEX,
     DOOR,
     DOWN_DIRECTION,
-    ELEMENT_BOX_TYPE,
+    ELEMENT_BOX_TYPE, ELEMENT_CRACK_TYPE,
     ELEMENT_GRASS_TYPE,
     ENEMY_SPRITE_PREFIX,
     FOLLOW_BEHAVIOUR,
-    GRASS_INDEX,
     HERO_DEPTH,
     HERO_SPRITE_NAME,
     IDLE_FRAME,
@@ -54,6 +53,7 @@ import {
     selectHeroSetters,
 } from '../zustand/hero/selectHeroData';
 import { selectGameHeight, selectGameSetters, selectGameWidth } from '../zustand/game/selectGameData';
+import game from "../Game";
 
 export const createAnimation = (animationManager, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
     const frames = Array.from({ length: frameQuantity }).map((n, index) => ({
@@ -405,9 +405,7 @@ export const createTilemap = (
                     return;
                 }
 
-                // TODO create a function that checks this
-                // and also check for the tileset name I guess
-                if (index === GRASS_INDEX) {
+                if (isGrassTile(tile)) {
                     const gameObject = createGameObjectForTile(scene, tile);
                     gameObject.elementType = ELEMENT_GRASS_TYPE;
                     layer.removeTileAt(tileX, tileY);
@@ -435,6 +433,13 @@ export const createTilemap = (
                     scene.elements.add(gameObject);
 
                     return;
+                }
+
+                if (isCrackedTile(tile)) {
+                    const gameObject = createGameObjectForTile(scene, tile);
+                    gameObject.elementType = ELEMENT_CRACK_TYPE;
+                    gameObject.setDepth(100000); // TODO
+                    layer.removeTileAt(tileX, tileY);
                 }
 
                 // TODO create a function that checkes this
@@ -602,6 +607,38 @@ export const createTilemap = (
     scene.map = map;
 
     return customColliders;
+};
+
+export const isGrassTile = (tile) => {
+    const { index, tileset } = tile;
+    const { name, firstgid } = tileset;
+    const tileIndex = index - firstgid;
+
+    switch (name) {
+        case 'field_01': {
+            return [173, 174, 175, 176, 177, 178].includes(tileIndex);
+        }
+
+        default: {
+            return false;
+        }
+    }
+};
+
+export const isCrackedTile = (tile) => {
+    const { index, tileset } = tile;
+    const { name, firstgid } = tileset;
+    const tileIndex = index - firstgid;
+
+    switch (name) {
+        case 'custom_tileset': {
+            return [0, 1].includes(tileIndex);
+        }
+
+        default: {
+            return false;
+        }
+    }
 };
 
 export const createGameObjectForTile = (scene, tile) => {
@@ -1458,12 +1495,12 @@ export const handleCreateHero = (scene) => {
     scene.sprites.add(heroSprite);
 };
 
-export const calculateClosestStaticElement = (heroSprite, sprites) => {
+export const calculateClosestStaticElement = (targetSprite, sprites) => {
     let closestSprite;
     let shortestDistance = Number.POSITIVE_INFINITY;
 
     sprites.forEach((sprite) => {
-        const distance = PhaserMath.Distance.Between(heroSprite.x, heroSprite.y, sprite.body.x, sprite.body.y);
+        const distance = PhaserMath.Distance.Between(targetSprite.x, targetSprite.y, sprite.body.x, sprite.body.y);
         if (distance < shortestDistance) {
             closestSprite = sprite;
             shortestDistance = distance;

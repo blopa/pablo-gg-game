@@ -123,7 +123,7 @@ export function create() {
     scene.physics.add.collider(scene.heroSprite, customColliders);
 
     const overlaps = new Set();
-    scene.physics.add.overlap(scene.elements, scene.heroSprite.actionCollider, (element, actionCollider) => {
+    scene.physics.add.overlap(scene.heroSprite.actionCollider, scene.elements, (actionCollider, element) => {
         overlaps.add(element);
     });
 
@@ -195,7 +195,7 @@ export function create() {
         }
 
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
-        const element = calculateClosestStaticElement(scene.heroSprite, overlaps);
+        const element = calculateClosestStaticElement(scene.heroSprite.actionCollider, overlaps);
 
         if (element) {
             // eslint-disable-next-line unicorn/no-lonely-if
