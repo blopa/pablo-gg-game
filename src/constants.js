@@ -82,3 +82,8 @@ export const WEATHER_STRENGTH_STRONG = 'strong';
 export const WEATHER_DIRECTION_LEFT = 'left';
 
 export const WEATHER_DIRECTION_RIGHT = 'right';
+
+export const MAP_TYPE_INDOOR = 'indoor';
+
+export const MAP_TYPE_OUTDOOR = 'outdoor';
+

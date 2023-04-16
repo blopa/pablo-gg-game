@@ -18,7 +18,7 @@ import {
     subscribeToGridEngineEvents,
     calculateClosestStaticElement,
 } from '../../utils/sceneHelpers';
-import { getSelectorData, getStageWeatherFromMap } from '../../utils/utils';
+import {getSelectorData, getMapWeatherFromMap, getMapTypeFromMap} from '../../utils/utils';
 
 // Selectors
 import {
@@ -38,6 +38,7 @@ import {
     DOWN_DIRECTION,
     LEFT_DIRECTION,
     RIGHT_DIRECTION,
+    MAP_TYPE_INDOOR,
     HERO_SPRITE_NAME,
     ELEMENT_BOX_TYPE,
     ELEMENT_GRASS_TYPE,
@@ -382,7 +383,13 @@ export function create() {
         heroSprite.updateActionCollider();
     });
 
-    const weatherData = getStageWeatherFromMap(scene.map);
+    const mapType = getMapTypeFromMap(scene.map);
+    if (mapType === MAP_TYPE_INDOOR) {
+        // TODO
+        return;
+    }
+
+    const weatherData = getMapWeatherFromMap(scene.map);
     const { type: weatherType, direction: weatherDirection, strength: weatherStrength } = weatherData;
     if (weatherType === RAINY_WEATHER) {
         const strengthMultiplier = {

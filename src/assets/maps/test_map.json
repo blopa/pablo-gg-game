@@ -364,6 +364,11 @@
  "orientation":"orthogonal",
  "properties":[
         {
+         "name":"map_type",
+         "type":"string",
+         "value":"outdoor"
+        }, 
+        {
          "name":"weather_direction",
          "type":"string",
          "value":"right"

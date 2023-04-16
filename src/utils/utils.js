@@ -22,7 +22,11 @@ export const isObjectEmpty = (obj) =>
 export const isObjectNotEmpty = (obj) =>
     isObject(obj) && Object.keys(obj).length > 0;
 
-export const getStageWeatherFromMap = (map) => {
+export const getMapTypeFromMap = (map) => map.properties?.find?.(
+    (property) => property.name === 'map_type'
+);
+
+export const getMapWeatherFromMap = (map) => {
     const weatherType = map.properties?.find?.(
         (property) => property.name === 'weather_type'
     );
