@@ -460,6 +460,8 @@ export function create() {
     }
 
     // TODO also move this somewhere else
+    const durationOfDay = 60 * 1000 * 4; // 4 minutes in milliseconds
+    const durationPartsOfDay = durationOfDay / 4;
     const canvas = getSelectorData(selectGameCanvasElement);
     let sepia = 0;
     let brightness = 1;
@@ -473,7 +475,7 @@ export function create() {
         const startBrightness = brightness;
         const endSepia = 0.6;
         const endBrightness = 0.6;
-        const duration = 12000; // 12 seconds in milliseconds
+        const duration = durationPartsOfDay;
         const startTime = Date.now();
 
         function update() {
@@ -486,7 +488,7 @@ export function create() {
             if (progress < 1) {
                 requestAnimationFrame(update);
             } else {
-                setTimeout(animateBackToZero, 12000); // Start 12 seconds at 0.6
+                setTimeout(animateBackToZero, durationPartsOfDay); // Start 60 seconds at 0.6
             }
         }
 
@@ -497,8 +499,8 @@ export function create() {
         const startSepia = sepia;
         const startBrightness = brightness;
         const endSepia = 0;
-        const endBrightness = 1; // Change this line
-        const duration = 12000; // 12 seconds in milliseconds
+        const endBrightness = 1;
+        const duration = durationPartsOfDay;
         const startTime = Date.now();
 
         function update() {
@@ -511,14 +513,14 @@ export function create() {
             if (progress < 1) {
                 requestAnimationFrame(update);
             } else {
-                setTimeout(animate, 12000); // Start 12 seconds at 1
+                setTimeout(animate, durationPartsOfDay); // Start 60 seconds at 1
             }
         }
 
         requestAnimationFrame(update);
     }
 
-// Start the animation
+    // Start the animation
     animate();
 }
 
