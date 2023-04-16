@@ -459,69 +459,43 @@ export function create() {
         });
     }
 
-    // TODO also move this somewhere else
+    // TODO move this to somewhere else
     const durationOfDay = 60 * 1000 * 4; // 4 minutes in milliseconds
     const durationPartsOfDay = durationOfDay / 4;
     const canvas = getSelectorData(selectGameCanvasElement);
     let sepia = 0;
     let brightness = 1;
 
-    function updateFilter() {
-        canvas.style.filter = `sepia(${sepia}) brightness(${brightness})`;
-    }
-
-    function animate() {
+    const animate = (endSepia, endBrightness, onComplete) => {
         const startSepia = sepia;
         const startBrightness = brightness;
-        const endSepia = 0.6;
-        const endBrightness = 0.6;
         const duration = durationPartsOfDay;
         const startTime = Date.now();
 
-        function update() {
+        const update = () => {
             const elapsedTime = Date.now() - startTime;
             const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
             sepia = startSepia + (endSepia - startSepia) * progress;
             brightness = startBrightness + (endBrightness - startBrightness) * progress;
-            updateFilter();
+            canvas.style.filter = `sepia(${sepia}) brightness(${brightness})`;
 
             if (progress < 1) {
                 requestAnimationFrame(update);
             } else {
-                setTimeout(animateBackToZero, durationPartsOfDay); // Start 60 seconds at 0.6
+                scene.time.delayedCall(durationPartsOfDay, onComplete);
             }
-        }
+        };
 
         requestAnimationFrame(update);
-    }
+    };
 
-    function animateBackToZero() {
-        const startSepia = sepia;
-        const startBrightness = brightness;
-        const endSepia = 0;
-        const endBrightness = 1;
-        const duration = durationPartsOfDay;
-        const startTime = Date.now();
+    const startAnimation = () => {
+        animate(0.6, 0.6, () => {
+            animate(0, 1, startAnimation);
+        });
+    };
 
-        function update() {
-            const elapsedTime = Date.now() - startTime;
-            const progress = Math.min(elapsedTime / duration, 1); // Limit progress to 1
-            sepia = startSepia + (endSepia - startSepia) * progress;
-            brightness = startBrightness + (endBrightness - startBrightness) * progress;
-            updateFilter();
-
-            if (progress < 1) {
-                requestAnimationFrame(update);
-            } else {
-                setTimeout(animate, durationPartsOfDay); // Start 60 seconds at 1
-            }
-        }
-
-        requestAnimationFrame(update);
-    }
-
-    // Start the animation
-    animate();
+    startAnimation();
 }
 
 export function update(time, delta) {
