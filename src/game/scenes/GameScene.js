@@ -12,13 +12,13 @@ import {
     handleCreateGroups,
     handleCreateControls,
     handleConfigureCamera,
-    generateTextureFromColor,
+    generateColorPixelTexture,
     handleCreateHeroAnimations,
     animateCanvasDayNightEffect,
     subscribeToGridEngineEvents,
     calculateClosestStaticElement,
 } from '../../utils/sceneHelpers';
-import {getSelectorData, getMapWeatherFromMap, getMapTypeFromMap} from '../../utils/utils';
+import { getSelectorData, getMapWeatherFromMap, getMapTypeFromMap } from '../../utils/utils';
 
 // Selectors
 import {
@@ -401,18 +401,14 @@ export function create() {
         const multiplier = weatherDirection === WEATHER_DIRECTION_LEFT ? 1 : -1;
 
         // TODO move this to somewhere else
-        const rainTextureName = 'TODO_rain';
-        const rainTexture = scene.textures.get(rainTextureName);
-        if (rainTexture.key !== rainTextureName) {
-            const darkBlue = Display.Color.GetColor(0, 176, 245);
-            generateTextureFromColor(scene, darkBlue, rainTextureName, 1, 8);
-        }
+        const darkBlue = Display.Color.GetColor(0, 176, 245);
+        const rainTexture = generateColorPixelTexture(scene, darkBlue, 'TODO_rain', 1, 8);
 
         const camera = scene.cameras.main;
         const gameWidth = getSelectorData(selectGameWidth);
         const gameHeight = getSelectorData(selectGameHeight);
         const spwanLocation = [0, gameWidth, gameWidth * 2.2 * multiplier];
-        const rainParticles = scene.add.particles(rainTextureName);
+        const rainParticles = scene.add.particles(rainTexture.key);
         rainParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
         rainParticles.createEmitter({
             rotate: 30 * multiplier,
@@ -433,14 +429,9 @@ export function create() {
             },
         });
 
-        const dropTextureName = 'TODO_drop';
-        const dropTexture = scene.textures.get(dropTextureName);
-        if (dropTexture.key !== dropTextureName) {
-            const darkBlue = Display.Color.GetColor(0, 176, 245);
-            generateTextureFromColor(scene, darkBlue, dropTextureName);
-        }
+        const dropTexture = generateColorPixelTexture(scene, darkBlue, 'TODO_drop');
 
-        const dropParticles = scene.add.particles(dropTextureName);
+        const dropParticles = scene.add.particles(dropTexture.key);
         const emitter = dropParticles.createEmitter({
             speed: { min: 10, max: 40 },
             angle: { min: 0, max: 360 },

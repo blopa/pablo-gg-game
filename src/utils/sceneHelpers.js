@@ -435,7 +435,7 @@ export const createTilemap = (
                     layer.removeTileAt(tileX, tileY);
                     gameObject.handleDestroyElement = () => {
                         const lifespan = 700;
-                        const tex = generatePixelTexture(scene, gameObject, 'grass');
+                        const tex = generateAverageColorPixelTexture(scene, gameObject, 'grass');
                         const particles = scene.add.particles(tex);
                         particles.setDepth(Number.MAX_SAFE_INTEGER - 1);
                         const emitter = particles.createEmitter({
@@ -970,7 +970,17 @@ export const handleCreateEnemy = (scene, spriteName, position, enemyType, enemyF
     handleCreateEnemyAnimations(scene, enemySprite);
 };
 
-export const generatePixelTexture = (scene, sprite, textureName) => {
+export const generateColorPixelTexture = (scene, color, textureName, width = 2, height = 2) => {
+    let texture = scene.textures.get(textureName);
+    if (texture.key !== textureName) {
+        generateTextureFromColor(scene, color, textureName, width, height);
+        texture = scene.textures.get(textureName);
+    }
+
+    return texture;
+};
+
+export const generateAverageColorPixelTexture = (scene, sprite, textureName) => {
     // const tex = scene.textures.get('slime');
     // let newTexture = tex.generateTexture('new', tex.width, tex.height);
     const tex = scene.textures.get(textureName);
@@ -1020,7 +1030,7 @@ export const generateTextureFromColor = (scene, color, textureName, width = 2, h
 };
 
 export const createEnemyDeathAnimation = (scene, enemySprite) => {
-    const tex = generatePixelTexture(scene, enemySprite, 'blue-pixel');
+    const tex = generateAverageColorPixelTexture(scene, enemySprite, 'blue-pixel');
     const particles = scene.add.particles(tex);
     particles.setDepth(Number.MAX_SAFE_INTEGER - 1);
     const emitter = particles.createEmitter({
@@ -1205,12 +1215,10 @@ export const handleCreateBomb = (scene, heroSprite) => {
     bombSprite.anims.play('bomb_idle');
 
     // TODO because need to make this look better
-    const textureName = 'TODO_explosion';
-    const tex = scene.textures.get(textureName);
-    if (tex.key !== textureName) {
-        const yellowInt = Display.Color.IntegerToColor(0xFFFF00).color;
-        generateTextureFromColor(scene, yellowInt, textureName);
-    }
+    const orangeColor = Display.Color.GetColor(255, 135, 64);
+    const orangeTexture = generateColorPixelTexture(scene, orangeColor, 'TODO_explosion_orange');
+    const yellowColor = Display.Color.GetColor(255, 231, 64);
+    const yellowTexture = generateColorPixelTexture(scene, yellowColor, 'TODO_explosion_yellow');
 
     scene.time.delayedCall(200, () => {
         // console.time('bomb');
@@ -1242,6 +1250,7 @@ export const handleCreateBomb = (scene, heroSprite) => {
                     }
                 );
 
+                const onExplosionEmitterStartedCallbacks = [];
                 const elementsOverlap = scene.physics.overlap(
                     explosionCollider,
                     scene.bombDestroyableElements,
@@ -1252,7 +1261,6 @@ export const handleCreateBomb = (scene, heroSprite) => {
                             elementSprite.destroy();
                             switch (elementSprite.elementType) {
                                 case ELEMENT_CRACK_TYPE: {
-                                    elementSprite.entranceSprite.setAlpha(1);
                                     const tilesAtPosition = scene.mapLayers.getChildren().reduce((tiles, layer) => {
                                         const tile = scene.map.getTileAtWorldXY(
                                             elementSprite.x,
@@ -1269,7 +1277,10 @@ export const handleCreateBomb = (scene, heroSprite) => {
                                         return tiles;
                                     }, []);
 
-                                    tilesAtPosition.forEach((tile) => tile.setCollision(false));
+                                    onExplosionEmitterStartedCallbacks.push(() => {
+                                        tilesAtPosition.forEach((tile) => tile.setCollision(false));
+                                        elementSprite.entranceSprite.setAlpha(1);
+                                    });
 
                                     break;
                                 }
@@ -1296,26 +1307,34 @@ export const handleCreateBomb = (scene, heroSprite) => {
                     ease: 'Power1',
                     onComplete: () => {
                         hasExploded = true;
-                        const explosionParticles = scene.add.particles(textureName);
-                        explosionParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
-                        const explosionEmitter = explosionParticles.createEmitter({
+                        const emitterConfig = {
                             x: bombSprite.x + Math.round(bombSprite.width / 2),
                             y: bombSprite.y + Math.round(bombSprite.height / 2),
-                            quantity: 200,
+                            quantity: { min: 50, max: 150 },
                             speed: { min: 50, max: 200 },
                             angle: { min: 0, max: 360 },
                             gravityY: 50,
                             lifespan: 350,
                             // blendMode: 'ADD',
                             scale: { start: 1, end: 0 },
-                        });
+                        };
 
-                        explosionEmitter.explode();
+                        const orangeExplosionParticles = scene.add.particles(orangeTexture.key);
+                        orangeExplosionParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
+                        const orangeExplosionEmitter = orangeExplosionParticles.createEmitter(emitterConfig);
+                        orangeExplosionEmitter.explode();
+
+                        const yellowExplosionParticles = scene.add.particles(yellowTexture.key);
+                        yellowExplosionParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
+                        const yellowExplosionEmitter = yellowExplosionParticles.createEmitter(emitterConfig);
+                        yellowExplosionEmitter.explode();
+
                         bombSprite.destroy();
                         scene.time.delayedCall(10, () => {
                             explosionCollider.destroy();
                             scene.physics.world.removeCollider(enemiesOverlap);
                             scene.physics.world.removeCollider(elementsOverlap);
+                            onExplosionEmitterStartedCallbacks.forEach((callback) => callback());
                         });
                     },
                 });
