@@ -6,7 +6,8 @@ import {
     BOX_INDEX,
     DOOR,
     DOWN_DIRECTION,
-    ELEMENT_BOX_TYPE, ELEMENT_CRACK_TYPE,
+    ELEMENT_BOX_TYPE,
+    ELEMENT_CRACK_TYPE,
     ELEMENT_GRASS_TYPE,
     ENEMY_SPRITE_PREFIX,
     FOLLOW_BEHAVIOUR,
@@ -53,7 +54,6 @@ import {
     selectHeroSetters,
 } from '../zustand/hero/selectHeroData';
 import { selectGameHeight, selectGameSetters, selectGameWidth } from '../zustand/game/selectGameData';
-import game from "../Game";
 
 export const createAnimation = (animationManager, assetKey, animationName, frameQuantity, frameRate, repeat, yoyo) => {
     const frames = Array.from({ length: frameQuantity }).map((n, index) => ({
@@ -100,6 +100,8 @@ export const handleCreateGroups = (scene) => {
     scene.mapLayers = scene.add.group();
     // eslint-disable-next-line no-param-reassign
     scene.elements = scene.physics.add.staticGroup();
+    // eslint-disable-next-line no-param-reassign
+    scene.bombDestroyableElements = scene.physics.add.staticGroup();
 };
 
 export const findAdjacentMaps = (currentMap, maps) => maps.filter((map) => (
@@ -267,13 +269,13 @@ export const createMapChangeTeleportObject = (
     });
 };
 
-export const createTeleportTileObject = (scene, position, mapKey, targetTilePosition, type) => {
+export const createTeleportTileObject = (scene, position, mapKey, targetTilePosition, type, margin = 3) => {
     const customCollider = createInteractiveGameObject(
         scene,
-        position.x,
-        position.y,
-        TILE_WIDTH,
-        TILE_HEIGHT,
+        position.x + margin,
+        position.y - margin,
+        TILE_WIDTH - margin * 2,
+        TILE_HEIGHT - margin * 2,
         {
             x: 0,
             y: 1,
@@ -281,6 +283,28 @@ export const createTeleportTileObject = (scene, position, mapKey, targetTilePosi
     );
 
     const overlapCollider = scene.physics.add.overlap(scene.heroSprite, customCollider, () => {
+        // console.log({
+        //     overlapX: Math.abs(customCollider.body.overlapX),
+        //     overlapY: Math.abs(customCollider.body.overlapY),
+        //     // velocityX: Math.abs(scene.heroSprite.body.velocity.x),
+        //     // velocityY: Math.abs(scene.heroSprite.body.velocity.y),
+        // });
+        // return;
+        //
+        // const yAxisMovement = [UP_DIRECTION, DOWN_DIRECTION].includes(facingDirection);
+        // const xAxisMovement = [LEFT_DIRECTION, RIGHT_DIRECTION].includes(facingDirection);
+        // if (xAxisMovement && Math.abs(customCollider.body.overlapX) < 10) {
+        //     return;
+        // }
+        //
+        // if (yAxisMovement && Math.abs(customCollider.body.overlapY) < 10) {
+        //     return;
+        // }
+
+        // if (!((xAxisMovement && Math.abs(customCollider.body.overlapX) > 8) || (yAxisMovement && Math.abs(customCollider.body.overlapY) > 8))) {
+        //     return;
+        // }
+
         scene.physics.world.removeCollider(overlapCollider);
         const {
             setHeroInitialFrame,
@@ -436,10 +460,19 @@ export const createTilemap = (
                 }
 
                 if (isCrackedTile(tile)) {
+                    const entranceSprite = createCaveEntrance(scene, tile);
+                    entranceSprite.setAlpha(0);
+                    entranceSprite.setDepth(100000); // TODO
                     const gameObject = createGameObjectForTile(scene, tile);
                     gameObject.elementType = ELEMENT_CRACK_TYPE;
                     gameObject.setDepth(100000); // TODO
                     layer.removeTileAt(tileX, tileY);
+                    gameObject.entranceSprite = entranceSprite;
+
+                    // scene.elements.add(gameObject);
+                    scene.bombDestroyableElements.add(gameObject);
+
+                    return;
                 }
 
                 // TODO create a function that checkes this
@@ -457,6 +490,7 @@ export const createTilemap = (
                     layer.removeTileAt(tileX, tileY);
 
                     scene.elements.add(gameObject);
+                    scene.bombDestroyableElements.add(gameObject);
 
                     return;
                 }
@@ -639,6 +673,22 @@ export const isCrackedTile = (tile) => {
             return false;
         }
     }
+};
+
+// TODO add option for dark or light entrance
+export const createCaveEntrance = (scene, tile) => {
+    const tileData = {
+        index: 1634,
+        tileset: {
+            name: 'mountains_01',
+            firstgid: 1459,
+        },
+        properties: {},
+        pixelX: tile.pixelX,
+        pixelY: tile.pixelY,
+    };
+
+    return createGameObjectForTile(scene, tileData);
 };
 
 export const createGameObjectForTile = (scene, tile) => {
@@ -1194,12 +1244,44 @@ export const handleCreateBomb = (scene, heroSprite) => {
 
                 const elementsOverlap = scene.physics.overlap(
                     explosionCollider,
-                    scene.elements,
+                    scene.bombDestroyableElements,
                     (explosion, elementSprite) => {
                         if (!hasExploded) {
                             // TODO add destroy animation
                             // and check if element should be destroyed or not
                             elementSprite.destroy();
+                            switch (elementSprite.elementType) {
+                                case ELEMENT_CRACK_TYPE: {
+                                    elementSprite.entranceSprite.setAlpha(1);
+                                    const tilesAtPosition = scene.mapLayers.getChildren().reduce((tiles, layer) => {
+                                        const tile = scene.map.getTileAtWorldXY(
+                                            elementSprite.x,
+                                            elementSprite.y,
+                                            false,
+                                            undefined,
+                                            layer
+                                        );
+
+                                        if (tile) {
+                                            return [...tiles, tile];
+                                        }
+
+                                        return tiles;
+                                    }, []);
+
+                                    tilesAtPosition.forEach((tile) => tile.setCollision(false));
+
+                                    break;
+                                }
+                                case ELEMENT_BOX_TYPE: {
+                                    // TODO
+                                    break;
+                                }
+                                default: {
+                                    // TODO
+                                    break;
+                                }
+                            }
                         }
                     }
                 );
