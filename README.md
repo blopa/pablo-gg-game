@@ -113,6 +113,8 @@ setDialogMessages(['hello world', 'hello world 2']);
 
 # Assets:
 https://opengameart.org/content/16-bit-animated-bomb
+https://porito.itch.io/16x16
+https://alexs-assets.itch.io/16x16-rpg-item-pack
 
 # License
 MIT License

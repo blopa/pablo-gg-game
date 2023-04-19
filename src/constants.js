@@ -65,8 +65,9 @@ export const PATROL_BEHAVIOUR = 'patrol-behaviour';
 export const HERO_DEPTH = 100;
 export const UI_DEPTH = 200;
 export const ENEMY_DEPTH = 20;
-export const ITEM_DEPTH = 10;
+export const DEPTH_DIFF = 10;
 
+export const ITEM_DEPTH = HERO_DEPTH - DEPTH_DIFF;
 export const RAINY_WEATHER = 'rainy';
 
 export const SNOWY_WEATHER = 'snowy';
@@ -86,4 +87,6 @@ export const WEATHER_DIRECTION_RIGHT = 'right';
 export const MAP_TYPE_INDOOR = 'indoor';
 
 export const MAP_TYPE_OUTDOOR = 'outdoor';
+
+export const LAYER_TYPE_TERRAIN = 'terrain';
 

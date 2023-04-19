@@ -4,6 +4,7 @@ import { Display, Input, Math as PhaserMath } from 'phaser';
 import {
     BOMB_SPRITE_NAME,
     BOX_INDEX,
+    DEPTH_DIFF,
     DOOR,
     DOWN_DIRECTION,
     ELEMENT_BOX_TYPE,
@@ -15,6 +16,8 @@ import {
     HERO_SPRITE_NAME,
     IDLE_FRAME,
     IDLE_FRAME_POSITION_KEY,
+    ITEM_DEPTH,
+    LAYER_TYPE_TERRAIN,
     LEFT_DIRECTION,
     PATROL_BEHAVIOUR,
     RIGHT_DIRECTION,
@@ -401,6 +404,13 @@ export const createTilemap = (
             // mapData.y
         );
 
+        const layerType = layerData.properties.find((property) => property.name === 'type')?.value;
+        if (layerType === LAYER_TYPE_TERRAIN) {
+            layer.setDepth(HERO_DEPTH - DEPTH_DIFF);
+        } else {
+            layer.setDepth(HERO_DEPTH + DEPTH_DIFF);
+        }
+
         // const columnLength = layer.layer.data.length;
         layer.layer.data.forEach((tileRows, columnIndex) => {
             // const rowLength = tileRows.length;
@@ -462,10 +472,10 @@ export const createTilemap = (
                 if (isCrackedTile(tile)) {
                     const entranceSprite = createCaveEntrance(scene, tile);
                     entranceSprite.setAlpha(0);
-                    entranceSprite.setDepth(100000); // TODO
+                    entranceSprite.setDepth(HERO_DEPTH - DEPTH_DIFF);
                     const gameObject = createGameObjectForTile(scene, tile);
                     gameObject.elementType = ELEMENT_CRACK_TYPE;
-                    gameObject.setDepth(100000); // TODO
+                    gameObject.setDepth(HERO_DEPTH - DEPTH_DIFF);
                     layer.removeTileAt(tileX, tileY);
                     gameObject.entranceSprite = entranceSprite;
 
@@ -1061,10 +1071,10 @@ export const updateSpriteDepthBasedOnHeroPosition = (scene, sprite) => {
 
     if (spriteBounds.bottom - 1 <= heroBounds.bottom) {
         if (sprite.depth > HERO_DEPTH) {
-            sprite.setDepth(HERO_DEPTH - 1);
+            sprite.setDepth(HERO_DEPTH - DEPTH_DIFF);
         }
     } else if (sprite.depth < HERO_DEPTH) {
-        sprite.setDepth(HERO_DEPTH + 1);
+        sprite.setDepth(HERO_DEPTH + DEPTH_DIFF);
     }
 };
 
@@ -1190,7 +1200,8 @@ export const handleCreateBomb = (scene, heroSprite) => {
     const bombSprite = scene.physics.add
         .sprite(position.x, position.y, BOMB_SPRITE_NAME)
         .setName(BOMB_SPRITE_NAME)
-        .setOrigin(0, 0);
+        .setOrigin(0, 0)
+        .setDepth(ITEM_DEPTH);
 
     const explosionCollider = createInteractiveGameObject(
         scene,
@@ -1476,7 +1487,7 @@ export const handleCreateHero = (scene) => {
         }
     };
 
-    heroSprite.handleTakeDamage = (damage, enemySprite, heroEnemyOverlap) => {
+    heroSprite.handleTakeDamage = (damage, enemySprite, heroEnemyOverlap, shouldMoveHero = false) => {
         if (
             heroSprite.body.overlapR === enemySprite.body.overlapR
             && heroSprite.body.overlapR < 5
@@ -1531,25 +1542,27 @@ export const handleCreateHero = (scene) => {
             }
         );
 
-        // Create the tween animation to move the heroSprite
-        scene.tweens.add({
-            targets: heroSprite,
-            x: newX,
-            y: newY,
-            ease: 'Power1',
-            duration: 40,
-            onUpdate: () => {
-                updateActionCollider();
-                updatePresencePerceptionCircle();
-                scene.heroSprite.attackSprite.update?.();
-                // scene.physics.moveTo(heroSprite, heroSprite.x, heroSprite.y);
-                scene.heroSprite.body.setVelocity(1, 1); // TODO maybe
-            },
-            onComplete: () => {
-                updateActionCollider();
-                updatePresencePerceptionCircle();
-            },
-        });
+        if (shouldMoveHero) {
+            // Create the tween animation to move the heroSprite
+            scene.tweens.add({
+                targets: heroSprite,
+                x: newX,
+                y: newY,
+                ease: 'Power1',
+                duration: 40,
+                onUpdate: () => {
+                    updateActionCollider();
+                    updatePresencePerceptionCircle();
+                    scene.heroSprite.attackSprite.update?.();
+                    // scene.physics.moveTo(heroSprite, heroSprite.x, heroSprite.y);
+                    scene.heroSprite.body.setVelocity(1, 1); // TODO maybe
+                },
+                onComplete: () => {
+                    updateActionCollider();
+                    updatePresencePerceptionCircle();
+                },
+            });
+        }
     };
 
     updatePresencePerceptionCircle();
@@ -1578,16 +1591,17 @@ export const handleCreateHero = (scene) => {
     heroSprite.actionCollider.update = (time, delta) => {
         const touching = !heroSprite.actionCollider.body.touching.none;
         const wasTouching = !heroSprite.actionCollider.body.wasTouching.none;
-        const { embedded } = heroSprite.actionCollider.body;
-        const hasVelocity = heroSprite.actionCollider.body.velocity.x !== 0
-            || heroSprite.actionCollider.body.velocity.y !== 0;
+        const { actionCollider } = heroSprite;
+        const { embedded } = actionCollider.body;
+        const hasVelocity = actionCollider.body.velocity.x !== 0
+            || actionCollider.body.velocity.y !== 0;
 
         if (lastEvent !== 'overlapstart' && ((hasVelocity && touching && !wasTouching) || embedded)) {
             lastEvent = 'overlapstart';
-            heroSprite.actionCollider.emit(lastEvent);
+            actionCollider.emit(lastEvent);
         } else if (lastEvent !== 'overlapend' && ((hasVelocity && !touching && wasTouching) || !embedded)) {
             lastEvent = 'overlapend';
-            heroSprite.actionCollider.emit(lastEvent);
+            actionCollider.emit(lastEvent);
         }
     };
 
