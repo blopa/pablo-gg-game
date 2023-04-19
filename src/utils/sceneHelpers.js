@@ -3,9 +3,8 @@ import { Display, Input, Math as PhaserMath } from 'phaser';
 // Constants
 import {
     BOMB_SPRITE_NAME,
-    BOX_INDEX,
     DEPTH_DIFF,
-    DOOR,
+    DOOR_TILE_INDEX,
     DOWN_DIRECTION,
     ELEMENT_BOX_TYPE,
     ELEMENT_CRACK_TYPE,
@@ -22,7 +21,7 @@ import {
     PATROL_BEHAVIOUR,
     RIGHT_DIRECTION,
     SHOULD_TILE_COLLIDE,
-    SLIME,
+    SLIME_TILE_INDEX,
     SLIME_SPRITE_NAME,
     SWORD_SPRITE_NAME,
     TILE_HEIGHT,
@@ -487,7 +486,7 @@ export const createTilemap = (
 
                 // TODO create a function that checkes this
                 // and also check for the tileset name I guess
-                if (index === BOX_INDEX) {
+                if (isBoxTile(tile)) {
                     // const gameObjects = layer.createFromTiles(
                     //     index,
                     //     -1,
@@ -661,6 +660,22 @@ export const isGrassTile = (tile) => {
     switch (name) {
         case 'field_01': {
             return [173, 174, 175, 176, 177, 178].includes(tileIndex);
+        }
+
+        default: {
+            return false;
+        }
+    }
+};
+
+export const isBoxTile = (tile) => {
+    const { index, tileset } = tile;
+    const { name, firstgid } = tileset;
+    const tileIndex = index - firstgid;
+
+    switch (name) {
+        case 'village_01': {
+            return [261, 293, 325, 357].includes(tileIndex);
         }
 
         default: {
@@ -1633,7 +1648,7 @@ export const handleObjectsLayer = (scene) => {
             const propertiesObject = Object.fromEntries(properties?.map((curr) => [curr.name, curr.value]) || []);
 
             switch (gid || name) {
-                case SLIME: {
+                case SLIME_TILE_INDEX: {
                     const { type, health } = propertiesObject;
                     handleCreateEnemy(
                         scene,
@@ -1647,7 +1662,7 @@ export const handleObjectsLayer = (scene) => {
                     break;
                 }
 
-                case DOOR: {
+                case DOOR_TILE_INDEX: {
                     const { type, map: mapKey, position } = propertiesObject;
                     const [posX, posY] = position.split(';');
 

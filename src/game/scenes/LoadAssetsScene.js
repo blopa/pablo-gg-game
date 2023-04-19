@@ -13,7 +13,7 @@ import { asyncLoader } from '../../utils/phaser';
 import { findAdjacentMaps } from '../../utils/sceneHelpers';
 
 // Constants
-import { IGNORED_TILESETS, SLIME, SLIME_SPRITE_NAME } from '../../constants';
+import { IGNORED_TILESETS, SLIME_TILE_INDEX, SLIME_SPRITE_NAME } from '../../constants';
 
 // Selectors
 import {
@@ -188,7 +188,7 @@ export async function create(initData) {
                 layer.objects.forEach(async (object) => {
                     const { gid, properties } = object;
                     switch (gid) {
-                        case SLIME: {
+                        case SLIME_TILE_INDEX: {
                             // for some reason, if I don't assign this constant to a local variable
                             // webpack production build do something that the code doesn't work properly
                             // on the browser
