@@ -27,7 +27,7 @@ import {
     selectGameSetters,
     selectShouldPauseScene, selectGameCanvasElement,
 } from '../../zustand/game/selectGameData';
-import { selectHeroFacingDirection } from '../../zustand/hero/selectHeroData';
+import { selectHeroFacingDirection, selectHeroSetters } from '../../zustand/hero/selectHeroData';
 
 // Constants
 import {
@@ -46,8 +46,9 @@ import {
     WEATHER_STRENGTH_WEAK,
     WEATHER_DIRECTION_LEFT,
     WEATHER_STRENGTH_MEDIUM,
-    WEATHER_STRENGTH_STRONG,
+    WEATHER_STRENGTH_STRONG, IDLE_FRAME, IDLE_FRAME_POSITION_KEY,
 } from '../../constants';
+import { selectDialogMessages } from '../../zustand/dialog/selectDialog';
 
 export const key = 'GameScene';
 
@@ -183,6 +184,152 @@ export function create() {
     //         },
     //     });
     // });
+
+    const handleHeroMove = (event) => {
+        const dialogMessages = getSelectorData(selectDialogMessages);
+        if (dialogMessages.length > 0) {
+            return;
+        }
+
+        const { setHeroFacingDirection } = getSelectorData(selectHeroSetters);
+
+        const heroSpeed = 80;
+        let velocityX = 0;
+        let velocityY = 0;
+        let animName = null;
+
+        switch (event.key) {
+            case 'ArrowUp': {
+                velocityY = -heroSpeed;
+                animName = `${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`;
+                setHeroFacingDirection(UP_DIRECTION);
+                break;
+            }
+
+            case 'ArrowDown': {
+                velocityY = heroSpeed;
+                animName = `${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`;
+                setHeroFacingDirection(DOWN_DIRECTION);
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+
+        switch (event.key) {
+            case 'ArrowLeft': {
+                velocityX = -heroSpeed;
+                animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
+                setHeroFacingDirection(LEFT_DIRECTION);
+                break;
+            }
+
+            case 'ArrowRight': {
+                velocityX = heroSpeed;
+                animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
+                setHeroFacingDirection(RIGHT_DIRECTION);
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+
+        // TODO this is not working because either start from zero or grab the current speed
+        // gotta figure this out in an elegant way
+        // Adjust velocity for diagonal movement
+        if (
+            (Math.abs(velocityX) === heroSpeed && scene.heroSprite.body.velocity.y !== 0)
+            || (Math.abs(velocityY) === heroSpeed && scene.heroSprite.body.velocity.x !== 0)
+        ) {
+            velocityX *= (1 / Math.sqrt(2));
+            velocityY *= (1 / Math.sqrt(2));
+
+            if (velocityX < 0) {
+                animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
+                setHeroFacingDirection(LEFT_DIRECTION);
+            } else {
+                animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
+                setHeroFacingDirection(RIGHT_DIRECTION);
+            }
+        }
+
+        scene.heroSprite.body.setVelocity(velocityX, velocityY);
+        scene.heroSprite.actionCollider.body.setVelocity(velocityX, velocityY);
+
+        // if (velocityX !== 0) {
+        //     scene.heroSprite.body.setVelocityX(velocityX);
+        //     scene.heroSprite.actionCollider.body.setVelocityX(velocityX);
+        // }
+        //
+        // if (velocityY !== 0) {
+        //     scene.heroSprite.body.setVelocityY(velocityY);
+        //     scene.heroSprite.actionCollider.body.setVelocityY(velocityY);
+        // }
+
+        if (animName) {
+            scene.heroSprite.anims.play(animName, true);
+        }
+    };
+
+    scene.input.keyboard.on('keydown-LEFT', handleHeroMove);
+    scene.input.keyboard.on('keydown-RIGHT', handleHeroMove);
+    scene.input.keyboard.on('keydown-UP', handleHeroMove);
+    scene.input.keyboard.on('keydown-DOWN', handleHeroMove);
+
+    const handleHeroStop = (event) => {
+        console.log(event.key);
+        switch (event.key) {
+            case 'ArrowLeft':
+            case 'ArrowRight': {
+                scene.heroSprite.body.setVelocityX(0);
+                scene.heroSprite.actionCollider.body.setVelocityX(0);
+                break;
+            }
+
+            case 'ArrowUp':
+            case 'ArrowDown': {
+                scene.heroSprite.body.setVelocityY(0);
+                scene.heroSprite.actionCollider.body.setVelocityY(0);
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+
+        const velocityX = scene.heroSprite.body.velocity.x;
+        const velocityY = scene.heroSprite.body.velocity.y;
+        if (velocityX === 0 && velocityY === 0) {
+            if (scene.heroSprite.anims.isPlaying) {
+                scene.heroSprite.anims.stop();
+                const facingDirection = getSelectorData(selectHeroFacingDirection);
+                scene.heroSprite.setFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
+            }
+        } else {
+            let animName = null;
+            if (velocityX < 0) {
+                animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
+            } else if (velocityX > 0) {
+                animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
+            } else if (velocityY < 0) {
+                animName = `${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`;
+            } else {
+                animName = `${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`;
+            }
+
+            scene.heroSprite.anims.play(animName, true);
+        }
+    };
+
+    scene.input.keyboard.on('keyup-LEFT', handleHeroStop);
+    scene.input.keyboard.on('keyup-RIGHT', handleHeroStop);
+    scene.input.keyboard.on('keyup-UP', handleHeroStop);
+    scene.input.keyboard.on('keyup-DOWN', handleHeroStop);
 
     scene.input.keyboard.on('keydown-ENTER', () => {
         // TODO adjust bomb position

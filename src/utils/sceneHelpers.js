@@ -1778,6 +1778,8 @@ export const handleCreateHeroAnimations = (heroSprite) => {
 };
 
 export const handleHeroMovement = (scene, heroSpeed = 80) => {
+    return;
+
     const dialogMessages = getSelectorData(selectDialogMessages);
     if (dialogMessages.length > 0) {
         return;
