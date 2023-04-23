@@ -197,17 +197,19 @@ export function create() {
         let velocityX = 0;
         let velocityY = 0;
         let animName = null;
+        let multiplierY = 0;
+        let multiplierX = 0;
 
         switch (event.key) {
             case 'ArrowUp': {
-                velocityY = -heroSpeed;
+                multiplierY = -1;
                 animName = `${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`;
                 setHeroFacingDirection(UP_DIRECTION);
                 break;
             }
 
             case 'ArrowDown': {
-                velocityY = heroSpeed;
+                multiplierY = 1;
                 animName = `${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`;
                 setHeroFacingDirection(DOWN_DIRECTION);
                 break;
@@ -220,14 +222,14 @@ export function create() {
 
         switch (event.key) {
             case 'ArrowLeft': {
-                velocityX = -heroSpeed;
+                multiplierX = -1;
                 animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
                 setHeroFacingDirection(LEFT_DIRECTION);
                 break;
             }
 
             case 'ArrowRight': {
-                velocityX = heroSpeed;
+                multiplierX = 1;
                 animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
                 setHeroFacingDirection(RIGHT_DIRECTION);
                 break;
@@ -242,11 +244,12 @@ export function create() {
         // gotta figure this out in an elegant way
         // Adjust velocity for diagonal movement
         if (
-            (Math.abs(velocityX) === heroSpeed && scene.heroSprite.body.velocity.y !== 0)
-            || (Math.abs(velocityY) === heroSpeed && scene.heroSprite.body.velocity.x !== 0)
+            (Math.abs(multiplierX) && scene.heroSprite.body.velocity.y !== 0)
+            || (Math.abs(multiplierY) && scene.heroSprite.body.velocity.x !== 0)
         ) {
-            velocityX *= (1 / Math.sqrt(2));
-            velocityY *= (1 / Math.sqrt(2));
+            velocityX = heroSpeed * (1 / Math.sqrt(2)) * multiplierX;
+            velocityY = heroSpeed * (1 / Math.sqrt(2)) * multiplierY;
+            console.log('odl odl', velocityX, velocityY);
 
             if (velocityX < 0) {
                 animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
@@ -255,6 +258,9 @@ export function create() {
                 animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
                 setHeroFacingDirection(RIGHT_DIRECTION);
             }
+        } else {
+            velocityX = heroSpeed * multiplierX;
+            velocityY = heroSpeed * multiplierY;
         }
 
         scene.heroSprite.body.setVelocity(velocityX, velocityY);
@@ -281,7 +287,6 @@ export function create() {
     scene.input.keyboard.on('keydown-DOWN', handleHeroMove);
 
     const handleHeroStop = (event) => {
-        console.log(event.key);
         switch (event.key) {
             case 'ArrowLeft':
             case 'ArrowRight': {
