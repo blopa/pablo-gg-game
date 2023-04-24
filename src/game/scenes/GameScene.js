@@ -8,7 +8,6 @@ import {
     handleCreateBomb,
     handleCreateHero,
     handleObjectsLayer,
-    handleHeroMovement,
     handleCreateGroups,
     handleCreateControls,
     handleConfigureCamera,
@@ -31,6 +30,7 @@ import { selectHeroFacingDirection, selectHeroSetters } from '../../zustand/hero
 
 // Constants
 import {
+    IDLE_FRAME,
     TILE_WIDTH,
     TILE_HEIGHT,
     UP_DIRECTION,
@@ -45,8 +45,9 @@ import {
     SHOULD_TILE_COLLIDE,
     WEATHER_STRENGTH_WEAK,
     WEATHER_DIRECTION_LEFT,
+    IDLE_FRAME_POSITION_KEY,
     WEATHER_STRENGTH_MEDIUM,
-    WEATHER_STRENGTH_STRONG, IDLE_FRAME, IDLE_FRAME_POSITION_KEY,
+    WEATHER_STRENGTH_STRONG,
 } from '../../constants';
 import { selectDialogMessages } from '../../zustand/dialog/selectDialog';
 
@@ -185,7 +186,8 @@ export function create() {
     //     });
     // });
 
-    const handleHeroMove = (event) => {
+    const heroSpeed = 80;
+    const handleHeroStartMovement = (direction) => (event) => {
         const dialogMessages = getSelectorData(selectDialogMessages);
         if (dialogMessages.length > 0) {
             return;
@@ -193,25 +195,22 @@ export function create() {
 
         const { setHeroFacingDirection } = getSelectorData(selectHeroSetters);
 
-        const heroSpeed = 80;
-        let velocityX = 0;
-        let velocityY = 0;
-        let animName = null;
+        let velocityX = scene.heroSprite.body.velocity.x;
+        let velocityY = scene.heroSprite.body.velocity.y;
         let multiplierY = 0;
         let multiplierX = 0;
+        let facingDirection = DOWN_DIRECTION;
 
-        switch (event.key) {
-            case 'ArrowUp': {
+        switch (direction) {
+            case UP_DIRECTION: {
                 multiplierY = -1;
-                animName = `${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`;
-                setHeroFacingDirection(UP_DIRECTION);
+                facingDirection = UP_DIRECTION;
                 break;
             }
 
-            case 'ArrowDown': {
+            case DOWN_DIRECTION: {
                 multiplierY = 1;
-                animName = `${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`;
-                setHeroFacingDirection(DOWN_DIRECTION);
+                facingDirection = DOWN_DIRECTION;
                 break;
             }
 
@@ -220,18 +219,16 @@ export function create() {
             }
         }
 
-        switch (event.key) {
-            case 'ArrowLeft': {
+        switch (direction) {
+            case LEFT_DIRECTION: {
                 multiplierX = -1;
-                animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
-                setHeroFacingDirection(LEFT_DIRECTION);
+                facingDirection = LEFT_DIRECTION;
                 break;
             }
 
-            case 'ArrowRight': {
+            case RIGHT_DIRECTION: {
                 multiplierX = 1;
-                animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
-                setHeroFacingDirection(RIGHT_DIRECTION);
+                facingDirection = RIGHT_DIRECTION;
                 break;
             }
 
@@ -240,63 +237,60 @@ export function create() {
             }
         }
 
-        // TODO this is not working because either start from zero or grab the current speed
-        // gotta figure this out in an elegant way
         // Adjust velocity for diagonal movement
-        if (
-            (Math.abs(multiplierX) && scene.heroSprite.body.velocity.y !== 0)
-            || (Math.abs(multiplierY) && scene.heroSprite.body.velocity.x !== 0)
-        ) {
+        if (Math.abs(multiplierX) && Math.abs(scene.heroSprite.body.velocity.y)) {
+            if (scene.heroSprite.body.velocity.y < 0) {
+                multiplierY = -1;
+            } else {
+                multiplierY = 1;
+            }
+
             velocityX = heroSpeed * (1 / Math.sqrt(2)) * multiplierX;
             velocityY = heroSpeed * (1 / Math.sqrt(2)) * multiplierY;
-            console.log('odl odl', velocityX, velocityY);
+        } else if (Math.abs(multiplierY) && Math.abs(scene.heroSprite.body.velocity.x)) {
+            if (scene.heroSprite.body.velocity.x < 0) {
+                multiplierX = -1;
+            } else {
+                multiplierX = 1;
+            }
+
+            velocityX = heroSpeed * (1 / Math.sqrt(2)) * multiplierX;
+            velocityY = heroSpeed * (1 / Math.sqrt(2)) * multiplierY;
 
             if (velocityX < 0) {
-                animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
-                setHeroFacingDirection(LEFT_DIRECTION);
+                facingDirection = LEFT_DIRECTION;
             } else {
-                animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
-                setHeroFacingDirection(RIGHT_DIRECTION);
+                facingDirection = RIGHT_DIRECTION;
             }
         } else {
             velocityX = heroSpeed * multiplierX;
             velocityY = heroSpeed * multiplierY;
         }
 
+        scene.heroSprite.updateActionCollider();
         scene.heroSprite.body.setVelocity(velocityX, velocityY);
         scene.heroSprite.actionCollider.body.setVelocity(velocityX, velocityY);
 
-        // if (velocityX !== 0) {
-        //     scene.heroSprite.body.setVelocityX(velocityX);
-        //     scene.heroSprite.actionCollider.body.setVelocityX(velocityX);
-        // }
-        //
-        // if (velocityY !== 0) {
-        //     scene.heroSprite.body.setVelocityY(velocityY);
-        //     scene.heroSprite.actionCollider.body.setVelocityY(velocityY);
-        // }
-
-        if (animName) {
-            scene.heroSprite.anims.play(animName, true);
-        }
+        setHeroFacingDirection(facingDirection);
+        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${facingDirection}`, true);
     };
 
-    scene.input.keyboard.on('keydown-LEFT', handleHeroMove);
-    scene.input.keyboard.on('keydown-RIGHT', handleHeroMove);
-    scene.input.keyboard.on('keydown-UP', handleHeroMove);
-    scene.input.keyboard.on('keydown-DOWN', handleHeroMove);
+    scene.input.keyboard.on('keydown-LEFT', handleHeroStartMovement(LEFT_DIRECTION));
+    scene.input.keyboard.on('keydown-RIGHT', handleHeroStartMovement(RIGHT_DIRECTION));
+    scene.input.keyboard.on('keydown-UP', handleHeroStartMovement(UP_DIRECTION));
+    scene.input.keyboard.on('keydown-DOWN', handleHeroStartMovement(DOWN_DIRECTION));
 
-    const handleHeroStop = (event) => {
-        switch (event.key) {
-            case 'ArrowLeft':
-            case 'ArrowRight': {
+    const handleHeroStopMovement = (direction) => (event) => {
+        switch (direction) {
+            case LEFT_DIRECTION:
+            case RIGHT_DIRECTION: {
                 scene.heroSprite.body.setVelocityX(0);
                 scene.heroSprite.actionCollider.body.setVelocityX(0);
                 break;
             }
 
-            case 'ArrowUp':
-            case 'ArrowDown': {
+            case UP_DIRECTION:
+            case DOWN_DIRECTION: {
                 scene.heroSprite.body.setVelocityY(0);
                 scene.heroSprite.actionCollider.body.setVelocityY(0);
                 break;
@@ -316,25 +310,36 @@ export function create() {
                 scene.heroSprite.setFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
             }
         } else {
-            let animName = null;
+            let facingDirection = DOWN_DIRECTION;
+            const { setHeroFacingDirection } = getSelectorData(selectHeroSetters);
+
             if (velocityX < 0) {
-                animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
+                scene.heroSprite.body.setVelocityX(-heroSpeed);
+                scene.heroSprite.actionCollider.body.setVelocityX(-heroSpeed);
+                facingDirection = LEFT_DIRECTION;
             } else if (velocityX > 0) {
-                animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
+                scene.heroSprite.body.setVelocityX(heroSpeed);
+                scene.heroSprite.actionCollider.body.setVelocityX(heroSpeed);
+                facingDirection = RIGHT_DIRECTION;
             } else if (velocityY < 0) {
-                animName = `${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`;
+                scene.heroSprite.body.setVelocityY(-heroSpeed);
+                scene.heroSprite.actionCollider.body.setVelocityY(-heroSpeed);
+                facingDirection = UP_DIRECTION;
             } else {
-                animName = `${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`;
+                scene.heroSprite.body.setVelocityY(heroSpeed);
+                scene.heroSprite.actionCollider.body.setVelocityY(heroSpeed);
+                facingDirection = DOWN_DIRECTION;
             }
 
-            scene.heroSprite.anims.play(animName, true);
+            setHeroFacingDirection(facingDirection);
+            scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${facingDirection}`, true);
         }
     };
 
-    scene.input.keyboard.on('keyup-LEFT', handleHeroStop);
-    scene.input.keyboard.on('keyup-RIGHT', handleHeroStop);
-    scene.input.keyboard.on('keyup-UP', handleHeroStop);
-    scene.input.keyboard.on('keyup-DOWN', handleHeroStop);
+    scene.input.keyboard.on('keyup-LEFT', handleHeroStopMovement(LEFT_DIRECTION));
+    scene.input.keyboard.on('keyup-RIGHT', handleHeroStopMovement(RIGHT_DIRECTION));
+    scene.input.keyboard.on('keyup-UP', handleHeroStopMovement(UP_DIRECTION));
+    scene.input.keyboard.on('keyup-DOWN', handleHeroStopMovement(DOWN_DIRECTION));
 
     scene.input.keyboard.on('keydown-ENTER', () => {
         // TODO adjust bomb position
@@ -348,6 +353,8 @@ export function create() {
 
         const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
         const element = calculateClosestStaticElement(scene.heroSprite.actionCollider, overlaps);
+        const currentVelocityY = scene.heroSprite.body.velocity.y;
+        const currentVelocityX = scene.heroSprite.body.velocity.x;
 
         if (element) {
             // eslint-disable-next-line unicorn/no-lonely-if
@@ -390,7 +397,28 @@ export function create() {
                 const bodyStartY = element.body.y;
                 const bodyNewX = bodyStartX + diffX;
                 const bodyNewY = bodyStartY + diffY;
-                scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true);
+
+                const handlePushAnimationComplete = () => {
+                    if (currentVelocityX) {
+                        scene.heroSprite.body.setVelocityX(currentVelocityX);
+                        scene.heroSprite.actionCollider.body.setVelocityX(currentVelocityX);
+                    }
+
+                    if (currentVelocityY) {
+                        scene.heroSprite.body.setVelocityY(currentVelocityY);
+                        scene.heroSprite.actionCollider.body.setVelocityY(currentVelocityY);
+                    }
+
+                    const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
+                    if (!currentVelocityX && !currentVelocityY) {
+                        scene.heroSprite.setFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, heroFacingDirection));
+                    } else {
+                        scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${heroFacingDirection}`, true);
+                    }
+                };
+                scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_attack_${heroFacingDirection}`, true)
+                    .once('animationcomplete', handlePushAnimationComplete)
+                    .once('animationstop', handlePushAnimationComplete);
 
                 // scene.physics.moveTo(element, newX, newY);
                 const isOccupiedByTile = scene.mapLayers.getChildren().some((layer) => {
@@ -507,6 +535,23 @@ export function create() {
                 enemySprite.handleStopTakingDamage();
             }
 
+            if (currentVelocityX) {
+                scene.heroSprite.body.setVelocityX(currentVelocityX);
+                scene.heroSprite.actionCollider.body.setVelocityX(currentVelocityX);
+            }
+
+            if (currentVelocityY) {
+                scene.heroSprite.body.setVelocityY(currentVelocityY);
+                scene.heroSprite.actionCollider.body.setVelocityY(currentVelocityY);
+            }
+
+            const heroFacingDirection = getSelectorData(selectHeroFacingDirection);
+            if (!currentVelocityX && !currentVelocityY) {
+                scene.heroSprite.setFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, heroFacingDirection));
+            } else {
+                scene.heroSprite.anims.play(`${HERO_SPRITE_NAME}_walk_${heroFacingDirection}`, true);
+            }
+
             scene.heroSprite.attackSprite.setVisible(false);
             scene.heroSprite.isAttacking = false;
             delete scene.heroSprite.attackSprite.update;
@@ -527,7 +572,8 @@ export function create() {
     });
 
     scene.heroSprite.on('animationstop', () => {
-        scene.heroSprite.actionCollider.body.setVelocity(0, 0);
+        // TODO I don't remember why I had this
+        // scene.heroSprite.actionCollider.body.setVelocity(0, 0);
     });
 
     scene.heroSprite.on('animationstart', () => {
@@ -653,7 +699,6 @@ export function update(time, delta) {
         return;
     }
 
-    handleHeroMovement(scene);
     scene.heroSprite.update(time, delta);
     scene.heroSprite.actionCollider.update(time, delta);
     scene.enemies.getChildren().forEach((enemy) => {

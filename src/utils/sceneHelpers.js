@@ -2,58 +2,57 @@ import { Display, Input, Math as PhaserMath } from 'phaser';
 
 // Constants
 import {
-    BOMB_SPRITE_NAME,
+    UI_DEPTH,
     DEPTH_DIFF,
-    DOOR_TILE_INDEX,
-    DOWN_DIRECTION,
-    ELEMENT_BOX_TYPE,
-    ELEMENT_CRACK_TYPE,
-    ELEMENT_GRASS_TYPE,
-    ENEMY_SPRITE_PREFIX,
-    FOLLOW_BEHAVIOUR,
     HERO_DEPTH,
-    HERO_SPRITE_NAME,
     IDLE_FRAME,
-    IDLE_FRAME_POSITION_KEY,
     ITEM_DEPTH,
-    LAYER_TYPE_TERRAIN,
+    TILE_WIDTH,
+    TILE_HEIGHT,
+    UP_DIRECTION,
+    DOWN_DIRECTION,
     LEFT_DIRECTION,
-    PATROL_BEHAVIOUR,
+    DOOR_TILE_INDEX,
     RIGHT_DIRECTION,
-    SHOULD_TILE_COLLIDE,
+    BOMB_SPRITE_NAME,
+    HERO_SPRITE_NAME,
+    PATROL_BEHAVIOUR,
+    FOLLOW_BEHAVIOUR,
+    ELEMENT_BOX_TYPE,
     SLIME_TILE_INDEX,
     SLIME_SPRITE_NAME,
     SWORD_SPRITE_NAME,
-    TILE_HEIGHT,
-    TILE_WIDTH,
-    UI_DEPTH,
-    UP_DIRECTION,
+    LAYER_TYPE_TERRAIN,
+    ELEMENT_CRACK_TYPE,
+    ELEMENT_GRASS_TYPE,
+    ENEMY_SPRITE_PREFIX,
+    SHOULD_TILE_COLLIDE,
+    IDLE_FRAME_POSITION_KEY,
 } from '../constants';
 
 // Utils
 import {
-    createInteractiveGameObject,
-    getDegreeFromRadians,
-    getFileNameWithoutExtension,
     getSelectorData,
+    getDegreeFromRadians,
     rotateRectangleInsideTile,
+    getFileNameWithoutExtension,
+    createInteractiveGameObject,
 } from './utils';
 
 // Selectors
-import { selectDialogMessages } from '../zustand/dialog/selectDialog';
 import {
-    selectCurrentMapKey,
-    selectMapKeyData,
-    selectMapSetters,
     selectTilesets,
     selectWorldData,
+    selectMapKeyData,
+    selectMapSetters,
+    selectCurrentMapKey,
 } from '../zustand/map/selectMapData';
 import {
+    selectHeroSetters,
+    selectHeroInitialFrame,
     selectHeroCurrentHealth,
     selectHeroFacingDirection,
-    selectHeroInitialFrame,
     selectHeroInitialPosition,
-    selectHeroSetters,
 } from '../zustand/hero/selectHeroData';
 import { selectGameHeight, selectGameSetters, selectGameWidth } from '../zustand/game/selectGameData';
 
@@ -1589,7 +1588,30 @@ export const handleCreateHero = (scene) => {
     });
 
     heroSprite.update = (time, delta) => {
-        if (heroSprite.body.velocity.y === 0 && heroSprite.body.velocity.x === 0) {
+        const velocityX = scene.heroSprite.body.velocity.x;
+        const velocityY = scene.heroSprite.body.velocity.y;
+        // console.log(velocityX, velocityY);
+
+        if (heroSprite.anims.isPlaying && !heroSprite.anims.currentAnim?.key.includes('walk')) {
+            heroSprite.body.setVelocity(0, 0); // TODO maybe
+        }
+
+        if (!heroSprite.body.blocked.none || heroSprite.body.speed === 0) {
+            heroSprite.actionCollider.body.setVelocity(0, 0); // TODO maybe
+            heroSprite.updateActionCollider();
+        }
+
+        if ((heroSprite.body.blocked.up || heroSprite.body.blocked.down) && velocityX !== 0) {
+            heroSprite.actionCollider.body.setVelocity(velocityX, 0); // TODO maybe
+            heroSprite.updateActionCollider();
+        }
+
+        if ((scene.heroSprite.body.blocked.left || heroSprite.body.blocked.right) && velocityY !== 0) {
+            heroSprite.actionCollider.body.setVelocity(0, velocityY); // TODO maybe
+            heroSprite.updateActionCollider();
+        }
+
+        if (velocityY === 0 && velocityX === 0) {
             heroSprite.x = PhaserMath.Snap.To(heroSprite.x, 1);
             heroSprite.y = PhaserMath.Snap.To(heroSprite.y, 1);
 
@@ -1775,87 +1797,6 @@ export const handleCreateHeroAnimations = (heroSprite) => {
     //         false
     //     );
     // });
-};
-
-export const handleHeroMovement = (scene, heroSpeed = 80) => {
-    return;
-
-    const dialogMessages = getSelectorData(selectDialogMessages);
-    if (dialogMessages.length > 0) {
-        return;
-    }
-
-    // if (dialogMessages.length > 0 || scene.heroSprite.isTakingDamage) {
-    //     scene.heroSprite.actionCollider.body.setVelocity(0, 0); // TODO maybe
-    //     scene.heroSprite.updateActionCollider();
-    //     return;
-    // }
-
-    const { setHeroFacingDirection } = getSelectorData(selectHeroSetters);
-
-    let velocityX = 0;
-    let velocityY = 0;
-    let animName = null;
-
-    if (scene.cursors.up.isDown || scene.wasd[UP_DIRECTION].isDown) {
-        velocityY = -heroSpeed;
-        animName = `${HERO_SPRITE_NAME}_walk_${UP_DIRECTION}`;
-        setHeroFacingDirection(UP_DIRECTION);
-    } else if (scene.cursors.down.isDown || scene.wasd[DOWN_DIRECTION].isDown) {
-        velocityY = heroSpeed;
-        animName = `${HERO_SPRITE_NAME}_walk_${DOWN_DIRECTION}`;
-        setHeroFacingDirection(DOWN_DIRECTION);
-    }
-
-    if (scene.cursors.left.isDown || scene.wasd[LEFT_DIRECTION].isDown) {
-        velocityX = -heroSpeed;
-        animName = `${HERO_SPRITE_NAME}_walk_${LEFT_DIRECTION}`;
-        setHeroFacingDirection(LEFT_DIRECTION);
-    } else if (scene.cursors.right.isDown || scene.wasd[RIGHT_DIRECTION].isDown) {
-        velocityX = heroSpeed;
-        animName = `${HERO_SPRITE_NAME}_walk_${RIGHT_DIRECTION}`;
-        setHeroFacingDirection(RIGHT_DIRECTION);
-    }
-
-    // Adjust velocity for diagonal movement
-    if (velocityX !== 0 && velocityY !== 0) {
-        velocityX *= 1 / Math.sqrt(2);
-        velocityY *= 1 / Math.sqrt(2);
-    }
-
-    if (scene.heroSprite.anims.isPlaying && !scene.heroSprite.anims.currentAnim?.key.includes('walk')) {
-        scene.heroSprite.body.setVelocity(0, 0); // TODO maybe
-        return;
-    }
-
-    scene.heroSprite.body.setVelocity(velocityX, velocityY);
-    scene.heroSprite.actionCollider.body.setVelocity(velocityX, velocityY);
-
-    if (!scene.heroSprite.body.blocked.none || scene.heroSprite.body.speed === 0) {
-        scene.heroSprite.actionCollider.body.setVelocity(0, 0); // TODO maybe
-        scene.heroSprite.updateActionCollider();
-    }
-
-    if ((scene.heroSprite.body.blocked.up || scene.heroSprite.body.blocked.down) && velocityX !== 0) {
-        scene.heroSprite.actionCollider.body.setVelocity(velocityX, 0); // TODO maybe
-        scene.heroSprite.updateActionCollider();
-    }
-
-    if ((scene.heroSprite.body.blocked.left || scene.heroSprite.body.blocked.right) && velocityY !== 0) {
-        scene.heroSprite.actionCollider.body.setVelocity(0, velocityY); // TODO maybe
-        scene.heroSprite.updateActionCollider();
-    }
-
-    if (animName) {
-        scene.heroSprite.anims.play(animName, true);
-    } else {
-        if (scene.heroSprite.anims.isPlaying) {
-            scene.heroSprite.anims.stop();
-        }
-
-        const facingDirection = getSelectorData(selectHeroFacingDirection);
-        scene.heroSprite.setFrame(IDLE_FRAME.replace(IDLE_FRAME_POSITION_KEY, facingDirection));
-    }
 };
 
 export const changeScene = (scene, nextScene, assets = {}, config = {}) => {
