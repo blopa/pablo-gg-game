@@ -19,16 +19,30 @@ export function create() {
     const { setCurrentMapKey } = getSelectorData(selectMapSetters);
     const { setMenuItems, setMenuOnSelect } = getSelectorData(selectMenuSetters);
 
-    setMenuItems(['start_game', 'exit']);
-    setMenuOnSelect((itemKey, item) => {
+    const handleMainMenuItemSelected = (itemKey, item) => {
         if (itemKey === 'start_game') {
             handleStartGameSelected();
+        } else if (itemKey === 'settings') {
+            setMenuItems(['controls', 'return']);
+            setMenuOnSelect(handleSettingsItemSelected);
         } else {
             setMenuItems([]);
             setMenuOnSelect(null);
             window.location.reload();
         }
-    });
+    };
+
+    const handleSettingsItemSelected = (itemKey, item) => {
+        if (itemKey === 'return') {
+            setMenuItems(['start_game', 'settings', 'exit']);
+            setMenuOnSelect(handleMainMenuItemSelected);
+        } else {
+            // TODO
+        }
+    };
+
+    setMenuItems(['start_game', 'settings', 'exit']);
+    setMenuOnSelect(handleMainMenuItemSelected);
 
     const handleStartGameSelected = () => {
         const testMapKey = 'test_map';
