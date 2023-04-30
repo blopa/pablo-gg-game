@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { FormattedMessage } from 'react-intl';
 
@@ -29,11 +29,16 @@ function GameMenu() {
 
     const [selectedItemIndex, setSelectedItemIndex] = useState(0);
 
+    const handleOnSelect = useCallback((item, itemKey) => {
+        setSelectedItemIndex(0);
+        onSelected(item);
+    }, [onSelected]);
+
     useEffect(() => {
         const handleKeyPressed = (e) => {
             switch (e.code) {
                 case ENTER_KEY: {
-                    onSelected(items[selectedItemIndex]);
+                    handleOnSelect(items[selectedItemIndex]);
                     break;
                 }
 
@@ -67,9 +72,9 @@ function GameMenu() {
         return () => {
             // TODO improve this
             console.log('rodei');
-            window.removeEventListener('keydown', handleKeyPressed)
+            window.removeEventListener('keydown', handleKeyPressed);
         };
-    }, [items, onSelected, selectedItemIndex]);
+    }, [handleOnSelect, items, selectedItemIndex]);
 
     return (
         <div
@@ -81,12 +86,12 @@ function GameMenu() {
         >
             <ul className={styles['menu-items-wrapper']}>
                 {items.map((item, index) => {
-                    const [key, variables] = getTranslationVariables(item);
+                    const [itemKey, variables] = getTranslationVariables(item);
 
                     return (
                         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                         <li
-                            key={key}
+                            key={itemKey}
                             className={classNames(styles['menu-item'], {
                                 [styles['selected-menu-item']]: selectedItemIndex === index,
                             })}
@@ -94,11 +99,11 @@ function GameMenu() {
                                 setSelectedItemIndex(index);
                             }}
                             onClick={() => {
-                                onSelected(key, item);
+                                handleOnSelect(item, itemKey);
                             }}
                         >
                             <FormattedMessage
-                                id={key}
+                                id={itemKey}
                                 values={variables}
                             />
                         </li>

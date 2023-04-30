@@ -13,5 +13,12 @@
     "return": "Return",
     "settings": "Settings",
     "controls": "Controls",
+    "type_key_for_up": "Type key for 'up'",
+    "type_key_for_down": "Type key for 'down'",
+    "type_key_for_left": "Type key for 'left'",
+    "type_key_for_right": "Type key for 'right'",
+    "type_key_for_action": "Type key for 'action'",
+    "type_key_for_item": "Type key for 'item'",
+    "type_key_for_cancel": "Type key for 'cancel'",
     "run": "Run"
 }

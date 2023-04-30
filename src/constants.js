@@ -33,6 +33,11 @@ export const LEFT_DIRECTION = 'left';
 export const UP_DIRECTION = 'up';
 export const DOWN_DIRECTION = 'down';
 
+// Controls
+export const ACTION_KEY = 'action';
+export const ACTION_ITEM = 'item';
+export const ACTION_CANCEL = 'cancel';
+
 export const IGNORED_TILESETS = ['tileset_objects'];
 
 // Keys

@@ -13,7 +13,7 @@ export default (set) => ({
             text: {
                 ...state.text,
                 // TODO make this a Set()
-                texts: [...state.text.texts, ...texts],
+                texts: [...state.text.texts, texts],
             },
         })),
     updateTextTexts: (key, variables) =>
