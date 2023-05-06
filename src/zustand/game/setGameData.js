@@ -70,4 +70,15 @@ export default (set) => ({
                 },
             },
         })),
+    setGameControlKey: (action, key) =>
+        set((state) => ({
+            ...state,
+            game: {
+                ...state.game,
+                controls: {
+                    ...state.game.controls,
+                    [action]: key,
+                },
+            },
+        })),
 });

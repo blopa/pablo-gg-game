@@ -1,7 +1,17 @@
 import { createStore, useStore } from 'zustand';
 
 // Constants
-import { MIN_GAME_HEIGHT, MIN_GAME_WIDTH } from '../constants';
+import {
+    ACTION_CANCEL,
+    ACTION_ITEM,
+    ACTION_KEY,
+    DOWN_DIRECTION,
+    LEFT_DIRECTION,
+    MIN_GAME_HEIGHT,
+    MIN_GAME_WIDTH,
+    RIGHT_DIRECTION,
+    UP_DIRECTION
+} from '../constants';
 
 // Setters
 import setLoadedAssets from './assets/setLoadedAssets';
@@ -61,6 +71,15 @@ const store = createStore((set) => ({
         cameraSizeUpdateCallbacks: [],
         pausedScenes: {},
         showHeadsUpDisplay: false,
+        controls: {
+            [UP_DIRECTION]: 'UP',
+            [DOWN_DIRECTION]: 'DOWN',
+            [LEFT_DIRECTION]: 'LEFT',
+            [RIGHT_DIRECTION]: 'RIGHT',
+            [ACTION_KEY]: 'ENTER',
+            [ACTION_ITEM]: 'SPACE',
+            [ACTION_CANCEL]: 'ESC',
+        },
         setters: setGameData(set),
     },
     dialog: {

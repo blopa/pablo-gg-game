@@ -24,7 +24,9 @@ import {
     selectGameWidth,
     selectGameHeight,
     selectGameSetters,
-    selectShouldPauseScene, selectGameCanvasElement,
+    selectGameControls,
+    selectShouldPauseScene,
+    selectGameCanvasElement,
 } from '../../zustand/game/selectGameData';
 import { selectHeroFacingDirection, selectHeroSetters } from '../../zustand/hero/selectHeroData';
 
@@ -71,6 +73,8 @@ export function create() {
     //     console.log('clicky click');
     // });
     const { addGameCameraSizeUpdateCallback, setGameShowHeadsUpDisplay } = getSelectorData(selectGameSetters);
+    const controls = getSelectorData(selectGameControls);
+    console.log(controls);
 
     // All of these functions need to be called in order
 

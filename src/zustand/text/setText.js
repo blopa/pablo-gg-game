@@ -43,4 +43,11 @@ export default (set) => ({
                 texts: state.text.texts.filter((text) => text.key !== key),
             },
         })),
+    clearTextTexts: () =>
+        set((state) => ({
+            ...state,
+            text: {
+                texts: [],
+            },
+        })),
 });

@@ -20,7 +20,7 @@ import { selectHeroSetters } from '../../zustand/hero/selectHeroData';
 import { selectMapSetters } from '../../zustand/map/selectMapData';
 import { selectMenuSetters } from '../../zustand/menu/selectMenu';
 import { selectTextSetters } from '../../zustand/text/selectText';
-import { selectGameHeight } from '../../zustand/game/selectGameData';
+import { selectGameHeight, selectGameSetters } from '../../zustand/game/selectGameData';
 
 export const sceneHelpers = {};
 
@@ -30,8 +30,9 @@ export function create() {
     const scene = sceneHelpers.getScene();
     const { setCurrentMapKey } = getSelectorData(selectMapSetters);
     const { setMenuItems, setMenuOnSelect } = getSelectorData(selectMenuSetters);
-    const { setTextTexts } = getSelectorData(selectTextSetters);
+    const { setTextTexts, clearTextTexts } = getSelectorData(selectTextSetters);
     const gameHeight = getSelectorData(selectGameHeight);
+    const { setGameControlKey } = getSelectorData(selectGameSetters);
 
     const handleMainMenuItemSelected = (itemKey, item) => {
         if (itemKey === 'start_game') {
@@ -66,17 +67,31 @@ export function create() {
 
             const handleChangeText = () => {
                 const textKey = textKeys.shift();
-                setTextTexts([{
-                    // TODO move this to variables
-                    key: `type_key_for_${textKey}`,
-                    config: { top: Math.round(gameHeight / 2) },
-                }]);
+
+                if (textKey) {
+                    setTextTexts([{
+                        // TODO move this to variables
+                        key: `type_key_for_${textKey}`,
+                        config: { top: Math.round(gameHeight / 2) },
+                    }]);
+                } else {
+                    clearTextTexts();
+                    scene.input.keyboard.removeListener('keydown', handleKeyPressed);
+                    setMenuItems(['controls', 'return']);
+                    setMenuOnSelect(handleSettingsItemSelected);
+                }
+
+                return textKey;
             };
 
-            handleChangeText();
-            scene.input.keyboard.on('keydown', () => {
-                handleChangeText();
-            });
+            let textKey = handleChangeText();
+            const handleKeyPressed = (event) => {
+                const { code } = event;
+                setGameControlKey(textKey, code.toUpperCase());
+                textKey = handleChangeText();
+            };
+
+            scene.input.keyboard.on('keydown', handleKeyPressed);
         }
     };
 
