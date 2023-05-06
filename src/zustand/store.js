@@ -2,15 +2,15 @@ import { createStore, useStore } from 'zustand';
 
 // Constants
 import {
-    ACTION_CANCEL,
-    ACTION_ITEM,
     ACTION_KEY,
+    ACTION_ITEM,
+    UP_DIRECTION,
+    ACTION_CANCEL,
     DOWN_DIRECTION,
     LEFT_DIRECTION,
-    MIN_GAME_HEIGHT,
     MIN_GAME_WIDTH,
+    MIN_GAME_HEIGHT,
     RIGHT_DIRECTION,
-    UP_DIRECTION
 } from '../constants';
 
 // Setters
@@ -72,13 +72,13 @@ const store = createStore((set) => ({
         pausedScenes: {},
         showHeadsUpDisplay: false,
         controls: {
-            [UP_DIRECTION]: 'UP',
-            [DOWN_DIRECTION]: 'DOWN',
-            [LEFT_DIRECTION]: 'LEFT',
-            [RIGHT_DIRECTION]: 'RIGHT',
-            [ACTION_KEY]: 'ENTER',
-            [ACTION_ITEM]: 'SPACE',
-            [ACTION_CANCEL]: 'ESC',
+            [UP_DIRECTION]: 'ArrowUp',
+            [DOWN_DIRECTION]: 'ArrowDown',
+            [LEFT_DIRECTION]: 'ArrowLeft',
+            [RIGHT_DIRECTION]: 'ArrowRight',
+            [ACTION_KEY]: 'Space',
+            [ACTION_ITEM]: 'Enter',
+            [ACTION_CANCEL]: 'Escape',
         },
         setters: setGameData(set),
     },

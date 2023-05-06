@@ -87,7 +87,7 @@ export function create() {
             let textKey = handleChangeText();
             const handleKeyPressed = (event) => {
                 const { code } = event;
-                setGameControlKey(textKey, code.toUpperCase());
+                setGameControlKey(textKey, code);
                 textKey = handleChangeText();
             };
 
