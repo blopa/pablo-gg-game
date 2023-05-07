@@ -505,6 +505,7 @@ export function create() {
             .once('animationstop', handleAttackComplete);
     };
 
+    // https://stackoverflow.com/questions/9093287/javascript-bug-no-space-bar-event-when-pressing-up-and-left-arrow-keys
     scene.input.keyboard.on('keydown', ({ code }) => {
         switch (code) {
             case controls[LEFT_DIRECTION]: {
@@ -721,7 +722,7 @@ export function create() {
     }
 
     // TODO move this to somewhere else
-    const durationOfDay = 60 * 1000 * 4; // 4 minutes in milliseconds
+    const durationOfDay = 60 * 1000 * 12; // 12 minutes in milliseconds
     const durationPartsOfDay = durationOfDay / 4;
     const canvas = getSelectorData(selectGameCanvasElement);
 
