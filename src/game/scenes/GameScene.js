@@ -672,9 +672,7 @@ export function create() {
         const gameWidth = getSelectorData(selectGameWidth);
         const gameHeight = getSelectorData(selectGameHeight);
         const spwanLocation = [0, gameWidth, gameWidth * 2.2 * multiplier];
-        const rainParticles = scene.add.particles(rainTexture.key);
-        rainParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
-        rainParticles.createEmitter({
+        const rainParticles = scene.add.particles(0, 0, rainTexture.key, {
             rotate: 30 * multiplier,
             y: 0,
             x: { min: Math.min(...spwanLocation), max: Math.max(...spwanLocation) },
@@ -692,30 +690,37 @@ export function create() {
                 particle.y += camera.scrollY;
             },
         });
+        rainParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
 
         const dropTexture = generateColorPixelTexture(scene, darkBlue, 'TODO_drop');
-
-        const dropParticles = scene.add.particles(dropTexture.key);
-        const emitter = dropParticles.createEmitter({
-            speed: { min: 10, max: 40 },
-            angle: { min: 0, max: 360 },
-            gravityY: 50,
-            lifespan: 400,
-            scale: { start: 1, end: 0 },
-            alpha: { start: 1, end: 0 },
-            // quantity: 64,
-        });
-
         scene.time.addEvent({
             delay: 50,
             loop: true,
             callback: () => {
                 Array.from({ length: strengthMultiplier[weatherStrength] }).fill(null).forEach(() => {
-                    emitter.setPosition(
+                    const splashEmitter = scene.add.particles(
                         PhaserMath.Between(0, gameWidth) + camera.scrollX,
-                        PhaserMath.Between(0, gameHeight) + camera.scrollY
+                        PhaserMath.Between(0, gameHeight) + camera.scrollY,
+                        dropTexture.key,
+                        {
+                            speed: { min: 10, max: 40 },
+                            angle: { min: 0, max: 360 },
+                            gravityY: 50,
+                            lifespan: 400,
+                            scale: { start: 1, end: 0 },
+                            alpha: { start: 1, end: 0 },
+                            quantity: 1,
+                        }
                     );
-                    emitter.explode(PhaserMath.Between(2, 6));
+
+                    // TODO ok this is a hack, but I don't know how to do it properly
+                    scene.time.addEvent({
+                        delay: 400,
+                        loop: false,
+                        callback: () => {
+                            splashEmitter.destroy();
+                        },
+                    });
                 });
             },
         });

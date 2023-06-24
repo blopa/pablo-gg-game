@@ -444,9 +444,7 @@ export const createTilemap = (
                     gameObject.handleDestroyElement = () => {
                         const lifespan = 700;
                         const tex = generateAverageColorPixelTexture(scene, gameObject, 'grass');
-                        const particles = scene.add.particles(tex);
-                        particles.setDepth(Number.MAX_SAFE_INTEGER - 1);
-                        const emitter = particles.createEmitter({
+                        const emitter = scene.add.particles(0, 0, tex, {
                             x: gameObject.body.x + Math.round(gameObject.body.width / 2),
                             y: gameObject.body.y + Math.round(gameObject.body.height / 2),
                             speed: { min: 20, max: 60 },
@@ -457,6 +455,7 @@ export const createTilemap = (
                             scale: { start: 1, end: 0 },
                             // quantity: 64,
                         });
+                        emitter.setDepth(Number.MAX_SAFE_INTEGER - 1);
 
                         gameObject.destroy();
                         emitter.explode(PhaserMath.Between(20, 35));
@@ -1055,9 +1054,7 @@ export const generateTextureFromColor = (scene, color, textureName, width = 2, h
 
 export const createEnemyDeathAnimation = (scene, enemySprite) => {
     const tex = generateAverageColorPixelTexture(scene, enemySprite, 'blue-pixel');
-    const particles = scene.add.particles(tex);
-    particles.setDepth(Number.MAX_SAFE_INTEGER - 1);
-    const emitter = particles.createEmitter({
+    const emitter = scene.add.particles(0, 0, tex, {
         x: enemySprite.x + Math.round(enemySprite.width / 2),
         y: enemySprite.y + Math.round(enemySprite.height / 2),
         speed: { min: 50, max: 200 },
@@ -1068,10 +1065,11 @@ export const createEnemyDeathAnimation = (scene, enemySprite) => {
         scale: { start: 1, end: 0 },
         // quantity: 64,
     });
+    emitter.setDepth(Number.MAX_SAFE_INTEGER - 1);
 
     emitter.onParticleDeath((particle) => {
         emitter.active = false;
-        particles.destroy();
+        emitter.destroy();
     });
 
     return emitter;
@@ -1344,14 +1342,12 @@ export const handleCreateBomb = (scene, heroSprite) => {
                             scale: { start: 1, end: 0 },
                         };
 
-                        const orangeExplosionParticles = scene.add.particles(orangeTexture.key);
+                        const orangeExplosionEmitter = scene.add.particles(0, 0, orangeTexture.key, emitterConfig);
                         orangeExplosionParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
-                        const orangeExplosionEmitter = orangeExplosionParticles.createEmitter(emitterConfig);
                         orangeExplosionEmitter.explode();
 
-                        const yellowExplosionParticles = scene.add.particles(yellowTexture.key);
+                        const yellowExplosionEmitter = scene.add.particles(0, 0, yellowTexture.key, emitterConfig);
                         yellowExplosionParticles.setDepth(Number.MAX_SAFE_INTEGER - 1);
-                        const yellowExplosionEmitter = yellowExplosionParticles.createEmitter(emitterConfig);
                         yellowExplosionEmitter.explode();
 
                         bombSprite.destroy();

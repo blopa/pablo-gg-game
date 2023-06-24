@@ -71,7 +71,7 @@ function GameMenu() {
 
         return () => {
             // TODO improve this
-            console.log('rodei');
+            // console.log('rodei');
             window.removeEventListener('keydown', handleKeyPressed);
         };
     }, [handleOnSelect, items, selectedItemIndex]);
