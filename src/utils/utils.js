@@ -1,4 +1,6 @@
 import { GameObjects } from 'phaser';
+
+// Constants
 import {
     ENTER_KEY,
     SPACE_KEY,
@@ -7,7 +9,9 @@ import {
     ARROW_UP_KEY,
     ARROW_LEFT_KEY,
     ARROW_DOWN_KEY,
-    ARROW_RIGHT_KEY, WEATHER_STRENGTH_MEDIUM, WEATHER_DIRECTION_LEFT,
+    ARROW_RIGHT_KEY,
+    WEATHER_DIRECTION_LEFT,
+    WEATHER_STRENGTH_MEDIUM,
 } from '../constants';
 
 // Store

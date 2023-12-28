@@ -10,7 +10,7 @@ import {
     isTilesetFileAvailable,
 } from '../../utils/utils';
 import { asyncLoader } from '../../utils/phaser';
-import { findAdjacentMaps } from '../../utils/sceneHelpers';
+import { findAdjacentMaps } from '../../utils/tilemap';
 
 // Constants
 import { IGNORED_TILESETS, SLIME_TILE_INDEX, SLIME_SPRITE_NAME } from '../../constants';

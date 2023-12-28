@@ -4,20 +4,17 @@ import { GridEngine } from 'grid-engine';
 // Utils
 import {
     fadeIn,
-    handleCreateMap,
-    handleCreateBomb,
-    handleCreateHero,
-    handleObjectsLayer,
-    handleCreateGroups,
     handleCreateControls,
     handleConfigureCamera,
-    generateColorPixelTexture,
-    handleCreateHeroAnimations,
-    animateCanvasDayNightEffect,
     subscribeToGridEngineEvents,
     calculateClosestStaticElement,
 } from '../../utils/sceneHelpers';
 import { getSelectorData, getMapWeatherFromMap, getMapTypeFromMap } from '../../utils/utils';
+import { animateCanvasDayNightEffect, handleCreateHeroAnimations } from '../../utils/animation';
+import { handleCreateGroups } from '../../utils/group';
+import { handleCreateMap, handleObjectsLayer } from '../../utils/tilemap';
+import { handleCreateBomb, handleCreateHero } from '../../utils/sprite';
+import { generateColorPixelTexture } from '../../utils/color';
 
 // Selectors
 import {
@@ -53,6 +50,8 @@ import {
     WEATHER_STRENGTH_MEDIUM,
     WEATHER_STRENGTH_STRONG,
 } from '../../constants';
+
+// Selectors
 import { selectDialogMessages } from '../../zustand/dialog/selectDialog';
 
 export const key = 'GameScene';

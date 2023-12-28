@@ -473,6 +473,7 @@ module.exports = {
         'implicit-arrow-linebreak': 'off',
         'react/destructuring-assignment': 'off',
         'react/forbid-prop-types': ['warn'],
+        'import/no-cycle': 'off',
         'import/extensions': [
             'warn',
             'ignorePackages',

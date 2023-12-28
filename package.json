@@ -38,7 +38,7 @@
     "@mui/material": "^5.15.2",
     "@react-spring/web": "^9.7.3",
     "beautiful-react-hooks": "^3.12.2",
-    "classnames": "^2.4.0",
+    "classnames": "^2.5.0",
     "cross-env": "^7.0.3",
     "grid-engine": "^2.43.2",
     "is-mobile": "^3.1.1",
