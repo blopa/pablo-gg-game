@@ -81,4 +81,12 @@ export default (set) => ({
                 },
             },
         })),
+    setFadeAnimation: (direction) =>
+        set((state) => ({
+            ...state,
+            game: {
+                ...state.game,
+                fadeAnimation: direction,
+            },
+        })),
 });

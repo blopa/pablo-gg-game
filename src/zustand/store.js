@@ -80,6 +80,8 @@ const store = createStore((set) => ({
             [ACTION_ITEM]: 'Enter',
             [ACTION_CANCEL]: 'Escape',
         },
+        // 'left', 'right', 'up', 'down', 'none'
+        fadeAnimation: 'none',
         setters: setGameData(set),
     },
     dialog: {

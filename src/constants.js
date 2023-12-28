@@ -92,3 +92,9 @@ export const MAP_TYPE_OUTDOOR = 'outdoor';
 
 export const LAYER_TYPE_TERRAIN = 'terrain';
 
+// Fade animations
+export const FADE_ANIMATION_NONE = 'none';
+export const FADE_ANIMATION_LEFT = 'left';
+export const FADE_ANIMATION_RIGHT = 'right';
+export const FADE_ANIMATION_UP = 'up';
+export const FADE_ANIMATION_DOWN = 'down';

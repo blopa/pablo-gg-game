@@ -239,6 +239,7 @@ export const fadeIn = (scene, callback = null, direction = 'left') => {
 
 // TODO make this into a new scene
 const fade = (scene, callback, direction, type) => {
+    // return callback?.();
     const camera = scene.cameras.main;
     const gameWidth = getSelectorData(selectGameWidth);
     const gameHeight = getSelectorData(selectGameHeight);

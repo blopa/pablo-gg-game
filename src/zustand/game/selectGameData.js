@@ -18,6 +18,8 @@ export const selectGameSetters = (state) => state.game.setters;
 
 export const selectGameShowHeadsUpDisplay = (state) => state.game.showHeadsUpDisplay;
 
+export const selectGameFadeAnimation = (state) => state.game.fadeAnimation;
+
 export const selectGameControls = (state) => state.game.controls;
 
 export const selectShouldPauseScene = (sceneName) => (state) =>
